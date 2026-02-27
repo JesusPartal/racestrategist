@@ -1,0 +1,74 @@
+<div class="shell">
+  <header class="header">
+    <div class="logo" style="display: flex; align-items: center; gap: 15px;">
+      <div style="color: var(--accent-color); font-size: 1.8rem; display: flex; align-items: center;">
+        <i class="fa-solid fa-headset"></i>
+      </div>
+      <div>
+        <span
+          style="font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; color: var(--accent-color); letter-spacing: 2px;">RACE</span>
+        <span
+          style="font-family: var(--font-display); font-weight: 300; font-size: 1.1rem; color: #fff; letter-spacing: 1px;">STRATEGIST</span>
+      </div>
+    </div>
+
+    <nav class="animate-in" style="animation-duration: 1.2s;">
+      <div
+        style="display: flex; gap: 30px; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+        <span
+          style="color: var(--accent-color); cursor: pointer; border-bottom: 2px solid var(--accent-color); padding-bottom: 5px;">STRATEGY</span>
+        <span style="color: var(--text-dim); cursor: not-allowed; transition: 0.3s;"
+          onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-dim)'">TELEMETRY</span>
+        <span style="color: var(--text-dim); cursor: not-allowed; transition: 0.3s;"
+          onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-dim)'">TEMPEST</span>
+      </div>
+    </nav>
+
+    <div class="animate-in" style="font-size: 0.65rem; font-family: monospace; color: var(--text-dim);">
+      v1.2 // CONNECTED_OK
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container" style="max-width: 1400px; margin: 0 auto;">
+
+      <app-strategy-calculator></app-strategy-calculator>
+
+      <div class="grid" style="margin-top: 50px;">
+        <div class="glass-card animate-in stagger-2" style="border-left: 4px solid var(--success-color);">
+          <h3 style="font-size: 0.75rem; color: var(--success-color);">Milestone 1: Ready</h3>
+          <p
+            style="font-size: 0.9rem; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+            Core strategy engine is operational. This interface uses modern **Midnight Track** design principles for
+            high visibility.
+          </p>
+          <ul style="color: var(--text-dim); font-size: 0.8rem; list-style: none; padding: 0; margin-top: 15px;">
+            <li style="margin-bottom: 8px;"><span style="color: var(--accent-color);">[✓]</span> Dynamic Vehicle Catalog
+            </li>
+            <li style="margin-bottom: 8px;"><span style="color: var(--accent-color);">[✓]</span> Stint Prediction Logic
+            </li>
+            <li style="margin-bottom: 8px;"><span style="color: var(--accent-color);">[✓]</span> Multilingual Support
+              (ES/EN)</li>
+          </ul>
+        </div>
+
+        <div class="glass-card animate-in stagger-3"
+          style="opacity: 0.8; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0) 100%);">
+          <h3 style="font-size: 0.75rem;">Next Update: Tempest System</h3>
+          <p
+            style="font-size: 0.9rem; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; color: var(--text-dim);">
+            Developing the dynamic weather engine. We are bringing "rain painting" capabilities to your race timeline
+            for real-time adaptations.
+          </p>
+          <div style="margin-top: 20px; font-family: monospace; font-size: 0.7rem; color: var(--accent-color);">
+            LOADING_SIM_MODULES... 42%</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer
+    style="padding: 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;">
+    &copy; 2026 RACE STRATEGIST // DESIGNED_FOR_VICTORY
+  </footer>
+</div>

@@ -1,0 +1,684 @@
+<div class="calculator-container glass-card animate-in stagger-1" style="margin-top: 20px;">
+    <div
+        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 35px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
+        <h2 style="margin: 0; font-family: var(--font-display);"><span
+                style="font-weight: 300; opacity: 0.6;">DASH:</span> {{ trans.translate('calculator_title') }}</h2>
+        <div class="lang-switcher">
+            <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
+            <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Selection Section -->
+        <div class="config-panel" style="padding: 10px;">
+            <h3 style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 25px;">{{ trans.translate('select_event') }}</h3>
+            <div class="form-field">
+                <label for="eventSelect">{{ trans.translate('select_event') }}</label>
+                <select id="eventSelect" [ngModel]="selectedEventId()" (ngModelChange)="onEventChange($event)">
+                    <option *ngFor="let event of events()" [value]="event.id">{{ event.name }}</option>
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="vehicleSelect">{{ trans.translate('select_vehicle') }}</label>
+                <select id="vehicleSelect" [ngModel]="selectedVehicleId()" (ngModelChange)="onVehicleChange($event)">
+                    <option *ngFor="let vehicle of vehiclesByEvent()" [value]="vehicle.id">{{ vehicle.name }} ({{
+                        vehicle.vehicleClass }})</option>
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="tankCapacity">{{ trans.translate('tank_capacity') }} <span class="tag"
+                        *ngIf="tankCapacityOverride() !== null">BOP</span></label>
+                <div style="position: relative;">
+                    <input type="number" id="tankCapacity" [ngModel]="tankCapacity()"
+                        (ngModelChange)="tankCapacityOverride.set($event)" step="0.5">
+                    <span
+                        style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">LITS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inputs Section -->
+        <div class="inputs-panel" style="padding: 10px;">
+            <h3 style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 25px;">Real-Time Data</h3>
+            <div class="form-field">
+                <label for="fuelPerLap">{{ trans.translate('fuel_consumption') }}</label>
+                <div style="position: relative;">
+                    <input type="number" id="fuelPerLap" [ngModel]="fuelPerLap()"
+                        (ngModelChange)="fuelPerLap.set($event)" step="0.01">
+                    <span
+                        style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">L/LAP</span>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label for="avgLapTime">{{ trans.translate('avg_lap_time') }}</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <div style="position: relative;">
+                        <input type="number" [ngModel]="lapMin()" (ngModelChange)="lapMin.set($event)"
+                            placeholder="MIN">
+                        <span
+                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">M</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="number" [ngModel]="lapSec()" (ngModelChange)="lapSec.set($event)" placeholder="SEC"
+                            max="59">
+                        <span
+                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">S</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="number" [ngModel]="lapMs()" (ngModelChange)="lapMs.set($event)" placeholder="MS">
+                        <span
+                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">MS</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div class="form-field">
+                    <label>PIT (NO TIRES)</label>
+                    <div style="position: relative;">
+                        <input type="number" [ngModel]="strategyService.pitStopFuelOnlyMs() / 1000"
+                            (ngModelChange)="strategyService.pitStopFuelOnlyMs.set($event * 1000)">
+                        <span
+                            style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">SEC</span>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>PIT (WITH TIRES)</label>
+                    <div style="position: relative;">
+                        <input type="number" [ngModel]="strategyService.pitStopTiresMs() / 1000"
+                            (ngModelChange)="strategyService.pitStopTiresMs.set($event * 1000)">
+                        <span
+                            style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">SEC</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-panel glass-card"
+            style="background: linear-gradient(135deg, rgba(255, 176, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%); border-left: 4px solid var(--accent-color);">
+            <h3 style="margin-top: 0; color: var(--accent-color); font-size: 0.9rem;">{{ trans.translate('predictions')
+                }}</h3>
+            <div class="result-box">
+                <div class="result-label">{{ trans.translate('max_laps') }}</div>
+                <div class="result-value" style="font-size: 3rem; font-weight: 800; line-height: 1;">{{ maxLaps()
+                    }}<span
+                        style="font-size: 0.8rem; font-weight: 400; color: var(--text-dim); margin-left:8px;">LAPS</span>
+                </div>
+            </div>
+            <div class="result-row">
+                <span class="label">{{ trans.translate('stint_duration') }}</span>
+                <span class="value" style="font-family: monospace; letter-spacing: 1px;">{{ stintDurationFormatted()
+                    }}</span>
+            </div>
+            <div class="result-row" *ngIf="maxLaps() > 0">
+                <span class="label">{{ trans.translate('estimated_stints') }}</span>
+                <span class="value" style="color: var(--success-color); font-weight: 700;">{{ stintsNeeded() }}</span>
+            </div>
+            <div style="margin-top: 20px;">
+                <button [disabled]="!canGenerateStints()" (click)="generateStintPlan()" class="primary"
+                    style="width: 100%; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;"
+                    [style.opacity]="canGenerateStints() ? 1 : 0.4"
+                    [style.cursor]="canGenerateStints() ? 'pointer' : 'not-allowed'">
+                    Generate Strategy Plan
+                </button>
+                <p *ngIf="!canGenerateStints()"
+                    style="font-size: 0.6rem; color: #ff5252; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4;">
+                    <span *ngIf="stintsNeeded() <= 0">⚠ Fill consumption data first</span>
+                    <span *ngIf="stintsNeeded() > 1000">⚠ Max 1000 stints allowed (Current: {{ stintsNeeded() }})</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Driver Management Section -->
+<div class="glass-card animate-in stagger-2" style="margin-top: 30px;">
+    <h2><span style="font-weight: 300; opacity: 0.6;">TEAM:</span> Drivers</h2>
+    <div class="grid" style="grid-template-columns: 1fr 2fr;">
+        <div class="add-driver-form" style="border-right: 1px solid rgba(255,255,255,0.05); padding-right: 30px;">
+            <h4
+                style="margin-top: 0; font-size: 0.7rem; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px;">
+                {{ editingDriverId() ? 'Update Driver Profile' : 'New Driver Profile' }}
+            </h4>
+            <div class="form-field">
+                <label>{{ trans.translate('driver_name') }}</label>
+                <input type="text" [(ngModel)]="newDriverName" [placeholder]="'e.g. Max Verstappen'">
+            </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-field">
+                    <label>{{ trans.translate('driver_fuel') }} (Opt)</label>
+                    <input type="number" [(ngModel)]="newDriverFuel" step="0.01"
+                        [placeholder]="fuelPerLap() > 0 ? fuelPerLap() + ' (Default)' : 'Use Global'">
+                </div>
+                <div class="form-field">
+                    <label>{{ trans.translate('driver_error') }}</label>
+                    <input type="number" [(ngModel)]="newDriverError" step="0.01">
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label>DRIVER LAP TIME (Opt)</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <div style="position: relative;">
+                        <input type="number" [(ngModel)]="newDriverLapMin" placeholder="MIN">
+                        <span
+                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">M</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="number" [(ngModel)]="newDriverLapSec" placeholder="SEC" max="59">
+                        <span
+                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">S</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="number" [(ngModel)]="newDriverLapMs" placeholder="MS">
+                        <span
+                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">MS</span>
+                    </div>
+                </div>
+                <p style="font-size: 0.55rem; color: var(--text-dim); margin-top: 5px;">Leave empty to use Global Lap
+                    Time</p>
+            </div>
+            <div class="form-field">
+                <label>{{ trans.translate('driver_color') }}</label>
+                <input type="color" [(ngModel)]="newDriverAccent" style="height: 45px; padding: 2px;">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button *ngIf="!editingDriverId()" (click)="addDriver()" class="primary"
+                    style="flex: 1; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;">
+                    {{ trans.translate('add_driver') }}
+                </button>
+                <ng-container *ngIf="editingDriverId()">
+                    <button (click)="updateDriver()" class="primary"
+                        style="flex: 2; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;">
+                        Save Changes
+                    </button>
+                    <button (click)="cancelEdit()"
+                        style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.6rem;">
+                        Cancel
+                    </button>
+                </ng-container>
+            </div>
+        </div>
+        <div class="drivers-list"
+            style="display: flex; gap: 15px; flex-wrap: wrap; align-content: flex-start; padding-left: 10px;">
+            <div *ngFor="let driver of strategyService.drivers()" class="driver-badge"
+                [class.editing]="editingDriverId() === driver.id" [style.border-left-color]="driver.accentColor"
+                (click)="editDriver(driver)" style="cursor: pointer;">
+                <div style="font-weight: 700;">{{ driver.name }}</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim);">
+                    {{ driver.fuelPerLapL ? driver.fuelPerLapL + ' L/Lap' : 'Global Fuel' }}
+                    <span *ngIf="driver.avgLapTimeMs" style="margin-left: 8px; color: var(--accent-color);">
+                        ⏱ {{ formatMs(driver.avgLapTimeMs) }}
+                    </span>
+                </div>
+                <div style="font-size: 0.6rem; color: var(--accent-color); margin-top: 4px;"
+                    *ngIf="editingDriverId() === driver.id">EDITING...</div>
+                <button (click)="strategyService.removeDriver(driver.id); $event.stopPropagation()"
+                    class="delete-btn">&times;</button>
+            </div>
+            <div *ngIf="strategyService.drivers().length === 0" style="color: var(--text-dim); font-style: italic;">
+                No drivers added yet.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stint Strategy Section (Tiles) -->
+<div *ngIf="strategyService.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
+    <h2><span style="font-weight: 300; opacity: 0.6;">PLAN:</span> {{ trans.translate('team_strategy_title') }}</h2>
+    <div class="stint-timeline" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
+        <div *ngFor="let stint of strategyService.stintPlan()" [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
+            [style.background]="getDriverColor(stint.driverId) + '22'"
+            [style.border-left-color]="getDriverColor(stint.driverId)">
+            <div class="stint-header">
+                <span class="stint-number">STINT #{{ stint.index }}</span>
+                <span class="stint-laps">{{ stint.laps }} LAPS</span>
+            </div>
+            <div class="stint-body">
+                <select [ngModel]="stint.driverId" (ngModelChange)="updateStintDriver(stint.index, $event)">
+                    <option value="">Select Driver</option>
+                    <option *ngFor="let driver of strategyService.drivers()" [value]="driver.id">{{ driver.name }}
+                    </option>
+                </select>
+
+                <div
+                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
+                    <label
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.65rem; color: white;">
+                        <input type="checkbox" [ngModel]="stint.changeTires"
+                            (ngModelChange)="updateStintTires(stint.index, $event)"
+                            style="width: 14px; height: 14px; cursor: pointer; appearance: auto; -webkit-appearance: auto;">
+                        CHANGE TIRES
+                    </label>
+                    <div style="flex: 1; position: relative;">
+                        <input type="number" [ngModel]="(stint.additionalTimeMs || 0) / 1000"
+                            (ngModelChange)="updateStintExtraTime(stint.index, $event)" placeholder="+ SEC"
+                            style="padding: 5px 25px 5px 8px; font-size: 0.7rem; background: rgba(0,0,0,0.2);">
+                        <span
+                            style="position: absolute; right: 5px; top: 6px; font-size: 0.5rem; opacity: 0.5;">SEC</span>
+                    </div>
+                </div>
+                <div class="stint-times">
+                    <div>
+                        <label>{{ trans.translate('start_time') }}</label>
+                        <code>{{ formatMs(stint.startTimeMs) }}</code>
+                    </div>
+                    <div style="text-align: right;">
+                        <label>{{ trans.translate('end_time') }}</label>
+                        <code>{{ formatMs(stint.endTimeMs) }}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Overview Grid -->
+    <div class="visual-overview"
+        style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px;">
+        <h3
+            style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;">
+            Race Overview Matrix</h3>
+        <div class="stint-grid">
+            <div *ngFor="let stint of strategyService.stintPlan()" class="mini-tile"
+                [style.background]="getDriverColor(stint.driverId)" [class.unassigned]="!stint.driverId"
+                (click)="scrollToStint(stint.index)">
+                {{ stint.index }}
+
+                <!-- Expanded Tooltip -->
+                <div class="mini-tooltip">
+                    <div
+                        style="font-weight: 700; color: var(--accent-color); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                        STINT #{{ stint.index }}
+                    </div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: white;">{{
+                        strategyService.getDriverById(stint.driverId)?.name || 'UNASSIGNED' }}</div>
+                    <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 5px; color: white;">{{ stint.laps }} Laps
+                    </div>
+                    <div
+                        style="font-family: monospace; font-size: 0.7rem; color: var(--accent-color); margin-top: 8px;">
+                        {{ formatMs(stint.startTimeMs) }} <br>
+                        {{ formatMs(stint.endTimeMs) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hide Chrome/Safari/Edge spin buttons */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Hide Firefox spin buttons */
+    input[type=number] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    /* Input specific refinements */
+    input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 12px 65px 12px 15px;
+        /* Added right padding for unit labels */
+        border-radius: 8px;
+        width: 100%;
+        font-family: var(--font-main);
+        transition: var(--transition);
+    }
+
+    input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 15px rgba(255, 176, 0, 0.1);
+    }
+
+    .lang-switcher button {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-dim);
+        padding: 5px 12px;
+        font-family: var(--font-display);
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .lang-switcher button:first-child {
+        border-radius: 4px 0 0 4px;
+    }
+
+    .lang-switcher button:last-child {
+        border-radius: 0 4px 4px 0;
+    }
+
+    .lang-switcher button.active {
+        background: var(--accent-color);
+        color: black;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 10px rgba(255, 176, 0, 0.3);
+    }
+
+    select {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 12px 40px 12px 15px;
+        /* More padding on the right for the arrow */
+        border-radius: 8px;
+        width: 100%;
+        font-family: var(--font-main);
+        font-size: 0.9rem;
+
+        /* Fully disable browser default appearance */
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(255,176,0)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    select:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 176, 0, 0.3);
+    }
+
+    select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 15px rgba(255, 176, 0, 0.2);
+    }
+
+    select option {
+        background: #111;
+        color: white;
+        padding: 10px;
+    }
+
+    /* Target specifically the stints select if needed for secondary refinement */
+    .stint-body select {
+        padding: 10px 35px 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .tag {
+        background: #FF5252;
+        color: white;
+        font-size: 0.6rem;
+        padding: 2px 4px;
+        border-radius: 2px;
+        font-weight: 800;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+
+    .driver-badge {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 4px solid var(--accent-color);
+        border-radius: 8px;
+        padding: 12px 40px 12px 15px;
+        position: relative;
+        min-width: 150px;
+        transition: all 0.3s ease;
+    }
+
+    .driver-badge:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .driver-badge.editing {
+        background: rgba(255, 176, 0, 0.1);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 15px rgba(255, 176, 0, 0.2);
+    }
+
+    .delete-btn {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: #666;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    .delete-btn:hover {
+        color: #ff5252;
+    }
+
+    .stint-timeline {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        padding: 20px 5px 30px 5px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.05);
+    }
+
+    .stint-timeline::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .stint-timeline::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+    }
+
+    .stint-timeline::-webkit-scrollbar-thumb {
+        background: rgba(255, 176, 0, 0.2);
+        border-radius: 10px;
+        transition: background 0.3s ease;
+    }
+
+    .stint-timeline::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-color);
+    }
+
+    .stint-tile {
+        flex: 0 0 280px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-left: 6px solid var(--accent-color);
+        border-radius: 12px;
+        padding: 20px;
+        transition: var(--transition);
+    }
+
+    .stint-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .stint-number {
+        font-family: var(--font-display);
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+    }
+
+    .stint-laps {
+        background: rgba(255, 255, 255, 0.1);
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+    .stint-body select {
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+    }
+
+    .stint-times {
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 15px;
+    }
+
+    .stint-times label {
+        font-size: 0.6rem;
+        margin-bottom: 2px;
+    }
+
+    .stint-times code {
+        color: var(--accent-color);
+        font-size: 0.9rem;
+    }
+
+    .cdk-drag-preview {
+        box-sizing: border-box;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
+        opacity: 0.8;
+    }
+
+    .cdk-drag-placeholder {
+        opacity: 0.2;
+    }
+
+    .cdk-drag-animating {
+        transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    .stint-timeline.cdk-drop-list-dragging .stint-tile:not(.cdk-drag-placeholder) {
+        transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    /* Race Overview Matrix Styles */
+    .stint-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .mini-tile {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: rgba(0, 0, 0, 0.6);
+        position: relative;
+        cursor: help;
+        transition: all 0.2s ease;
+    }
+
+    .mini-tile:hover {
+        transform: scale(1.15);
+        filter: brightness(1.2);
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .mini-tile.unassigned {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: var(--text-dim);
+    }
+
+    .mini-tooltip {
+        position: absolute;
+        bottom: 140%;
+        left: 50%;
+        transform: translateX(-50%) translateY(10px);
+        background: #111;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px;
+        border-radius: 10px;
+        min-width: 160px;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        text-align: left;
+    }
+
+    .mini-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: #111;
+    }
+
+    .mini-tile:hover .mini-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .stint-tile.highlight {
+        animation: pulse-active 1.5s ease-out;
+    }
+
+    /* Prediction Results Styling */
+    .result-box {
+        margin-bottom: 30px;
+    }
+
+    .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .result-row .label {
+        font-size: 0.65rem;
+        opacity: 0.6;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+    }
+
+    .result-row .value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    @keyframes pulse-active {
+        0% {
+            transform: scale(1);
+        }
+
+        30% {
+            transform: scale(1.03);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
