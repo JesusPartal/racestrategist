@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, effect, untracked } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, untracked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -6,6 +6,7 @@ import { CatalogService } from '../../core/services/catalog.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { StrategyService } from '../../core/services/strategy.service';
 import { IRacingEvent, Vehicle, WeatherCondition, TireType, DriverProfile } from '../../core/models/race-strategy.model';
+import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-strategy-calculator',
@@ -14,7 +15,7 @@ import { IRacingEvent, Vehicle, WeatherCondition, TireType, DriverProfile } from
   templateUrl: './strategy-calculator.html',
   styleUrl: './strategy-calculator.css'
 })
-export class StrategyCalculator implements OnInit {
+export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   // Color Palette for Drivers (Racing Accent Colors)
   private readonly colorPalette = [
     '#FFB000', // Racing Amber (Yellow) - Driver 1
@@ -113,7 +114,11 @@ export class StrategyCalculator implements OnInit {
         this.catalog.getVehiclesByEvent(eventId).subscribe(v => {
           this.vehiclesByEvent.set(v);
           if (v.length > 0) {
-            this.selectedVehicleId.set(v[0].id);
+            const current = untracked(() => this.selectedVehicleId());
+            // Only set default if current vehicle is not in the new list OR if we don't have one yet
+            if (!current || !v.some(item => item.id === current)) {
+              this.selectedVehicleId.set(v[0].id);
+            }
           }
         });
       }
@@ -122,7 +127,7 @@ export class StrategyCalculator implements OnInit {
     // React to vehicle change to reset override
     effect(() => {
       this.selectedVehicleId();
-      this.tankCapacityOverride.set(null);
+      this.untrackOverrideReset();
     });
 
     // Ripple Recalculate Effect
@@ -139,6 +144,26 @@ export class StrategyCalculator implements OnInit {
         this.strategyService.recalculateTimeline(fuel, lapTime, tank);
       }
     });
+
+    // Auto-dirty tracking: mark dirty on any meaningful change after init
+    let dirtyInitSkip = true;
+    effect(() => {
+      // Track all user-editable signals
+      this.fuelPerLap(); this.lapMin(); this.lapSec(); this.lapMs();
+      this.selectedEventId(); this.selectedVehicleId();
+      this.strategyService.pitStopFuelOnlyMs(); this.strategyService.pitStopTiresMs();
+      this.strategyService.stintPlan(); this.strategyService.drivers();
+
+      if (dirtyInitSkip) {
+        dirtyInitSkip = false;
+        return;
+      }
+      untracked(() => this.isDirty.set(true));
+    });
+  }
+
+  private untrackOverrideReset() {
+    this.tankCapacityOverride.set(null);
   }
 
   // Editing State
@@ -147,7 +172,7 @@ export class StrategyCalculator implements OnInit {
   editDriver(driver: DriverProfile) {
     this.editingDriverId.set(driver.id);
     this.newDriverName = driver.name;
-    this.newDriverAccent = driver.accentColor;
+    this.newDriverAccent = driver.accentColor || '#FFB000';
     this.newDriverError = driver.errorFactor;
     this.newDriverFuel = driver.fuelPerLapL || null;
 
@@ -190,14 +215,58 @@ export class StrategyCalculator implements OnInit {
   ngOnInit() {
     this.catalog.getEvents().subscribe(e => {
       this.events.set(e);
-      if (e.length > 0) {
+      // Only set default if no strategy is active or selectedEventId is empty
+      if (e.length > 0 && !this.strategyService.activeStrategyId() && !this.selectedEventId()) {
         this.selectedEventId.set(e[0].id);
       }
     });
+
+    // Check if we have an active strategy to sync
+    if (this.strategyService.activeStrategyId()) {
+      this.syncFromActiveStrategy();
+    }
+  }
+
+  syncFromActiveStrategy() {
+    const eventId = this.strategyService.activeEventId();
+    const vehicleId = this.strategyService.activeVehicleId();
+    const fuel = this.strategyService.activeFuelPerLap();
+    const totalMs = this.strategyService.activeAvgLapTimeMs();
+
+    if (eventId) this.selectedEventId.set(eventId);
+    if (vehicleId) this.selectedVehicleId.set(vehicleId);
+    if (fuel) this.fuelPerLap.set(fuel);
+
+    if (totalMs) {
+      const totalSeconds = Math.floor(totalMs / 1000);
+      this.lapMin.set(Math.floor(totalSeconds / 60));
+      this.lapSec.set(totalSeconds % 60);
+      this.lapMs.set(totalMs % 1000);
+    }
   }
 
   onEventChange(id: string) {
     this.selectedEventId.set(id);
+  }
+
+  // ── Strategy Name ────────────────────────────────────────────────────────
+  onStrategyNameInput(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    this.strategyService.activeStrategyName.set(val);
+  }
+
+  onStrategyNameBlur(event: Event) {
+    const val = (event.target as HTMLInputElement).value.trim();
+    if (!val) {
+      this.strategyService.activeStrategyName.set('Unnamed Strategy');
+      (event.target as HTMLInputElement).value = 'Unnamed Strategy';
+    } else {
+      this.strategyService.activeStrategyName.set(val);
+    }
+  }
+
+  onStrategyNameEnter(event: Event) {
+    (event.target as HTMLInputElement).blur();
   }
 
   onVehicleChange(id: string) {
@@ -261,18 +330,101 @@ export class StrategyCalculator implements OnInit {
   }
 
   getDriverColor(driverId: string): string {
-    if (!driverId) return '#888'; // Light grey for unassigned
-    return this.strategyService.getDriverById(driverId)?.accentColor || '#888';
+    if (!driverId) return '#888888'; // Light grey for unassigned
+    return this.strategyService.getDriverById(driverId)?.accentColor || '#888888';
   }
 
   scrollToStint(index: number) {
     const el = document.getElementById(`stint-${index}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-
-      // Temporary highlight (scale only, no glow)
       el.classList.add('highlight');
       setTimeout(() => el.classList.remove('highlight'), 2000);
     }
+  }
+
+  // ── Save / Discard / Unsaved Changes Guard ──────────────────────────────────
+
+  /** Tracks whether the user has made changes since last save/load */
+  isDirty = signal(false);
+
+  /** Controls visibility of the unsaved-changes modal */
+  showUnsavedDialog = signal(false);
+
+  /**
+   * Resolver held by the current canDeactivate call.
+   * When the user picks Save/Discard/Cancel, this is called with true/false
+   * to let the router know whether to proceed.
+   */
+  private deactivateResolver: ((allow: boolean) => void) | null = null;
+
+  /**
+   * Called by the CanDeactivate guard automatically when the user tries to
+   * navigate away from this route. Returns a Promise so the router waits for
+   * the user to click a button in the dialog before proceeding.
+   */
+  canDeactivate(): boolean | Promise<boolean> {
+    if (!this.isDirty()) return true; // No changes — allow immediately
+
+    // Show the dialog and wait for the user's choice
+    this.showUnsavedDialog.set(true);
+    return new Promise<boolean>(resolve => {
+      this.deactivateResolver = resolve;
+    });
+  }
+
+  /** User clicked "KEEP EDITING" — block navigation and close dialog */
+  keepEditing() {
+    this.showUnsavedDialog.set(false);
+    if (this.deactivateResolver) {
+      this.deactivateResolver(false);
+      this.deactivateResolver = null;
+    }
+  }
+
+  /** User clicked "SAVE & CONTINUE" — save then allow navigation */
+  saveAndNavigate() {
+    this.saveStrategy();
+    this.showUnsavedDialog.set(false);
+    if (this.deactivateResolver) {
+      this.deactivateResolver(true);
+      this.deactivateResolver = null;
+    }
+  }
+
+  /** User clicked "DISCARD" — reset and allow navigation */
+  discardAndNavigate() {
+    this.discardChanges();
+    this.showUnsavedDialog.set(false);
+    if (this.deactivateResolver) {
+      this.deactivateResolver(true);
+      this.deactivateResolver = null;
+    }
+  }
+
+  /** Persist the current strategy back to the library */
+  saveStrategy() {
+    if (!this.strategyService.activeStrategyId()) {
+      const id = 'strat-' + Date.now();
+      this.strategyService.saveCurrentAsNew(id, 'New Strategy', this.selectedVehicleId());
+    } else {
+      this.strategyService.updateCurrentStrategy(
+        this.selectedEventId(), this.selectedVehicleId(),
+        this.avgLapTime(), this.fuelPerLap()
+      );
+    }
+    this.isDirty.set(false);
+  }
+
+  /** Revert to the last-loaded version from the strategy library */
+  discardChanges() {
+    const id = this.strategyService.activeStrategyId();
+    if (id) {
+      this.strategyService.loadStrategy(id);
+      this.syncFromActiveStrategy();
+    } else {
+      this.strategyService.clearActive();
+    }
+    this.isDirty.set(false);
   }
 }

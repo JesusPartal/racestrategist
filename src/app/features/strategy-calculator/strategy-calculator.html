@@ -1,11 +1,58 @@
+<!-- Unsaved Changes Modal -->
+<div class="unsaved-overlay" *ngIf="showUnsavedDialog()" (click)="keepEditing()">
+    <div class="unsaved-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="unsaved-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="unsaved-title">UNSAVED CHANGES</h3>
+        <p class="unsaved-body">
+            You have unsaved changes to <strong>{{ strategyService.activeStrategyName() }}</strong>.<br>
+            What would you like to do?
+        </p>
+        <div class="unsaved-actions">
+            <button class="btn-save-modal" (click)="saveAndNavigate()">
+                <i class="fa-solid fa-floppy-disk"></i> SAVE &amp; CONTINUE
+            </button>
+            <button class="btn-discard-modal" (click)="discardAndNavigate()">
+                <i class="fa-solid fa-trash"></i> DISCARD CHANGES
+            </button>
+            <button class="btn-cancel-modal" (click)="keepEditing()">KEEP EDITING</button>
+        </div>
+    </div>
+</div>
+
 <div class="calculator-container glass-card animate-in stagger-1" style="margin-top: 20px;">
     <div
-        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 35px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
-        <h2 style="margin: 0; font-family: var(--font-display);"><span
-                style="font-weight: 300; opacity: 0.6;">DASH:</span> {{ trans.translate('calculator_title') }}</h2>
-        <div class="lang-switcher">
-            <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
-            <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 8px;">
+                {{ strategyService.activeStrategyId() ? 'EDITING STRATEGY' : 'NEW STRATEGY' }}
+                <span *ngIf="isDirty()" style="color: var(--accent-color); margin-left: 8px;">● UNSAVED</span>
+            </div>
+            <!-- Editable strategy name -->
+            <div class="strategy-name-wrap">
+                <i class="fa-solid fa-pen-to-square strategy-name-icon"></i>
+                <input id="strategyNameInput" class="strategy-name-input" type="text"
+                    [value]="strategyService.activeStrategyName()" (input)="onStrategyNameInput($event)"
+                    (blur)="onStrategyNameBlur($event)" (keydown.enter)="onStrategyNameEnter($event)"
+                    placeholder="Name your strategy..." maxlength="60" spellcheck="false" autocomplete="off">
+            </div>
+            <h2
+                style="margin: 4px 0 0; font-family: var(--font-display); font-size: 0.85rem; opacity: 0.5; font-weight: 400;">
+                <span style="font-weight: 300;">DASH:</span> {{ trans.translate('calculator_title') }}
+            </h2>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; margin-left: 30px; flex-shrink: 0;">
+            <button class="btn-save" (click)="saveStrategy()" [disabled]="!isDirty()">
+                <i class="fa-solid fa-floppy-disk"></i> SAVE
+            </button>
+            <button class="btn-discard" (click)="discardChanges()" [disabled]="!isDirty()">
+                <i class="fa-solid fa-rotate-left"></i> DISCARD
+            </button>
+            <div class="lang-switcher">
+                <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
+                <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
+            </div>
         </div>
     </div>
 

@@ -1,0 +1,236 @@
+<div class="team-page">
+
+    <!-- Page Header -->
+    <div class="page-header animate-in">
+        <div>
+            <h1 class="page-title">TEAM <span class="accent">ROSTER</span></h1>
+            <p class="page-subtitle">Manage your drivers, performance baselines, and team configuration.</p>
+        </div>
+        <button class="btn-add" (click)="openAdd()" id="addDriverBtn">
+            <i class="fa-solid fa-user-plus"></i> ADD DRIVER
+        </button>
+    </div>
+
+    <!-- Team Stats Bar -->
+    <div class="stats-bar glass-card animate-in stagger-1">
+        <div class="stat">
+            <span class="stat-label">DRIVERS</span>
+            <span class="stat-value">{{ team.roster().length }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <span class="stat-label">AVG iRATING</span>
+            <span class="stat-value accent">{{ team.avgIRating() || '—' }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <span class="stat-label">PRIMARY DRIVERS</span>
+            <span class="stat-value">{{ primaryDriverCount() }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <span class="stat-label">TEAM NAME</span>
+            <span class="stat-value" style="font-size: 0.9rem;">{{ team.settings().teamName }}</span>
+        </div>
+    </div>
+
+    <!-- Driver Grid -->
+    <div class="driver-grid stagger-2">
+        <div *ngFor="let driver of team.roster()" class="driver-card glass-card animate-in"
+            [class.editing]="editingId() === driver.id" [style.border-left-color]="driver.accentColor"
+            (click)="openEdit(driver)">
+
+            <!-- Card Header: name + role badge -->
+            <div class="dc-header">
+                <div class="driver-color-dot" [style.background]="driver.accentColor"></div>
+                <div class="dc-name-block">
+                    <span class="dc-nationality">{{ driver.nationality }}</span>
+                    <h3 class="dc-name">{{ driver.name }}</h3>
+                </div>
+                <span class="role-badge" [class]="'role-' + (driver.role || 'Primary' | lowercase)">
+                    {{ driver.role || 'Primary' }}
+                </span>
+            </div>
+
+            <!-- License + iRating -->
+            <div class="dc-license-row">
+                <span class="license-badge" [style.background]="getLicenseBadgeColor(driver.licenseClass)">
+                    {{ driver.licenseClass || '—' }}
+                </span>
+                <span class="irating-val">
+                    <i class="fa-solid fa-chart-line" style="font-size:0.6rem;"></i>
+                    {{ driver.iRating ? (driver.iRating | number:'1.0-0') : 'N/A' }}
+                </span>
+            </div>
+
+            <!-- Performance Stats -->
+            <div class="dc-stats">
+                <div class="dc-stat">
+                    <span class="dc-stat-label">LAP TIME</span>
+                    <code class="dc-stat-val">{{ team.formatLapTime(driver.avgLapTimeMs) }}</code>
+                </div>
+                <div class="dc-stat">
+                    <span class="dc-stat-label">FUEL / LAP</span>
+                    <code
+                        class="dc-stat-val">{{ driver.fuelPerLapL ? (driver.fuelPerLapL | number:'1.1-2') + ' L' : 'Global' }}</code>
+                </div>
+                <div class="dc-stat">
+                    <span class="dc-stat-label">ERROR FACTOR</span>
+                    <code class="dc-stat-val">{{ (driver.errorFactor * 100 | number:'1.0-1') }}%</code>
+                </div>
+            </div>
+
+            <!-- Hover action hint -->
+            <div class="dc-hover-hint">
+                <i class="fa-solid fa-pen-to-square"></i> EDIT PROFILE
+            </div>
+
+            <button class="dc-delete-btn" (click)="removeDriver(driver.id); $event.stopPropagation()"
+                title="Remove driver">
+                &times;
+            </button>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="team.roster().length === 0" class="empty-card glass-card">
+            <i class="fa-solid fa-helmet-safety"
+                style="font-size: 2.5rem; color: var(--text-dim); margin-bottom: 15px;"></i>
+            <h3>No Drivers Yet</h3>
+            <p>Add your first driver to start building your team roster.</p>
+            <button class="btn-add" (click)="openAdd()">+ ADD FIRST DRIVER</button>
+        </div>
+    </div>
+
+    <!-- ── Team Settings Panel ──────────────────────────────────────────── -->
+    <div class="glass-card settings-panel animate-in stagger-3">
+        <h2 class="section-heading">TEAM <span class="accent">SETTINGS</span></h2>
+        <div class="settings-grid">
+            <div class="form-field">
+                <label for="teamName">Team Name</label>
+                <input id="teamName" type="text" [value]="team.settings().teamName"
+                    (change)="team.updateSettings({ teamName: $any($event.target).value })">
+            </div>
+            <div class="form-field">
+                <label for="defaultPitFuel">Default Pit — No Tires (s)</label>
+                <input id="defaultPitFuel" type="number" [value]="team.settings().defaultPitFuelOnlyS"
+                    (change)="team.updateSettings({ defaultPitFuelOnlyS: +$any($event.target).value })">
+            </div>
+            <div class="form-field">
+                <label for="defaultPitTires">Default Pit — With Tires (s)</label>
+                <input id="defaultPitTires" type="number" [value]="team.settings().defaultPitTiresS"
+                    (change)="team.updateSettings({ defaultPitTiresS: +$any($event.target).value })">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Add / Edit Driver Slide-Over Panel ───────────────────────────────── -->
+<div class="panel-overlay" *ngIf="formMode() !== 'closed'" (click)="closeForm()">
+    <div class="side-panel glass-card animate-in" (click)="$event.stopPropagation()">
+
+        <div class="panel-header">
+            <h2 class="panel-title">{{ formMode() === 'edit' ? 'EDIT' : 'ADD' }} <span class="accent">DRIVER</span></h2>
+            <button class="panel-close" (click)="closeForm()">&times;</button>
+        </div>
+
+        <!-- Color Picker Row -->
+        <div class="form-field" style="margin-top: 10px;">
+            <label>DRIVER ACCENT COLOR</label>
+            <div class="color-palette-row">
+                <button *ngFor="let c of colorPalette" class="color-swatch" [style.background]="c"
+                    [class.selected]="form.accentColor === c" (click)="form.accentColor = c; $event.preventDefault()">
+                </button>
+                <input type="color" [(ngModel)]="form.accentColor" class="color-custom-input" title="Custom color">
+            </div>
+        </div>
+
+        <!-- Name + Nationality row -->
+        <div class="two-col">
+            <div class="form-field">
+                <label for="driverName">DRIVER NAME *</label>
+                <input id="driverName" type="text" [(ngModel)]="form.name" placeholder="e.g. Marco Rossi"
+                    autocomplete="off">
+            </div>
+            <div class="form-field">
+                <label for="driverNat">NATIONALITY (emoji)</label>
+                <input id="driverNat" type="text" [(ngModel)]="form.nationality" placeholder="🇮🇹" maxlength="4"
+                    style="width: 80px; font-size: 1.4rem; text-align: center;">
+            </div>
+        </div>
+
+        <!-- License / iRating / Role -->
+        <div class="three-col">
+            <div class="form-field">
+                <label for="driverLicense">LICENSE</label>
+                <select id="driverLicense" [(ngModel)]="form.licenseClass">
+                    <option *ngFor="let lc of licenseClasses" [value]="lc">{{ lc }}</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="driverIR">iRATING</label>
+                <input id="driverIR" type="number" [(ngModel)]="form.iRating" placeholder="e.g. 4500">
+            </div>
+            <div class="form-field">
+                <label for="driverRole">ROLE</label>
+                <select id="driverRole" [(ngModel)]="form.role">
+                    <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Lap Time -->
+        <div class="form-field">
+            <label>AVERAGE LAP TIME</label>
+            <div class="three-col">
+                <div style="position: relative;">
+                    <input type="number" [(ngModel)]="form.lapMin" placeholder="MIN" min="0">
+                    <span class="unit-label">M</span>
+                </div>
+                <div style="position: relative;">
+                    <input type="number" [(ngModel)]="form.lapSec" placeholder="SEC" min="0" max="59">
+                    <span class="unit-label">S</span>
+                </div>
+                <div style="position: relative;">
+                    <input type="number" [(ngModel)]="form.lapMs" placeholder="MS" min="0" max="999">
+                    <span class="unit-label">MS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fuel + Error Factor -->
+        <div class="two-col">
+            <div class="form-field">
+                <label for="driverFuel">FUEL / LAP (Optional)</label>
+                <div style="position: relative;">
+                    <input id="driverFuel" type="number" [(ngModel)]="form.fuelPerLapL" placeholder="Use global"
+                        step="0.01">
+                    <span class="unit-label">L</span>
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="driverError">ERROR FACTOR</label>
+                <div style="position: relative;">
+                    <input id="driverError" type="number" [(ngModel)]="form.errorFactor" step="0.005" min="0" max="0.5">
+                    <span class="unit-label">%</span>
+                </div>
+                <p style="font-size: 0.6rem; color: var(--text-dim); margin-top: 4px;">Lap time variation (0.02 = 2%)
+                </p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="panel-actions">
+            <button class="btn-save-driver" (click)="saveDriver()" [disabled]="!form.name.trim()">
+                <i class="fa-solid fa-floppy-disk"></i>
+                {{ formMode() === 'edit' ? 'SAVE CHANGES' : 'ADD TO ROSTER' }}
+            </button>
+            <button class="btn-cancel-driver" (click)="closeForm()">CANCEL</button>
+            <button *ngIf="formMode() === 'edit' && editingId()" class="btn-remove-driver"
+                (click)="removeDriver(editingId()!)">
+                <i class="fa-solid fa-trash"></i> REMOVE
+            </button>
+        </div>
+
+    </div>
+</div>

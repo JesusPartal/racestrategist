@@ -33,6 +33,11 @@ export interface DriverProfile {
   avgLapTimeMs: number;
   fuelPerLapL?: number; // Optional: falls back to global if null
   errorFactor: number;
+  // Team roster metadata (optional)
+  licenseClass?: 'A' | 'B' | 'C' | 'D' | 'Pro' | 'Pro/Am';
+  iRating?: number;
+  nationality?: string;
+  role?: 'Primary' | 'Reserve' | 'Coach';
 }
 
 export interface StintPlanItem {
@@ -48,8 +53,15 @@ export interface StintPlanItem {
 
 export interface RaceStrategy {
   id: string;
+  name: string;
   eventId: string;
   vehicleId: string;
+  vehicleName: string;
+  avgLapTimeMs: number;
+  fuelPerLap: number;
+  drivers: DriverProfile[];
   stints: StintPlanItem[];
-  pitStopTimeMs: number;
+  pitStopFuelOnlyMs: number;
+  pitStopTiresMs: number;
+  lastModified: number;
 }
