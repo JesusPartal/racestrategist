@@ -12,58 +12,36 @@
       </div>
     </div>
 
-    <nav class="animate-in" style="animation-duration: 1.2s;">
-      <div
+    <nav class="animate-in" style="animation-duration: 1.2s; flex: 1; margin-left: 50px;">
+      <div *ngIf="auth.currentUser()"
         style="display: flex; gap: 30px; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-        <span
-          style="color: var(--accent-color); cursor: pointer; border-bottom: 2px solid var(--accent-color); padding-bottom: 5px;">STRATEGY</span>
-        <span style="color: var(--text-dim); cursor: not-allowed; transition: 0.3s;"
-          onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-dim)'">TELEMETRY</span>
-        <span style="color: var(--text-dim); cursor: not-allowed; transition: 0.3s;"
-          onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-dim)'">TEMPEST</span>
+        <a routerLink="/home" routerLinkActive="active" style="text-decoration: none;">
+          <span class="nav-link">DASHBOARD</span>
+        </a>
+        <a routerLink="/strategy" routerLinkActive="active" style="text-decoration: none;">
+          <span class="nav-link">STRATEGY</span>
+        </a>
+        <span class="nav-link disabled">TELEMETRY</span>
+        <span class="nav-link disabled">TEMPEST</span>
       </div>
     </nav>
 
-    <div class="animate-in" style="font-size: 0.65rem; font-family: monospace; color: var(--text-dim);">
-      v1.2 // CONNECTED_OK
+    <div class="auth-box animate-in">
+      <!-- Only show profile if logged in -->
+      <div *ngIf="auth.currentUser()" class="user-profile" (click)="logout()">
+        <div class="user-info">
+          <span class="username">{{ auth.currentUser()?.username }}</span>
+          <span class="license">{{ auth.currentUser()?.license }}</span>
+        </div>
+        <img [src]="auth.currentUser()?.avatar" class="avatar">
+        <div class="logout-overlay">LOGOUT</div>
+      </div>
     </div>
   </header>
 
   <main class="main-content">
     <div class="container" style="max-width: 1400px; margin: 0 auto;">
-
-      <app-strategy-calculator></app-strategy-calculator>
-
-      <div class="grid" style="margin-top: 50px;">
-        <div class="glass-card animate-in stagger-2" style="border-left: 4px solid var(--success-color);">
-          <h3 style="font-size: 0.75rem; color: var(--success-color);">Milestone 1: Ready</h3>
-          <p
-            style="font-size: 0.9rem; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-            Core strategy engine is operational. This interface uses modern **Midnight Track** design principles for
-            high visibility.
-          </p>
-          <ul style="color: var(--text-dim); font-size: 0.8rem; list-style: none; padding: 0; margin-top: 15px;">
-            <li style="margin-bottom: 8px;"><span style="color: var(--accent-color);">[✓]</span> Dynamic Vehicle Catalog
-            </li>
-            <li style="margin-bottom: 8px;"><span style="color: var(--accent-color);">[✓]</span> Stint Prediction Logic
-            </li>
-            <li style="margin-bottom: 8px;"><span style="color: var(--accent-color);">[✓]</span> Multilingual Support
-              (ES/EN)</li>
-          </ul>
-        </div>
-
-        <div class="glass-card animate-in stagger-3"
-          style="opacity: 0.8; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0) 100%);">
-          <h3 style="font-size: 0.75rem;">Next Update: Tempest System</h3>
-          <p
-            style="font-size: 0.9rem; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; color: var(--text-dim);">
-            Developing the dynamic weather engine. We are bringing "rain painting" capabilities to your race timeline
-            for real-time adaptations.
-          </p>
-          <div style="margin-top: 20px; font-family: monospace; font-size: 0.7rem; color: var(--accent-color);">
-            LOADING_SIM_MODULES... 42%</div>
-        </div>
-      </div>
+      <router-outlet></router-outlet>
     </div>
   </main>
 
