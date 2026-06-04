@@ -1,5 +1,6 @@
 # RaceStrategist
 
+WORK IN PROGRESS
 RaceStrategist is a premium, high-performance web application designed for endurance racing teams to plan, calculate, and optimize stint strategies on the iRacing platform. Built using **Angular 20**, **Angular Signals**, and **Angular Material CDK**, the application provides real-time stint calculation, team driver management, and an interactive stint timeline.
 
 ---
