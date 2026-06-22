@@ -103,6 +103,28 @@ export function updateDrivers(strategyId: string, drivers: DriverProfile[]): boo
   return true;
 }
 
+export function cloneStrategy(sourceId: string, targetTeamId: string): RaceStrategy | null {
+  const original = getStrategyById(sourceId);
+  if (!original) return null;
+
+  const eventExists = db.prepare('SELECT id FROM events WHERE id = ?').get(original.eventId);
+  if (!eventExists) return null;
+  const vehicleExists = db.prepare('SELECT id FROM vehicles WHERE id = ?').get(original.vehicleId);
+  if (!vehicleExists) return null;
+
+  const id = uuid().replace(/-/g, '').slice(0, 12);
+  const now = Date.now();
+
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, drivers, stints, team_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    id, original.name, original.eventId, original.vehicleId, original.vehicleName || '',
+    original.avgLapTimeMs, original.fuelPerLap, original.pitStopFuelOnlyMs, original.pitStopTiresMs,
+    now, JSON.stringify(original.drivers), JSON.stringify(original.stints), targetTeamId
+  );
+
+  return getStrategyById(id)!;
+}
+
 export function deleteStrategy(id: string): boolean {
   const existing = db.prepare('SELECT id FROM strategies WHERE id = ?').get(id);
   if (!existing) return false;

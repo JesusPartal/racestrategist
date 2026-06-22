@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'app-login',
@@ -95,6 +95,7 @@ import { Router } from '@angular/router';
 export class LoginComponent {
     auth = inject(AuthService);
     router = inject(Router);
+    route = inject(ActivatedRoute);
     username = '';
     password = '';
     loading = false;
@@ -109,7 +110,8 @@ export class LoginComponent {
         this.errorMsg.set('');
         try {
             await this.auth.login(this.username, this.password);
-            this.router.navigate(['/home']);
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
+            this.router.navigateByUrl(returnUrl);
         } catch {
             this.errorMsg.set('Invalid username or password');
             this.loading = false;
@@ -133,7 +135,8 @@ export class LoginComponent {
         this.errorMsg.set('');
         try {
             await this.auth.register(this.username, this.password);
-            this.router.navigate(['/home']);
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
+            this.router.navigateByUrl(returnUrl);
         } catch (e: any) {
             this.errorMsg.set(e?.error?.error || 'Registration failed');
             this.loading = false;

@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import jwt from 'jsonwebtoken';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import * as strategyService from '../services/strategy.service';
@@ -6,6 +6,21 @@ import * as strategyService from '../services/strategy.service';
 const INVITE_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
 const router = Router();
+
+// Public invite resolve — no user auth needed, token-based auth only
+router.get('/invite/:token', (req: Request, res: Response) => {
+  try {
+    const payload = jwt.verify(req.params.token as string, INVITE_SECRET);
+    const decoded = payload as unknown as { strategyId: string };
+    const strategy = strategyService.getStrategyById(decoded.strategyId);
+    if (!strategy) { res.status(404).json({ error: 'Strategy not found' }); return; }
+    res.json({ strategyId: decoded.strategyId, strategy });
+  } catch {
+    res.status(400).json({ error: 'Invalid or expired invite token' });
+  }
+});
+
+// All routes below require authentication
 router.use(authMiddleware);
 
 router.get('/', (req: AuthRequest, res: Response) => {
@@ -76,13 +91,13 @@ router.post('/:id/invite', (req: AuthRequest, res: Response) => {
   res.json({ token, url: `/join?token=${token}` });
 });
 
-router.get('/invite/:token', (req: AuthRequest, res: Response) => {
+router.post('/invite/:token/accept', (req: AuthRequest, res: Response) => {
   try {
     const payload = jwt.verify(req.params.token as string, INVITE_SECRET);
     const decoded = payload as unknown as { strategyId: string };
-    const strategy = strategyService.getStrategyById(decoded.strategyId);
-    if (!strategy) { res.status(404).json({ error: 'Strategy not found' }); return; }
-    res.json({ strategyId: decoded.strategyId, strategy });
+    const cloned = strategyService.cloneStrategy(decoded.strategyId, req.teamId!);
+    if (!cloned) { res.status(400).json({ error: 'Could not clone strategy' }); return; }
+    res.json(cloned);
   } catch {
     res.status(400).json({ error: 'Invalid or expired invite token' });
   }

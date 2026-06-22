@@ -91,4 +91,10 @@ export class StrategyApiService {
       this.http.get<{ strategyId: string; strategy: RaceStrategy }>(`${API_BASE}/strategies/invite/${token}`)
     );
   }
+
+  async acceptInvite(token: string): Promise<RaceStrategy> {
+    return lastValueFrom(
+      this.http.post<RaceStrategy>(`${API_BASE}/strategies/invite/${token}/accept`, {})
+    );
+  }
 }
