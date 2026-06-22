@@ -33,6 +33,7 @@ export interface RaceStrategy {
   pitStopFuelOnlyMs: number;
   pitStopTiresMs: number;
   lastModified: number;
+  eventStartTime: number;
   drivers: DriverProfile[];
   stints: StintPlanItem[];
 }
@@ -109,6 +110,7 @@ export interface CreateStrategyRequest {
   vehicleId: string;
   avgLapTimeMs: number;
   fuelPerLap: number;
+  eventStartTime?: number;
 }
 
 export interface UpdateStrategyRequest {
@@ -120,6 +122,7 @@ export interface UpdateStrategyRequest {
   fuelPerLap?: number;
   pitStopFuelOnlyMs?: number;
   pitStopTiresMs?: number;
+  eventStartTime?: number;
 }
 
 export interface UpdateStintsRequest {

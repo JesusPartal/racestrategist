@@ -248,6 +248,17 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   onStrategyNameEnter(event: Event) { (event.target as HTMLInputElement).blur(); }
   onVehicleChange(id: string) { this.selectedVehicleId.set(id); }
 
+  getEventStartDateString(): string {
+    const ts = this.store.activeEventStartTime();
+    if (!ts) return '';
+    return new Date(ts).toISOString().slice(0, 16);
+  }
+
+  onEventStartChange(value: string) {
+    const ts = value ? new Date(value).getTime() : 0;
+    this.store.activeEventStartTime.set(ts);
+  }
+
   formatMs(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
     const h = Math.floor(totalSeconds / 3600);
@@ -349,6 +360,9 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       );
       this.store.activeStrategyId.set(created.id);
       this.store.activeStrategyName.set(name);
+      if (this.store.activeEventStartTime()) {
+        await this.api.updateStrategy(created.id, { eventStartTime: this.store.activeEventStartTime() } as any);
+      }
       await this.saveStintsAndDrivers(created.id);
       await this.loadLibrary();
     } else {
@@ -358,6 +372,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
         avgLapTimeMs: this.avgLapTime(), fuelPerLap: this.fuelPerLap(),
         pitStopFuelOnlyMs: this.store.pitStopFuelOnlyMs(),
         pitStopTiresMs: this.store.pitStopTiresMs(),
+        eventStartTime: this.store.activeEventStartTime(),
       } as any);
       await this.saveStintsAndDrivers(id);
       await this.loadLibrary();

@@ -63,6 +63,7 @@ export interface RaceStrategy {
   pitStopFuelOnlyMs: number;
   pitStopTiresMs: number;
   lastModified: number;
+  eventStartTime: number;
 }
 
 export interface StrategySummary {

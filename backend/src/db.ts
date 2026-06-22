@@ -50,6 +50,7 @@ export function initializeDatabase(): void {
       pit_stop_fuel_only_ms INTEGER NOT NULL DEFAULT 45000,
       pit_stop_tires_ms INTEGER NOT NULL DEFAULT 65000,
       last_modified INTEGER NOT NULL,
+      event_start_time INTEGER DEFAULT 0,
       drivers TEXT NOT NULL DEFAULT '[]',
       stints TEXT NOT NULL DEFAULT '[]',
       team_id TEXT NOT NULL DEFAULT 'default',
@@ -89,6 +90,7 @@ export function initializeDatabase(): void {
   try { db.exec('ALTER TABLE teams ADD COLUMN user_id TEXT NOT NULL DEFAULT \'user_1\''); } catch {}
   try { db.exec('ALTER TABLE teams ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0'); } catch {}
   try { db.exec('ALTER TABLE team_drivers ADD COLUMN fuel_per_lap_l REAL DEFAULT 0'); } catch {}
+  try { db.exec('ALTER TABLE strategies ADD COLUMN event_start_time INTEGER DEFAULT 0'); } catch {}
 }
 
 export default db;

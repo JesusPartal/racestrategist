@@ -12,6 +12,7 @@ export class StrategyStore {
   activeVehicleId = signal<string>('');
   activeAvgLapTimeMs = signal<number>(0);
   activeFuelPerLap = signal<number>(0);
+  activeEventStartTime = signal<number>(0);
   pitStopFuelOnlyMs = signal<number>(45000);
   pitStopTiresMs = signal<number>(65000);
   savedStrategies = signal<StrategySummary[]>([]);
@@ -29,6 +30,7 @@ export class StrategyStore {
     this.activeVehicleId.set('');
     this.activeAvgLapTimeMs.set(0);
     this.activeFuelPerLap.set(0);
+    this.activeEventStartTime.set(0);
     this.drivers.set([]);
     this.stintPlan.set([]);
     this.pitStopFuelOnlyMs.set(45000);
@@ -67,6 +69,7 @@ export class StrategyStore {
     this.activeVehicleId.set(data.vehicleId);
     this.activeAvgLapTimeMs.set(data.avgLapTimeMs);
     this.activeFuelPerLap.set(data.fuelPerLap);
+    this.activeEventStartTime.set(data.eventStartTime || 0);
     this.drivers.set(data.drivers || []);
     this.stintPlan.set(data.stints || []);
     this.pitStopFuelOnlyMs.set(data.pitStopFuelOnlyMs);

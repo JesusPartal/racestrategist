@@ -2,7 +2,7 @@ import db from '../db';
 import { v4 as uuid } from 'uuid';
 import { RaceStrategy, DriverProfile, StintPlanItem, StrategySummaryDto, CreateStrategyRequest, UpdateStrategyRequest, StintDto } from '../models/types';
 
-const STRATEGY_COLS = 'id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified';
+const STRATEGY_COLS = 'id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time';
 
 function rowToStrategy(row: any): RaceStrategy {
   return {
@@ -16,6 +16,7 @@ function rowToStrategy(row: any): RaceStrategy {
     pitStopFuelOnlyMs: row.pit_stop_fuel_only_ms,
     pitStopTiresMs: row.pit_stop_tires_ms,
     lastModified: row.last_modified,
+    eventStartTime: row.event_start_time || 0,
     drivers: JSON.parse(row.drivers || '[]'),
     stints: JSON.parse(row.stints || '[]'),
   };
@@ -55,8 +56,8 @@ export function createStrategy(req: CreateStrategyRequest, teamId?: string): Rac
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, drivers, stints, team_id)
-    VALUES (?, ?, ?, ?, '', ?, ?, ?, '[]', '[]', ?)`).run(id, req.name, req.eventId, req.vehicleId, req.avgLapTimeMs, req.fuelPerLap, now, teamId || 'default');
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, event_start_time, drivers, stints, team_id)
+    VALUES (?, ?, ?, ?, '', ?, ?, ?, ?, '[]', '[]', ?)`).run(id, req.name, req.eventId, req.vehicleId, req.avgLapTimeMs, req.fuelPerLap, now, req.eventStartTime || 0, teamId || 'default');
 
   return getStrategyById(id)!;
 }
@@ -76,6 +77,7 @@ export function updateStrategy(id: string, req: UpdateStrategyRequest): boolean 
   if (req.fuelPerLap !== undefined) { fields.push('fuel_per_lap = ?'); values.push(req.fuelPerLap); }
   if (req.pitStopFuelOnlyMs !== undefined) { fields.push('pit_stop_fuel_only_ms = ?'); values.push(req.pitStopFuelOnlyMs); }
   if (req.pitStopTiresMs !== undefined) { fields.push('pit_stop_tires_ms = ?'); values.push(req.pitStopTiresMs); }
+  if (req.eventStartTime !== undefined) { fields.push('event_start_time = ?'); values.push(req.eventStartTime); }
 
   fields.push('last_modified = ?');
   values.push(Date.now());
@@ -115,11 +117,11 @@ export function cloneStrategy(sourceId: string, targetTeamId: string): RaceStrat
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, drivers, stints, team_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, drivers, stints, team_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     id, original.name, original.eventId, original.vehicleId, original.vehicleName || '',
     original.avgLapTimeMs, original.fuelPerLap, original.pitStopFuelOnlyMs, original.pitStopTiresMs,
-    now, JSON.stringify(original.drivers), JSON.stringify(original.stints), targetTeamId
+    now, original.eventStartTime || 0, JSON.stringify(original.drivers), JSON.stringify(original.stints), targetTeamId
   );
 
   return getStrategyById(id)!;

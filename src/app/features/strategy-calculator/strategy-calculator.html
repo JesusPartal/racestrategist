@@ -121,6 +121,13 @@
             </div>
 
             <div class="form-field">
+                <label for="eventStart">{{ trans.translate('event_start_datetime') }}</label>
+                <input type="datetime-local" id="eventStart"
+                    [ngModel]="getEventStartDateString()"
+                    (ngModelChange)="onEventStartChange($event)">
+            </div>
+
+            <div class="form-field">
                 <label for="tankCapacity">{{ trans.translate('tank_capacity') }} <span class="tag"
                         *ngIf="tankCapacityOverride() !== null">BOP</span></label>
                 <div style="position: relative;">
