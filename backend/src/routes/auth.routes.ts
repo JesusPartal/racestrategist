@@ -29,19 +29,24 @@ router.post('/register', (req: Request, res: Response) => {
 });
 
 router.post('/login', (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    res.status(400).json({ error: 'Username and password are required' });
-    return;
-  }
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      res.status(400).json({ error: 'Username and password are required' });
+      return;
+    }
 
-  const result = authService.login({ username, password });
-  if (!result) {
-    res.status(401).json({ error: 'Invalid credentials' });
-    return;
-  }
+    const result = authService.login({ username, password });
+    if (!result) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
 
-  res.json(result);
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Login Error]', err.message, err.stack);
+    res.status(500).json({ error: err.message || 'Internal server error' });
+  }
 });
 
 router.get('/me', authMiddleware, (req: AuthRequest, res: Response) => {
