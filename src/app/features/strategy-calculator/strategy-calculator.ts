@@ -216,6 +216,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     const vehicleId = this.store.activeVehicleId();
     const fuel = this.store.activeFuelPerLap();
     const totalMs = this.store.activeAvgLapTimeMs();
+    const eventStartTime = this.store.activeEventStartTime();
 
     if (eventId) this.selectedEventId.set(eventId);
     if (vehicleId) this.selectedVehicleId.set(vehicleId);
@@ -269,9 +270,8 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
 
   formatAbsoluteTime(stintMs: number): string {
     const ts = this.store.activeEventStartTime();
-    if (!ts) return this.formatMs(stintMs);
+    if (!ts) return '—';
     return this.formatMs(ts + stintMs);
-  }
   }
 
   generateStintPlan() {
@@ -321,7 +321,6 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
 
   isDirty = signal(false);
 
-  showUnsavedDialog() { return false; }
   showUnsavedDialog = signal(false);
   showDeleteDialog = signal(false);
   private deactivateResolver: ((allow: boolean) => void) | null = null;
@@ -365,13 +364,11 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       const name = this.store.activeStrategyName() || 'New Strategy';
       const created = await this.api.createStrategy(
         name, this.selectedEventId(), this.selectedVehicleId(),
-        this.avgLapTime(), this.fuelPerLap()
+        this.avgLapTime(), this.fuelPerLap(),
+        this.store.activeEventStartTime() || undefined
       );
       this.store.activeStrategyId.set(created.id);
       this.store.activeStrategyName.set(name);
-      if (this.store.activeEventStartTime()) {
-        await this.api.updateStrategy(created.id, { eventStartTime: this.store.activeEventStartTime() } as any);
-      }
       await this.saveStintsAndDrivers(created.id);
       await this.loadLibrary();
     } else {

@@ -50,9 +50,9 @@ export class StrategyApiService {
     return data;
   }
 
-  async createStrategy(name: string, eventId: string, vehicleId: string, avgLapTimeMs: number, fuelPerLap: number): Promise<RaceStrategy> {
+  async createStrategy(name: string, eventId: string, vehicleId: string, avgLapTimeMs: number, fuelPerLap: number, eventStartTime?: number): Promise<RaceStrategy> {
     return lastValueFrom(
-      this.http.post<RaceStrategy>(`${API_BASE}/strategies`, { name, eventId, vehicleId, avgLapTimeMs, fuelPerLap })
+      this.http.post<RaceStrategy>(`${API_BASE}/strategies`, { name, eventId, vehicleId, avgLapTimeMs, fuelPerLap, eventStartTime })
     );
   }
 
