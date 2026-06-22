@@ -43,7 +43,7 @@
           <span class="username">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
           <span class="license">{{ auth.currentUser()?.licenseClass }} · {{ auth.currentUser()?.iRating }} iR</span>
         </div>
-        <div class="avatar">{{ (auth.currentUser()?.displayName || '?')[0] }}</div>
+        <div class="avatar"><span>{{ (auth.currentUser()?.displayName || '?')[0] }}</span></div>
         <div class="logout-overlay">{{ trans.translate('logout') }}</div>
       </div>
     </div>
