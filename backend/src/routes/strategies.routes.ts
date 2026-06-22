@@ -8,7 +8,7 @@ router.use(authMiddleware);
 router.get('/', (req: AuthRequest, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
-  res.json(strategyService.getAllStrategies(page, limit));
+  res.json(strategyService.getAllStrategies(page, limit, req.teamId));
 });
 
 router.get('/:id', (req: AuthRequest, res: Response) => {
@@ -24,7 +24,7 @@ router.post('/', (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: 'name, eventId, and vehicleId are required' });
     return;
   }
-  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0 });
+  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0 }, req.teamId);
   if (!strategy) {
     res.status(400).json({ error: 'Invalid eventId or vehicleId' });
     return;

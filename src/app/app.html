@@ -16,18 +16,23 @@
       <div *ngIf="auth.currentUser()"
         style="display: flex; gap: 30px; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
         <a routerLink="/home" routerLinkActive="active" style="text-decoration: none;">
-          <span class="nav-link">DASHBOARD</span>
+          <span class="nav-link">{{ trans.translate('nav_dashboard') }}</span>
         </a>
-        <a routerLink="/strategy" routerLinkActive="active" style="text-decoration: none;">
-          <span class="nav-link">STRATEGY</span>
+        <a routerLink="/strategies" routerLinkActive="active" style="text-decoration: none;">
+          <span class="nav-link">{{ trans.translate('nav_strategy') }}</span>
         </a>
         <a routerLink="/team" routerLinkActive="active" style="text-decoration: none;">
-          <span class="nav-link">TEAM</span>
+          <span class="nav-link">{{ trans.translate('nav_team') }}</span>
         </a>
-        <span class="nav-link disabled">TELEMETRY</span>
-        <span class="nav-link disabled">TEMPEST</span>
+        <span class="nav-link disabled">{{ trans.translate('nav_telemetry') }}</span>
+        <span class="nav-link disabled">{{ trans.translate('nav_tempest') }}</span>
       </div>
     </nav>
+
+    <div class="lang-switcher">
+      <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
+      <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
+    </div>
 
     <div class="auth-box animate-in">
       <div *ngIf="auth.currentUser()" class="user-profile" (click)="logout()">
@@ -36,7 +41,7 @@
           <span class="license">{{ auth.currentUser()?.licenseClass }} · {{ auth.currentUser()?.iRating }} iR</span>
         </div>
         <div class="avatar">{{ (auth.currentUser()?.displayName || '?')[0] }}</div>
-        <div class="logout-overlay">LOGOUT</div>
+        <div class="logout-overlay">{{ trans.translate('logout') }}</div>
       </div>
     </div>
   </header>

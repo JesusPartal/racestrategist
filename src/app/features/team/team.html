@@ -3,44 +3,44 @@
     <!-- Page Header -->
     <div class="page-header animate-in">
         <div>
-            <h1 class="page-title">TEAM <span class="accent">ROSTER</span></h1>
-            <p class="page-subtitle">Manage your drivers, performance baselines, and team configuration.</p>
+            <h1 class="page-title">{{ trans.translate('team_roster_title') }}</h1>
+            <p class="page-subtitle">{{ trans.translate('team_subtitle') }}</p>
         </div>
         <button class="btn-add" (click)="openAdd()" id="addDriverBtn">
-            <i class="fa-solid fa-user-plus"></i> ADD DRIVER
+            <i class="fa-solid fa-user-plus"></i> {{ trans.translate('add_driver_btn') }}
         </button>
     </div>
 
     <!-- Loading / Error States -->
     <div *ngIf="team.loading()" class="loading-bar glass-card animate-in stagger-1">
         <i class="fa-solid fa-spinner fa-spin" style="color: var(--accent-color);"></i>
-        <span style="margin-left: 10px;">Loading roster...</span>
+        <span style="margin-left: 10px;">{{ trans.translate('loading_roster') }}</span>
     </div>
     <div *ngIf="team.error()" class="error-bar glass-card animate-in stagger-1">
         <i class="fa-solid fa-circle-exclamation" style="color: #ff5252;"></i>
         <span style="margin-left: 10px; color: #ff5252;">{{ team.error() }}</span>
-        <button class="retry-btn" (click)="team.loadRoster()">RETRY</button>
+        <button class="retry-btn" (click)="team.loadRoster()">{{ trans.translate('retry') }}</button>
     </div>
 
     <!-- Team Stats Bar -->
     <div class="stats-bar glass-card animate-in stagger-1">
         <div class="stat">
-            <span class="stat-label">DRIVERS</span>
+            <span class="stat-label">{{ trans.translate('drivers_stat') }}</span>
             <span class="stat-value">{{ team.roster().length }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-            <span class="stat-label">AVG iRATING</span>
+            <span class="stat-label">{{ trans.translate('avg_irating') }}</span>
             <span class="stat-value accent">{{ team.avgIRating() || '—' }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-            <span class="stat-label">PRIMARY DRIVERS</span>
+            <span class="stat-label">{{ trans.translate('primary_drivers') }}</span>
             <span class="stat-value">{{ primaryDriverCount() }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-            <span class="stat-label">TEAM NAME</span>
+            <span class="stat-label">{{ trans.translate('team_name_label') }}</span>
             <span class="stat-value" style="font-size: 0.9rem;">{{ team.settings().teamName }}</span>
         </div>
     </div>
@@ -77,23 +77,23 @@
             <!-- Performance Stats -->
             <div class="dc-stats">
                 <div class="dc-stat">
-                    <span class="dc-stat-label">LAP TIME</span>
+                    <span class="dc-stat-label">{{ trans.translate('lap_time') }}</span>
                     <code class="dc-stat-val">{{ team.formatLapTime(driver.avgLapTimeMs) }}</code>
                 </div>
                 <div class="dc-stat">
-                    <span class="dc-stat-label">FUEL / LAP</span>
+                    <span class="dc-stat-label">{{ trans.translate('fuel_per_lap') }}</span>
                     <code
-                        class="dc-stat-val">{{ driver.fuelPerLapL ? (driver.fuelPerLapL | number:'1.1-2') + ' L' : 'Global' }}</code>
+                        class="dc-stat-val">{{ driver.fuelPerLapL ? (driver.fuelPerLapL | number:'1.1-2') + ' L' : trans.translate('use_global') }}</code>
                 </div>
                 <div class="dc-stat">
-                    <span class="dc-stat-label">ERROR FACTOR</span>
+                    <span class="dc-stat-label">{{ trans.translate('error_factor') }}</span>
                     <code class="dc-stat-val">{{ (driver.errorFactor * 100 | number:'1.0-1') }}%</code>
                 </div>
             </div>
 
             <!-- Hover action hint -->
             <div class="dc-hover-hint">
-                <i class="fa-solid fa-pen-to-square"></i> EDIT PROFILE
+                <i class="fa-solid fa-pen-to-square"></i> {{ trans.translate('edit_profile') }}
             </div>
 
             <button class="dc-delete-btn" (click)="removeDriver(driver.id); $event.stopPropagation()"
@@ -106,18 +106,18 @@
         <div *ngIf="team.roster().length === 0" class="empty-card glass-card">
             <i class="fa-solid fa-helmet-safety"
                 style="font-size: 2.5rem; color: var(--text-dim); margin-bottom: 15px;"></i>
-            <h3>No Drivers Yet</h3>
-            <p>Add your first driver to start building your team roster.</p>
-            <button class="btn-add" (click)="openAdd()">+ ADD FIRST DRIVER</button>
+            <h3>{{ trans.translate('no_drivers_yet') }}</h3>
+            <p>{{ trans.translate('no_drivers_desc') }}</p>
+            <button class="btn-add" (click)="openAdd()">{{ trans.translate('add_first_driver') }}</button>
         </div>
     </div>
 
     <!-- ── Team Settings Panel ──────────────────────────────────────────── -->
     <div class="glass-card settings-panel animate-in stagger-3">
-        <h2 class="section-heading">TEAM <span class="accent">SETTINGS</span></h2>
+        <h2 class="section-heading">{{ trans.translate('team_settings') }}</h2>
         <div class="settings-grid">
             <div class="form-field">
-                <label for="teamName">Team Name</label>
+                <label for="teamName">{{ trans.translate('settings_team_name') }}</label>
                 <input id="teamName" type="text" [value]="team.settings().teamName"
                     (change)="team.updateSettings({ teamName: $any($event.target).value })">
             </div>
@@ -131,13 +131,13 @@
     <div class="side-panel glass-card animate-in" (click)="$event.stopPropagation()">
 
         <div class="panel-header">
-            <h2 class="panel-title">{{ formMode() === 'edit' ? 'EDIT' : 'ADD' }} <span class="accent">DRIVER</span></h2>
+            <h2 class="panel-title">{{ formMode() === 'edit' ? trans.translate('edit_driver_panel') : trans.translate('add_driver_panel') }}</h2>
             <button class="panel-close" (click)="closeForm()">&times;</button>
         </div>
 
         <!-- Color Picker Row -->
         <div class="form-field" style="margin-top: 10px;">
-            <label>DRIVER ACCENT COLOR</label>
+            <label>{{ trans.translate('driver_accent_color') }}</label>
             <div class="color-palette-row">
                 <button *ngFor="let c of colorPalette; trackBy: trackByColor" class="color-swatch" [style.background]="c"
                     [class.selected]="form.accentColor === c" (click)="form.accentColor = c; $event.preventDefault()">
@@ -149,12 +149,12 @@
         <!-- Name + Nationality row -->
         <div class="two-col">
             <div class="form-field">
-                <label for="driverName">DRIVER NAME *</label>
+                <label for="driverName">{{ trans.translate('driver_name_label') }}</label>
                 <input id="driverName" type="text" [(ngModel)]="form.name" placeholder="e.g. Marco Rossi"
                     autocomplete="off">
             </div>
             <div class="form-field">
-                <label for="driverNat">NATIONALITY (emoji)</label>
+                <label for="driverNat">{{ trans.translate('nationality_label') }}</label>
                 <input id="driverNat" type="text" [(ngModel)]="form.nationality" placeholder="🇮🇹" maxlength="4"
                     style="width: 80px; font-size: 1.4rem; text-align: center;">
             </div>
@@ -163,17 +163,17 @@
         <!-- License / iRating / Role -->
         <div class="three-col">
             <div class="form-field">
-                <label for="driverLicense">LICENSE</label>
+                <label for="driverLicense">{{ trans.translate('license_label') }}</label>
                 <select id="driverLicense" [(ngModel)]="form.licenseClass">
                     <option *ngFor="let lc of licenseClasses; trackBy: trackByLicense" [value]="lc">{{ lc }}</option>
                 </select>
             </div>
             <div class="form-field">
-                <label for="driverIR">iRATING</label>
+                <label for="driverIR">{{ trans.translate('irating_label') }}</label>
                 <input id="driverIR" type="number" [(ngModel)]="form.iRating" placeholder="e.g. 4500">
             </div>
             <div class="form-field">
-                <label for="driverRole">ROLE</label>
+                <label for="driverRole">{{ trans.translate('role_label') }}</label>
                 <select id="driverRole" [(ngModel)]="form.role">
                     <option *ngFor="let r of roles; trackBy: trackByRole" [value]="r">{{ r }}</option>
                 </select>
@@ -182,7 +182,7 @@
 
         <!-- Lap Time -->
         <div class="form-field">
-            <label>AVERAGE LAP TIME</label>
+            <label>{{ trans.translate('avg_lap_time_label') }}</label>
             <div class="three-col">
                 <div style="position: relative;">
                     <input type="number" [(ngModel)]="form.lapMin" placeholder="MIN" min="0">
@@ -202,20 +202,20 @@
         <!-- Fuel + Error Factor -->
         <div class="two-col">
             <div class="form-field">
-                <label for="driverFuel">FUEL / LAP (Optional)</label>
+                <label for="driverFuel">{{ trans.translate('fuel_per_lap_label') }}</label>
                 <div style="position: relative;">
-                    <input id="driverFuel" type="number" [(ngModel)]="form.fuelPerLapL" placeholder="Use global"
+                    <input id="driverFuel" type="number" [(ngModel)]="form.fuelPerLapL" [placeholder]="trans.translate('use_global')"
                         step="0.01">
                     <span class="unit-label">L</span>
                 </div>
             </div>
             <div class="form-field">
-                <label for="driverError">ERROR FACTOR</label>
+                <label for="driverError">{{ trans.translate('error_factor_label') }}</label>
                 <div style="position: relative;">
                     <input id="driverError" type="number" [(ngModel)]="form.errorFactor" step="0.005" min="0" max="0.5">
                     <span class="unit-label">%</span>
                 </div>
-                <p style="font-size: 0.6rem; color: var(--text-dim); margin-top: 4px;">Lap time variation (0.02 = 2%)
+                <p style="font-size: 0.6rem; color: var(--text-dim); margin-top: 4px;">{{ trans.translate('error_factor_hint') }}
                 </p>
             </div>
         </div>
@@ -224,12 +224,12 @@
         <div class="panel-actions">
             <button class="btn-save-driver" (click)="saveDriver()" [disabled]="!form.name.trim()">
                 <i class="fa-solid fa-floppy-disk"></i>
-                {{ formMode() === 'edit' ? 'SAVE CHANGES' : 'ADD TO ROSTER' }}
+                {{ formMode() === 'edit' ? trans.translate('save_changes') : trans.translate('add_to_roster') }}
             </button>
-            <button class="btn-cancel-driver" (click)="closeForm()">CANCEL</button>
+            <button class="btn-cancel-driver" (click)="closeForm()">{{ trans.translate('cancel') }}</button>
             <button *ngIf="formMode() === 'edit' && editingId()" class="btn-remove-driver"
                 (click)="removeDriver(editingId()!)">
-                <i class="fa-solid fa-trash"></i> REMOVE
+                <i class="fa-solid fa-trash"></i> {{ trans.translate('remove_driver') }}
             </button>
         </div>
 

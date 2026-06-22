@@ -21,11 +21,13 @@ function rowToStrategy(row: any): RaceStrategy {
   };
 }
 
-const SUMMARY_COLS = 'id, name, event_id, vehicle_id, vehicle_name, COALESCE(json_length(drivers), 0) as driver_count, COALESCE(json_length(stints), 0) as stint_count, last_modified';
+const SUMMARY_COLS = 'id, name, event_id, vehicle_id, vehicle_name, COALESCE(json_array_length(drivers), 0) as driver_count, COALESCE(json_array_length(stints), 0) as stint_count, last_modified';
 
-export function getAllStrategies(page = 1, limit = 50): StrategySummaryDto[] {
+export function getAllStrategies(page = 1, limit = 50, teamId?: string): StrategySummaryDto[] {
   const offset = (page - 1) * limit;
-  const rows = db.prepare(`SELECT ${SUMMARY_COLS} FROM strategies ORDER BY last_modified DESC LIMIT ? OFFSET ?`).all(limit, offset) as any[];
+  const rows = teamId
+    ? db.prepare(`SELECT ${SUMMARY_COLS} FROM strategies WHERE team_id = ? ORDER BY last_modified DESC LIMIT ? OFFSET ?`).all(teamId, limit, offset) as any[]
+    : db.prepare(`SELECT ${SUMMARY_COLS} FROM strategies ORDER BY last_modified DESC LIMIT ? OFFSET ?`).all(limit, offset) as any[];
   return rows.map(r => ({
     id: r.id,
     name: r.name,
@@ -43,7 +45,7 @@ export function getStrategyById(id: string): RaceStrategy | null {
   return rowToStrategy(row);
 }
 
-export function createStrategy(req: CreateStrategyRequest): RaceStrategy | null {
+export function createStrategy(req: CreateStrategyRequest, teamId?: string): RaceStrategy | null {
   const eventExists = db.prepare('SELECT id FROM events WHERE id = ?').get(req.eventId);
   if (!eventExists) return null;
 
@@ -53,8 +55,8 @@ export function createStrategy(req: CreateStrategyRequest): RaceStrategy | null 
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, drivers, stints)
-    VALUES (?, ?, ?, ?, '', ?, ?, ?, '[]', '[]')`).run(id, req.name, req.eventId, req.vehicleId, req.avgLapTimeMs, req.fuelPerLap, now);
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, drivers, stints, team_id)
+    VALUES (?, ?, ?, ?, '', ?, ?, ?, '[]', '[]', ?)`).run(id, req.name, req.eventId, req.vehicleId, req.avgLapTimeMs, req.fuelPerLap, now, teamId || 'default');
 
   return getStrategyById(id)!;
 }

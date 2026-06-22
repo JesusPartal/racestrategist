@@ -62,6 +62,12 @@ export class StrategyApiService {
     );
   }
 
+  async deleteStrategy(id: string): Promise<void> {
+    await lastValueFrom(
+      this.http.delete(`${API_BASE}/strategies/${id}`)
+    );
+  }
+
   async updateStints(strategyId: string, stints: any[]): Promise<void> {
     await lastValueFrom(
       this.http.put(`${API_BASE}/strategies/${strategyId}/stints`, { stints })

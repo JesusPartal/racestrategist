@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TeamService } from '../../core/services/team.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { DriverProfile } from '../../core/models/race-strategy.model';
 
 type FormMode = 'closed' | 'add' | 'edit';
@@ -14,6 +15,7 @@ type FormMode = 'closed' | 'add' | 'edit';
     styleUrl: './team.css'
 })
 export class TeamComponent implements OnInit {
+    trans = inject(TranslationService);
     team = inject(TeamService);
 
     primaryDriverCount = computed(() =>

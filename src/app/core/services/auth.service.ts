@@ -9,6 +9,7 @@ export interface UserProfile {
   displayName: string;
   licenseClass: string;
   iRating: number;
+  teamId: string;
 }
 
 interface LoginResponse {
@@ -17,6 +18,7 @@ interface LoginResponse {
   licenseClass: string;
   iRating: number;
   userId: string;
+  teamId: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -58,6 +60,23 @@ export class AuthService {
       displayName: res.displayName,
       licenseClass: res.licenseClass,
       iRating: res.iRating,
+      teamId: res.teamId,
+    });
+  }
+
+  async register(username: string, password: string): Promise<void> {
+    const res = await lastValueFrom(
+      this.http.post<LoginResponse>(`${API_BASE}/auth/register`, { username, password })
+    );
+    this.token.set(res.token);
+    localStorage.setItem('rs_token', res.token);
+    this.currentUser.set({
+      id: res.userId,
+      username: res.displayName,
+      displayName: res.displayName,
+      licenseClass: res.licenseClass,
+      iRating: res.iRating,
+      teamId: res.teamId,
     });
   }
 

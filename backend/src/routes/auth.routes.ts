@@ -4,6 +4,30 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+router.post('/register', (req: Request, res: Response) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    res.status(400).json({ error: 'Username and password are required' });
+    return;
+  }
+  if (username.length < 3) {
+    res.status(400).json({ error: 'Username must be at least 3 characters' });
+    return;
+  }
+  if (password.length < 4) {
+    res.status(400).json({ error: 'Password must be at least 4 characters' });
+    return;
+  }
+
+  const result = authService.register({ username, password });
+  if (!result) {
+    res.status(409).json({ error: 'Username already taken' });
+    return;
+  }
+
+  res.status(201).json(result);
+});
+
 router.post('/login', (req: Request, res: Response) => {
   const { username, password } = req.body;
   if (!username || !password) {

@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 export interface AuthRequest extends Request {
   userId?: string;
   username?: string;
+  teamId?: string;
 }
 
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
@@ -17,15 +18,16 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 
   const token = authHeader.slice(7);
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string; teamId: string };
     req.userId = decoded.userId;
     req.username = decoded.username;
+    req.teamId = decoded.teamId;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 }
 
-export function generateToken(userId: string, username: string): string {
-  return jwt.sign({ userId, username }, JWT_SECRET, { expiresIn: '7d' });
+export function generateToken(userId: string, username: string, teamId?: string): string {
+  return jwt.sign({ userId, username, teamId: teamId || 'default' }, JWT_SECRET, { expiresIn: '7d' });
 }

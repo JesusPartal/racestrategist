@@ -4,7 +4,13 @@ import { Router } from '@angular/router';
 import { StrategyStore } from '../../core/services/strategy-store.service';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { CatalogService } from '../../core/services/catalog.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { StrategySummary } from '../../core/models/race-strategy.model';
+
+interface ConfirmDeleteState {
+  id: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-strategies-list',
@@ -14,31 +20,31 @@ import { StrategySummary } from '../../core/models/race-strategy.model';
     <div class="strategies-container">
       <div class="header-section animate-in">
         <h1 style="font-family: var(--font-display); font-weight: 800; font-size: 2rem; margin: 0;">
-          STRATEGY <span style="color: var(--accent-color);">LIBRARY</span>
+          <span style="color: var(--accent-color);">{{ trans.translate('nav_strategy') }}</span> {{ trans.translate('strategy_library') }}
         </h1>
         <p style="color: var(--text-dim); margin-top: 10px;">
-          Manage and load your saved race configurations.
+          {{ trans.translate('library_subtitle') }}
         </p>
       </div>
 
       <div class="search-bar animate-in stagger-1">
         <div style="position: relative; flex: 1;">
           <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 15px; color: var(--text-dim);"></i>
-          <input type="text" [value]="searchQuery()" (input)="updateSearch($event)" placeholder="Filter by name or car..."
+          <input type="text" [value]="searchQuery()" (input)="updateSearch($event)" [placeholder]="trans.translate('filter_placeholder')"
                  style="padding-left: 45px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
         </div>
-        <button class="primary-btn" (click)="newStrategy()">+ NEW STRATEGY</button>
+        <button class="primary-btn" (click)="newStrategy()">{{ trans.translate('new_strategy_btn') }}</button>
       </div>
 
       <div *ngIf="loading()" class="loading-state glass-card">
         <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-color);"></i>
-        <p style="color: var(--text-dim); margin-top: 15px;">Loading strategies...</p>
+        <p style="color: var(--text-dim); margin-top: 15px;">{{ trans.translate('loading_strategies') }}</p>
       </div>
 
       <div *ngIf="error()" class="error-state glass-card">
         <i class="fa-solid fa-circle-exclamation" style="font-size: 2rem; color: #ff5252;"></i>
         <p style="color: #ff5252; margin-top: 10px;">{{ error() }}</p>
-        <button class="primary-btn" style="margin-top: 15px;" (click)="ngOnInit()">RETRY</button>
+        <button class="primary-btn" style="margin-top: 15px;" (click)="ngOnInit()">{{ trans.translate('retry') }}</button>
       </div>
 
       <div class="strategies-grid stagger-2" *ngIf="!loading() && !error()">
@@ -52,21 +58,24 @@ import { StrategySummary } from '../../core/models/race-strategy.model';
 
           <div class="strat-details">
             <div class="detail-item">
-              <span class="label">VEHICLE</span>
+              <span class="label">{{ trans.translate('vehicle') }}</span>
               <span class="val">{{ strat.vehicleName || '—' }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">STINTS</span>
-              <span class="val">{{ strat.stintCount }} Sessions</span>
+              <span class="label">{{ trans.translate('stints') }}</span>
+              <span class="val">{{ strat.stintCount }} {{ trans.translate('sessions') }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">DRIVERS</span>
-              <span class="val">{{ strat.driverCount }} Configured</span>
+              <span class="label">{{ trans.translate('drivers') }}</span>
+              <span class="val">{{ strat.driverCount }} {{ trans.translate('configured') }}</span>
             </div>
           </div>
 
           <div class="card-footer">
-            <button class="load-btn" (click)="loadStrategy(strat); $event.stopPropagation()">LOAD_MODULE</button>
+            <button class="load-btn" (click)="loadStrategy(strat); $event.stopPropagation()">{{ trans.translate('load_module') }}</button>
+            <button class="delete-btn-card" (click)="confirmDelete(strat); $event.stopPropagation()">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </div>
 
           <div class="card-glow"></div>
@@ -74,14 +83,34 @@ import { StrategySummary } from '../../core/models/race-strategy.model';
 
         <div *ngIf="filteredStrategies().length === 0" class="empty-state glass-card">
           <i class="fa-solid fa-ghost" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 20px;"></i>
-          <h3>No Strategies Found</h3>
-          <p style="color: var(--text-dim);">Create a new strategy from the calculator.</p>
+          <h3>{{ trans.translate('no_strategies_found') }}</h3>
+          <p style="color: var(--text-dim);">{{ trans.translate('no_strategies_desc') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="delete-overlay" *ngIf="deleteTarget()" (click)="cancelDelete()">
+      <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="delete-icon">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="delete-title">{{ trans.translate('delete_strategy') }}</h3>
+        <p class="delete-body">
+          {{ trans.translate('delete_confirm') }} <strong>{{ deleteTarget()?.name }}</strong>?<br>
+          {{ trans.translate('delete_body') }}
+        </p>
+        <div class="delete-actions">
+          <button class="btn-delete-confirm" (click)="executeDelete()">
+            <i class="fa-solid fa-trash"></i> {{ trans.translate('delete') }}
+          </button>
+          <button class="btn-delete-cancel" (click)="cancelDelete()">{{ trans.translate('cancel') }}</button>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .strategies-container { padding: 20px 0; }
+    .strategies-container { padding: 20px 0; position: relative; }
     .header-section { margin-bottom: 40px; }
     .search-bar { display: flex; gap: 20px; margin-bottom: 40px; align-items: center; }
     .strategies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
@@ -95,17 +124,32 @@ import { StrategySummary } from '../../core/models/race-strategy.model';
     .detail-item { display: flex; flex-direction: column; gap: 5px; }
     .label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 1px; }
     .val { font-size: 0.85rem; font-weight: 700; color: #fff; }
-    .card-footer { margin-top: auto; display: flex; justify-content: flex-end; }
+    .card-footer { margin-top: auto; display: flex; gap: 8px; justify-content: flex-end; }
     .load-btn { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 15px; font-family: var(--font-display); font-size: 0.6rem; font-weight: 700; letter-spacing: 1px; border-radius: 4px; transition: 0.3s; cursor: pointer; }
     .strategy-card:hover .load-btn { background: var(--accent-color); color: black; border-color: var(--accent-color); }
+    .delete-btn-card { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #ff5252; padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.3s; font-size: 0.75rem; opacity: 0; }
+    .strategy-card:hover .delete-btn-card { opacity: 1; }
+    .delete-btn-card:hover { background: rgba(255, 82, 82, 0.15); border-color: #ff5252; }
     .empty-state { grid-column: 1 / -1; text-align: center; padding: 100px 20px; }
     .loading-state, .error-state { grid-column: 1 / -1; text-align: center; padding: 80px 20px; }
     input { margin-bottom: 0; }
     .primary-btn { background: var(--accent-color); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-family: var(--font-display); font-weight: 800; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; }
     .card-glow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(255, 176, 0, 0.05), transparent 70%); pointer-events: none; }
+    .delete-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+    .delete-modal { max-width: 400px; width: 90%; padding: 40px; text-align: center; }
+    .delete-icon { font-size: 2.5rem; color: #ff5252; margin-bottom: 15px; }
+    .delete-title { font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 10px; }
+    .delete-body { color: var(--text-dim); font-size: 0.85rem; line-height: 1.6; margin-bottom: 25px; }
+    .delete-body strong { color: #fff; }
+    .delete-actions { display: flex; gap: 12px; justify-content: center; }
+    .btn-delete-confirm { background: #ff5252; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-family: var(--font-display); font-weight: 700; font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+    .btn-delete-confirm:hover { background: #ff1744; }
+    .btn-delete-cancel { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 25px; border-radius: 6px; font-family: var(--font-display); font-weight: 700; font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+    .btn-delete-cancel:hover { background: rgba(255,255,255,0.05); }
   `]
 })
 export class StrategiesListComponent implements OnInit {
+  trans = inject(TranslationService);
   store = inject(StrategyStore);
   api = inject(StrategyApiService);
   catalog = inject(CatalogService);
@@ -150,6 +194,28 @@ export class StrategiesListComponent implements OnInit {
       }
     } catch {
       this.store.error.set('Failed to load strategy');
+    }
+  }
+
+  deleteTarget = signal<ConfirmDeleteState | null>(null);
+
+  confirmDelete(strat: StrategySummary) {
+    this.deleteTarget.set({ id: strat.id, name: strat.name });
+  }
+
+  cancelDelete() {
+    this.deleteTarget.set(null);
+  }
+
+  async executeDelete() {
+    const target = this.deleteTarget();
+    if (!target) return;
+    this.deleteTarget.set(null);
+    try {
+      await this.api.deleteStrategy(target.id);
+      await this.loadLibrary();
+    } catch {
+      this.store.error.set('Failed to delete strategy');
     }
   }
 

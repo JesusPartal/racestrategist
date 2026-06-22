@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, effect, untracked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { CatalogService } from '../../core/services/catalog.service';
 import { TranslationService } from '../../core/services/translation.service';
@@ -104,7 +104,8 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     public trans: TranslationService,
     public store: StrategyStore,
     private api: StrategyApiService,
-    public team: TeamService
+    public team: TeamService,
+    private router: Router
   ) {
     effect(() => {
       const eventId = this.selectedEventId();
@@ -260,6 +261,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
 
   isDirty = signal(false);
   showUnsavedDialog = signal(false);
+  showDeleteDialog = signal(false);
   private deactivateResolver: ((allow: boolean) => void) | null = null;
 
   canDeactivate(): boolean | Promise<boolean> {
@@ -335,6 +337,20 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
+  async deleteStrategy() {
+    const id = this.store.activeStrategyId();
+    if (!id) return;
+    try {
+      await this.api.deleteStrategy(id);
+      this.showDeleteDialog.set(false);
+      this.store.clearActive();
+      this.isDirty.set(false);
+      this.router.navigate(['/strategies']);
+    } catch {
+      this.store.error.set('Failed to delete strategy');
+    }
+  }
+
   discardChanges() {
     const id = this.store.activeStrategyId();
     if (id) {
@@ -344,6 +360,13 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       });
     } else {
       this.store.clearActive();
+      this.selectedEventId.set('');
+      this.selectedVehicleId.set('');
+      this.fuelPerLap.set(0);
+      this.lapMin.set(0);
+      this.lapSec.set(0);
+      this.lapMs.set(0);
+      this.tankCapacityOverride.set(null);
     }
     this.isDirty.set(false);
   }

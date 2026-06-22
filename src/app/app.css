@@ -40,6 +40,38 @@
     box-shadow: 0 0 20px var(--accent-glow);
 }
 
+.lang-switcher {
+  display: flex;
+  gap: 0;
+  margin-right: 15px;
+}
+
+.lang-switcher button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  padding: 5px 12px;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lang-switcher button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.lang-switcher button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.lang-switcher button.active {
+  background: var(--accent-color);
+  color: black;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px rgba(255, 176, 0, 0.3);
+}
+
 .user-profile {
     display: flex;
     align-items: center;

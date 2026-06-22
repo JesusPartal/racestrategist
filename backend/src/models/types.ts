@@ -60,6 +60,7 @@ export interface User {
   displayName: string;
   licenseClass: string;
   iRating: number;
+  teamId: string;
 }
 
 export interface TeamDriver {
@@ -87,6 +88,7 @@ export interface LoginResponse {
   licenseClass: string;
   iRating: number;
   userId: string;
+  teamId: string;
 }
 
 export interface StrategySummaryDto {

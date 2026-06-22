@@ -21,6 +21,25 @@
     </div>
 </div>
 
+<div class="delete-overlay" *ngIf="showDeleteDialog()" (click)="showDeleteDialog.set(false)">
+    <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="delete-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="delete-title">DELETE STRATEGY</h3>
+        <p class="delete-body">
+            Are you sure you want to delete <strong>{{ store.activeStrategyName() }}</strong>?<br>
+            This action cannot be undone.
+        </p>
+        <div class="delete-actions">
+            <button class="btn-delete-confirm" (click)="deleteStrategy()">
+                <i class="fa-solid fa-trash"></i> DELETE
+            </button>
+            <button class="btn-delete-cancel" (click)="showDeleteDialog.set(false)">CANCEL</button>
+        </div>
+    </div>
+</div>
+
 <div *ngIf="store.error()" class="glass-card" style="margin-top: 20px; display: flex; align-items: center; padding: 15px 25px;">
     <i class="fa-solid fa-circle-exclamation" style="color: #ff5252;"></i>
     <span style="margin-left: 10px; color: #ff5252;">{{ store.error() }}</span>
@@ -53,10 +72,9 @@
             <button class="btn-discard" (click)="discardChanges()" [disabled]="!isDirty()">
                 <i class="fa-solid fa-rotate-left"></i> {{ trans.translate('discard') }}
             </button>
-            <div class="lang-switcher">
-                <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
-                <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
-            </div>
+            <button class="btn-delete-top" (click)="showDeleteDialog.set(true)" [disabled]="!store.activeStrategyId()">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </div>
     </div>
 
@@ -650,6 +668,22 @@
         font-weight: 700;
         color: white;
     }
+
+    .btn-delete-top { background: transparent; border: 1px solid rgba(255, 82, 82, 0.3); color: #ff5252; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+    .btn-delete-top:hover { background: rgba(255, 82, 82, 0.15); border-color: #ff5252; }
+    .btn-delete-top:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .delete-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+    .delete-modal { max-width: 400px; width: 90%; padding: 40px; text-align: center; }
+    .delete-icon { font-size: 2.5rem; color: #ff5252; margin-bottom: 15px; }
+    .delete-title { font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 10px; }
+    .delete-body { color: var(--text-dim); font-size: 0.85rem; line-height: 1.6; margin-bottom: 25px; }
+    .delete-body strong { color: #fff; }
+    .delete-actions { display: flex; gap: 12px; justify-content: center; }
+    .btn-delete-confirm { background: #ff5252; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-family: var(--font-display); font-weight: 700; font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+    .btn-delete-confirm:hover { background: #ff1744; }
+    .btn-delete-cancel { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 25px; border-radius: 6px; font-family: var(--font-display); font-weight: 700; font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+    .btn-delete-cancel:hover { background: rgba(255,255,255,0.05); }
 
     @keyframes pulse-active {
         0% {

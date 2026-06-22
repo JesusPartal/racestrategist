@@ -1,54 +1,52 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule],
     template: `
     <div class="login-page">
       <div class="login-card glass-card animate-in">
         <div class="racing-bg"></div>
-        
+
         <div class="content">
           <div class="logo-large">
             <span class="accent">RACE</span><span>STRATEGIST</span>
           </div>
-          
-          <h1 class="title">DESIGNED FOR <span class="accent">VICTORY</span></h1>
-          <p class="subtitle">The ultimate collaboration platform for iRacing endurance teams. Real-time strategy, telemetry, and weather analytics.</p>
-          
-          <div class="feature-list">
-            <div class="feature-item">
-              <i class="fa-solid fa-check"></i>
-              <span>Multi-driver Stint Planning</span>
-            </div>
-            <div class="feature-item">
-              <i class="fa-solid fa-check"></i>
-              <span>Live Fuel Consumption Tracking</span>
-            </div>
-            <div class="feature-item">
-              <i class="fa-solid fa-check"></i>
-              <span>Tempest Weather Integration</span>
-            </div>
-          </div>
 
-          <button class="login-action-btn" (click)="login()" [disabled]="loading">
-            <div class="btn-glow"></div>
-            <i class="fa-solid fa-right-to-bracket"></i>
-            {{ loading ? 'LOGGING IN...' : 'LOGIN WITH iRACING' }}
-          </button>
-          
-          <div class="footer-meta">
-            <span>SECURE_AUTH_v2</span>
-            <span class="divider">|</span>
-            <span>OAUTH2_CONNECTED</span>
+          <h1 class="title">DESIGNED FOR <span class="accent">VICTORY</span></h1>
+          <p class="subtitle">The ultimate collaboration platform for iRacing endurance teams.</p>
+
+          <div class="auth-form">
+            <div class="form-field">
+              <label for="username">USERNAME</label>
+              <input type="text" id="username" [(ngModel)]="username" placeholder="Enter your username" autocomplete="username">
+            </div>
+            <div class="form-field">
+              <label for="password">PASSWORD</label>
+              <input type="password" id="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password">
+            </div>
+
+            <div class="error-msg" *ngIf="errorMsg()">{{ errorMsg() }}</div>
+
+            <div class="auth-buttons">
+              <button class="login-btn" (click)="login()" [disabled]="loading">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                {{ loading ? 'LOGGING IN...' : 'LOGIN' }}
+              </button>
+              <button class="signup-btn" (click)="register()" [disabled]="true">
+                <i class="fa-solid fa-user-plus"></i>
+                SIGN UP
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      
+
       <div class="stats-ribbon animate-in stagger-2">
         <div class="stat-box">
           <span class="val">1,240</span>
@@ -67,23 +65,27 @@ import { Router } from '@angular/router';
   `,
     styles: [`
     .login-page { height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-    .login-card { width: 100%; max-width: 600px; padding: 0; overflow: hidden; position: relative; border: 1px solid rgba(255, 176, 0, 0.2); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-    .racing-bg { height: 120px; background: linear-gradient(45deg, #050505 25%, transparent 25%) -50px 0, linear-gradient(-45deg, #050505 25%, transparent 25%) -50px 0, linear-gradient(45deg, transparent 75%, #050505 75%), linear-gradient(-45deg, transparent 75%, #050505 75%); background-size: 100px 100px; background-color: #0a0a0a; opacity: 0.1; position: absolute; top: 0; left: 0; right: 0; }
-    .content { padding: 60px 40px 40px 40px; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .logo-large { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; letter-spacing: 4px; margin-bottom: 30px; }
+    .login-card { width: 100%; max-width: 450px; padding: 0; overflow: hidden; position: relative; border: 1px solid rgba(255, 176, 0, 0.2); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+    .racing-bg { height: 80px; background: linear-gradient(45deg, #050505 25%, transparent 25%) -50px 0, linear-gradient(-45deg, #050505 25%, transparent 25%) -50px 0, linear-gradient(45deg, transparent 75%, #050505 75%), linear-gradient(-45deg, transparent 75%, #050505 75%); background-size: 100px 100px; background-color: #0a0a0a; opacity: 0.1; position: absolute; top: 0; left: 0; right: 0; }
+    .content { padding: 40px 35px 35px; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .logo-large { font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; letter-spacing: 4px; margin-bottom: 15px; }
     .accent { color: var(--accent-color); }
-    .title { font-size: 2.2rem; margin-bottom: 15px; line-height: 1.1; }
-    .subtitle { color: var(--text-dim); font-size: 1.1rem; line-height: 1.6; margin-bottom: 35px; max-width: 450px; }
-    .feature-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; align-items: flex-start; padding-left: 20px; }
-    .feature-item { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: #fff; font-weight: 600; }
-    .feature-item i { color: var(--accent-color); font-size: 0.7rem; }
-    .login-action-btn { width: 100%; background: var(--accent-color); color: black; border: none; padding: 20px; border-radius: 12px; font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: 2px; cursor: pointer; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 15px; transition: all 0.3s ease; }
-    .login-action-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 30px var(--accent-glow); }
-    .login-action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-glow { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shine 3s infinite; }
-    @keyframes shine { 0% { left: -100%; } 20% { left: 150%; } 100% { left: 150%; } }
-    .footer-meta { margin-top: 30px; font-family: monospace; font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px; }
-    .divider { margin: 0 10px; opacity: 0.3; }
+    .title { font-size: 1.4rem; margin-bottom: 5px; line-height: 1.2; }
+    .subtitle { color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; margin-bottom: 25px; }
+    .auth-form { width: 100%; display: flex; flex-direction: column; gap: 15px; }
+    .form-field { text-align: left; }
+    .form-field label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 6px; display: block; }
+    .form-field input { width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.9rem; transition: 0.2s; }
+    .form-field input:focus { outline: none; border-color: var(--accent-color); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(255,176,0,0.1); }
+    .form-field input::placeholder { color: rgba(255,255,255,0.25); }
+    .error-msg { color: #ff5252; font-size: 0.75rem; text-align: center; padding: 8px; background: rgba(255,82,82,0.1); border-radius: 6px; }
+    .auth-buttons { display: flex; gap: 12px; margin-top: 5px; }
+    .login-btn, .signup-btn { flex: 1; padding: 14px; border-radius: 8px; font-family: var(--font-display); font-weight: 800; font-size: 0.75rem; letter-spacing: 1.5px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; }
+    .login-btn { background: var(--accent-color); color: black; }
+    .login-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px var(--accent-glow); }
+    .signup-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; }
+    .signup-btn:hover:not(:disabled) { border-color: var(--accent-color); color: var(--accent-color); }
+    .login-btn:disabled, .signup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .stats-ribbon { margin-top: 40px; display: flex; gap: 60px; }
     .stat-box { display: flex; flex-direction: column; align-items: center; }
     .val { font-family: var(--font-display); font-size: 1.2rem; color: #fff; margin-bottom: 5px; }
@@ -93,15 +95,47 @@ import { Router } from '@angular/router';
 export class LoginComponent {
     auth = inject(AuthService);
     router = inject(Router);
+    username = '';
+    password = '';
     loading = false;
+    errorMsg = signal('');
 
     async login() {
+        if (!this.username || !this.password) {
+            this.errorMsg.set('Please enter username and password');
+            return;
+        }
         this.loading = true;
+        this.errorMsg.set('');
         try {
-            await this.auth.login('TrackTitan_99', 'demo');
+            await this.auth.login(this.username, this.password);
             this.router.navigate(['/home']);
         } catch {
-            alert('Login failed. Use TrackTitan_99 / demo');
+            this.errorMsg.set('Invalid username or password');
+            this.loading = false;
+        }
+    }
+
+    async register() {
+        if (!this.username || !this.password) {
+            this.errorMsg.set('Please enter username and password');
+            return;
+        }
+        if (this.username.length < 3) {
+            this.errorMsg.set('Username must be at least 3 characters');
+            return;
+        }
+        if (this.password.length < 4) {
+            this.errorMsg.set('Password must be at least 4 characters');
+            return;
+        }
+        this.loading = true;
+        this.errorMsg.set('');
+        try {
+            await this.auth.register(this.username, this.password);
+            this.router.navigate(['/home']);
+        } catch (e: any) {
+            this.errorMsg.set(e?.error?.error || 'Registration failed');
             this.loading = false;
         }
     }

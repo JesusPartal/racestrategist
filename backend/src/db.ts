@@ -15,7 +15,8 @@ export function initializeDatabase(): void {
       password_hash TEXT NOT NULL,
       display_name TEXT NOT NULL,
       license_class TEXT NOT NULL DEFAULT 'A',
-      i_rating INTEGER NOT NULL DEFAULT 4500
+      i_rating INTEGER NOT NULL DEFAULT 4500,
+      team_id TEXT NOT NULL DEFAULT 'default'
     );
 
     CREATE TABLE IF NOT EXISTS events (
@@ -47,6 +48,7 @@ export function initializeDatabase(): void {
       last_modified INTEGER NOT NULL,
       drivers TEXT NOT NULL DEFAULT '[]',
       stints TEXT NOT NULL DEFAULT '[]',
+      team_id TEXT NOT NULL DEFAULT 'default',
       FOREIGN KEY (event_id) REFERENCES events(id),
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
     );
@@ -71,6 +73,10 @@ export function initializeDatabase(): void {
       role TEXT
     );
   `);
+
+  // Migrate existing tables
+  try { db.exec('ALTER TABLE users ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
+  try { db.exec('ALTER TABLE strategies ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
 }
 
 export default db;

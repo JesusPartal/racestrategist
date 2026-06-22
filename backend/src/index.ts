@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import strategiesRoutes from './routes/strategies.routes';
 import catalogRoutes from './routes/catalog.routes';
 import teamRoutes from './routes/team.routes';
+import iracingRoutes from './routes/iracing.routes';
 import { seedData } from './seed';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/strategies', strategiesRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/iracing', iracingRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

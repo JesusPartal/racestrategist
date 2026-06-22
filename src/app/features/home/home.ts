@@ -1,7 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { StrategyApiService } from '../../core/services/strategy-api.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-home',
@@ -12,20 +14,20 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="welcome-hero animate-in">
         <div class="hero-content">
           <h1 style="font-family: var(--font-display); font-weight: 800; font-size: 2.5rem; margin: 0;">
-            WELCOME BACK,             <span style="color: var(--accent-color);">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
+            {{ trans.translate('welcome_back') }}             <span style="color: var(--accent-color);">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
           </h1>
           <p style="color: var(--text-dim); margin-top: 10px; font-size: 1.1rem;">
-            Ready to optimize your next stint? Your team is waiting in the pit lane.
+            {{ trans.translate('home_subtitle') }}
           </p>
         </div>
         <div class="user-stats glass-card">
           <div class="stat-item">
-            <span class="stat-label">LICENSE</span>
+            <span class="stat-label">{{ trans.translate('license') }}</span>
             <span class="stat-value" style="color: var(--accent-color);">{{ auth.currentUser()?.licenseClass }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-label">iRATING</span>
+            <span class="stat-label">{{ trans.translate('irating') }}</span>
             <span class="stat-value">{{ auth.currentUser()?.iRating }}</span>
           </div>
         </div>
@@ -34,28 +36,28 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="dashboard-grid stagger-1">
         <div class="glass-card feature-card">
           <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
-          <h3>Active Strategies</h3>
-          <p>You have 2 strategy plans saved for the upcoming season.</p>
-          <button class="ghost-btn" routerLink="/strategies">VIEW ALL</button>
+          <h3>{{ trans.translate('active_strategies') }}</h3>
+          <p>{{ strategyCount > 0 ? strategyCount + ' ' + (strategyCount !== 1 ? trans.translate('strategies_plural') : trans.translate('strategies_singular')) : trans.translate('no_strategies_yet') }}</p>
+          <button class="ghost-btn" routerLink="/strategies">{{ trans.translate('view_all') }}</button>
         </div>
 
         <div class="glass-card feature-card highlight">
           <div class="card-icon"><i class="fa-solid fa-users-gear"></i></div>
-          <h3>Team Management</h3>
-          <p>D. Lopez has updated his average lap times for the GT3 catalog.</p>
-          <button class="ghost-btn" routerLink="/team">MANAGE TEAM</button>
+          <h3>{{ trans.translate('team_management') }}</h3>
+          <p>{{ trans.translate('team_desc') }}</p>
+          <button class="ghost-btn" routerLink="/team">{{ trans.translate('manage_team_btn') }}</button>
         </div>
 
         <div class="glass-card feature-card">
           <div class="card-icon"><i class="fa-solid fa-cloud-bolt"></i></div>
-          <h3>Tempest Alerts</h3>
-          <p>40% chance of rain detected for Sunday's main event.</p>
-          <button class="ghost-btn">WET SETUP</button>
+          <h3>{{ trans.translate('tempest_alerts') }}</h3>
+          <p>{{ trans.translate('weather_alert') }}</p>
+          <button class="ghost-btn" disabled>{{ trans.translate('soon') }}</button>
         </div>
       </div>
 
       <div class="glass-card animate-in stagger-2" style="margin-top: 40px;">
-        <h2 style="font-size: 1rem; color: #fff; margin-bottom: 20px;">RECENT_TELEMETRY_LOGS</h2>
+        <h2 style="font-size: 1rem; color: #fff; margin-bottom: 20px;">{{ trans.translate('recent_logs') }}</h2>
         <div class="log-table">
           <div class="log-row">
             <span class="time">14:02:45</span>
@@ -223,6 +225,16 @@ import { AuthService } from '../../core/services/auth.service';
     }
   `]
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   auth = inject(AuthService);
+  trans = inject(TranslationService);
+  api = inject(StrategyApiService);
+  strategyCount = 0;
+
+  async ngOnInit() {
+    try {
+      const list = await this.api.loadLibrary();
+      this.strategyCount = list.length;
+    } catch {}
+  }
 }

@@ -7,8 +7,8 @@ export function seedData(): void {
 
   // Seed user
   const hash = bcrypt.hashSync('demo', 10);
-  db.prepare('INSERT INTO users (id, username, password_hash, display_name, license_class, i_rating) VALUES (?, ?, ?, ?, ?, ?)').run(
-    'user_1', 'TrackTitan_99', hash, 'TrackTitan_99', 'Pro', 4500);
+  db.prepare('INSERT INTO users (id, username, password_hash, display_name, license_class, i_rating, team_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+    'user_1', 'TrackTitan_99', hash, 'TrackTitan_99', 'Pro', 4500, 'default');
 
   // Seed events
   db.prepare('INSERT OR IGNORE INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
@@ -40,10 +40,10 @@ export function seedData(): void {
     { index: 1, driverId: 'driver_2', startTimeMs: 2100000, endTimeMs: 4200000, laps: 20, changeTires: false, isCompleted: false },
   ]);
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, drivers, stints)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, drivers, stints, team_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     'strat_001', 'Daytona 24h - Baseline', 'daytona24', 'porsche992_gt3r', 'Porsche 911 GT3 R (992)',
-    105000, 3.2, 45000, 65000, Date.now(), mockDrivers, mockStints);
+    105000, 3.2, 45000, 65000, Date.now(), mockDrivers, mockStints, 'default');
 
   console.log('Database seeded successfully');
 }
