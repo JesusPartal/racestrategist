@@ -1,7 +1,11 @@
 import Database, { Database as DatabaseType } from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'racestrategist.db');
+const PERSISTENT_PATH = '/railway/persistent/racestrategist.db';
+const LOCAL_PATH = path.join(__dirname, '..', 'racestrategist.db');
+const DB_PATH = (process.env.DB_PATH) ||
+  (fs.existsSync('/railway/persistent') ? PERSISTENT_PATH : LOCAL_PATH);
 
 const db: DatabaseType = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
