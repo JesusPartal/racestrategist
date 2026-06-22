@@ -45,15 +45,26 @@ export function seedData(): void {
   db.prepare('INSERT OR IGNORE INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
     'sebring12', 'Sebring 12h', 'sebring_international', 720, JSON.stringify(['GT3', 'GTP', 'LMP2']));
 
-  // Seed vehicles
-  db.prepare('INSERT OR IGNORE INTO vehicles (id, name, fuel_tank_capacity_l, refuel_rate_ls, vehicle_class) VALUES (?, ?, ?, ?, ?)').run(
-    'porsche992_gt3r', 'Porsche 911 GT3 R (992)', 114, 2.5, 'GT3');
-  db.prepare('INSERT OR IGNORE INTO vehicles (id, name, fuel_tank_capacity_l, refuel_rate_ls, vehicle_class) VALUES (?, ?, ?, ?, ?)').run(
-    'bmw_m4_gt3', 'BMW M4 GT3', 118, 2.5, 'GT3');
-  db.prepare('INSERT OR IGNORE INTO vehicles (id, name, fuel_tank_capacity_l, refuel_rate_ls, vehicle_class) VALUES (?, ?, ?, ?, ?)').run(
-    'cadillac_vseries', 'Cadillac V-Series.R', 95, 3.0, 'GTP');
-  db.prepare('INSERT OR IGNORE INTO vehicles (id, name, fuel_tank_capacity_l, refuel_rate_ls, vehicle_class) VALUES (?, ?, ?, ?, ?)').run(
-    'dallara_p217', 'Dallara P217', 80, 3.0, 'LMP2');
+  // Clean up old vehicles and seed new ones
+  db.prepare('DELETE FROM vehicles WHERE id IN (?, ?, ?, ?)').run('porsche992_gt3r', 'cadillac_vseries', 'dallara_p217', 'bmw_m4_gt3');
+
+  const vehicles = [
+    { id: 'aston_vantage_gt3_evo', name: 'Aston Martin Vantage GT3 Evo', tank: 120, refuel: 2.5 },
+    { id: 'acura_nsx_gt3_evo22', name: 'Acura NSX GT3 EVO 22', tank: 110, refuel: 2.5 },
+    { id: 'audi_r8_lms_gt3_evo2', name: 'Audi R8 LMS GT3 EVO 2', tank: 120, refuel: 2.5 },
+    { id: 'bmw_m4_gt3', name: 'BMW M4 GT3', tank: 118, refuel: 2.5 },
+    { id: 'corvette_z06_gt3r', name: 'Chevrolet Corvette Z06 GT3.R', tank: 120, refuel: 2.5 },
+    { id: 'ferrari_296_gt3', name: 'Ferrari 296 GT3', tank: 110, refuel: 2.5 },
+    { id: 'ford_mustang_gt3', name: 'Ford Mustang GT3', tank: 120, refuel: 2.5 },
+    { id: 'lambo_huracan_gt3', name: 'Lamborghini Huracán GT3', tank: 120, refuel: 2.5 },
+    { id: 'mclaren_720s_gt3_evo', name: 'McLaren 720S GT3 EVO', tank: 120, refuel: 2.5 },
+    { id: 'mercedes_amg_gt3_2020', name: 'Mercedes-AMG GT3 2020', tank: 120, refuel: 2.5 },
+    { id: 'porsche_992_gt3r', name: 'Porsche 992 GT3 R', tank: 114, refuel: 2.5 },
+  ];
+  for (const v of vehicles) {
+    db.prepare('INSERT OR REPLACE INTO vehicles (id, name, fuel_tank_capacity_l, refuel_rate_ls, vehicle_class) VALUES (?, ?, ?, ?, ?)').run(
+      v.id, v.name, v.tank, v.refuel, 'GT3');
+  }
 
   // Seed mock strategy
   const mockDrivers = JSON.stringify([
@@ -69,7 +80,7 @@ export function seedData(): void {
 
   db.prepare(`INSERT OR IGNORE INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, drivers, stints, team_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    'strat_001', 'Daytona 24h - Baseline', 'daytona24', 'porsche992_gt3r', 'Porsche 911 GT3 R (992)',
+    'strat_001', 'Daytona 24h - Baseline', 'daytona24', 'porsche_992_gt3r', 'Porsche 992 GT3 R',
     105000, 3.2, 45000, 65000, Date.now(), mockDrivers, mockStints, 'default');
 
   console.log('Database seeded successfully');
