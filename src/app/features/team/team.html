@@ -11,6 +11,17 @@
         </button>
     </div>
 
+    <!-- Loading / Error States -->
+    <div *ngIf="team.loading()" class="loading-bar glass-card animate-in stagger-1">
+        <i class="fa-solid fa-spinner fa-spin" style="color: var(--accent-color);"></i>
+        <span style="margin-left: 10px;">Loading roster...</span>
+    </div>
+    <div *ngIf="team.error()" class="error-bar glass-card animate-in stagger-1">
+        <i class="fa-solid fa-circle-exclamation" style="color: #ff5252;"></i>
+        <span style="margin-left: 10px; color: #ff5252;">{{ team.error() }}</span>
+        <button class="retry-btn" (click)="team.loadRoster()">RETRY</button>
+    </div>
+
     <!-- Team Stats Bar -->
     <div class="stats-bar glass-card animate-in stagger-1">
         <div class="stat">
@@ -36,7 +47,7 @@
 
     <!-- Driver Grid -->
     <div class="driver-grid stagger-2">
-        <div *ngFor="let driver of team.roster()" class="driver-card glass-card animate-in"
+        <div *ngFor="let driver of team.roster(); trackBy: trackByDriverId" class="driver-card glass-card animate-in"
             [class.editing]="editingId() === driver.id" [style.border-left-color]="driver.accentColor"
             (click)="openEdit(driver)">
 
@@ -47,7 +58,7 @@
                     <span class="dc-nationality">{{ driver.nationality }}</span>
                     <h3 class="dc-name">{{ driver.name }}</h3>
                 </div>
-                <span class="role-badge" [class]="'role-' + (driver.role || 'Primary' | lowercase)">
+                <span class="role-badge" [class]="'role-' + (driver.role || 'Primary').toLowerCase()">
                     {{ driver.role || 'Primary' }}
                 </span>
             </div>
@@ -110,16 +121,6 @@
                 <input id="teamName" type="text" [value]="team.settings().teamName"
                     (change)="team.updateSettings({ teamName: $any($event.target).value })">
             </div>
-            <div class="form-field">
-                <label for="defaultPitFuel">Default Pit — No Tires (s)</label>
-                <input id="defaultPitFuel" type="number" [value]="team.settings().defaultPitFuelOnlyS"
-                    (change)="team.updateSettings({ defaultPitFuelOnlyS: +$any($event.target).value })">
-            </div>
-            <div class="form-field">
-                <label for="defaultPitTires">Default Pit — With Tires (s)</label>
-                <input id="defaultPitTires" type="number" [value]="team.settings().defaultPitTiresS"
-                    (change)="team.updateSettings({ defaultPitTiresS: +$any($event.target).value })">
-            </div>
         </div>
     </div>
 
@@ -138,7 +139,7 @@
         <div class="form-field" style="margin-top: 10px;">
             <label>DRIVER ACCENT COLOR</label>
             <div class="color-palette-row">
-                <button *ngFor="let c of colorPalette" class="color-swatch" [style.background]="c"
+                <button *ngFor="let c of colorPalette; trackBy: trackByColor" class="color-swatch" [style.background]="c"
                     [class.selected]="form.accentColor === c" (click)="form.accentColor = c; $event.preventDefault()">
                 </button>
                 <input type="color" [(ngModel)]="form.accentColor" class="color-custom-input" title="Custom color">
@@ -164,7 +165,7 @@
             <div class="form-field">
                 <label for="driverLicense">LICENSE</label>
                 <select id="driverLicense" [(ngModel)]="form.licenseClass">
-                    <option *ngFor="let lc of licenseClasses" [value]="lc">{{ lc }}</option>
+                    <option *ngFor="let lc of licenseClasses; trackBy: trackByLicense" [value]="lc">{{ lc }}</option>
                 </select>
             </div>
             <div class="form-field">
@@ -174,7 +175,7 @@
             <div class="form-field">
                 <label for="driverRole">ROLE</label>
                 <select id="driverRole" [(ngModel)]="form.role">
-                    <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                    <option *ngFor="let r of roles; trackBy: trackByRole" [value]="r">{{ r }}</option>
                 </select>
             </div>
         </div>

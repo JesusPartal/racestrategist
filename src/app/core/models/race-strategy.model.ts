@@ -46,7 +46,6 @@ export interface StintPlanItem {
   startTimeMs: number;
   endTimeMs: number;
   laps: number;
-  isCompleted: boolean;
   changeTires?: boolean;
   additionalTimeMs?: number;
 }
@@ -63,5 +62,15 @@ export interface RaceStrategy {
   stints: StintPlanItem[];
   pitStopFuelOnlyMs: number;
   pitStopTiresMs: number;
+  lastModified: number;
+}
+
+export interface StrategySummary {
+  id: string;
+  name: string;
+  vehicleId: string;
+  vehicleName: string;
+  stintCount: number;
+  driverCount: number;
   lastModified: number;
 }

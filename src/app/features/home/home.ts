@@ -1,8 +1,7 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-home',
@@ -13,7 +12,7 @@ import { TranslationService } from '../../core/services/translation.service';
       <div class="welcome-hero animate-in">
         <div class="hero-content">
           <h1 style="font-family: var(--font-display); font-weight: 800; font-size: 2.5rem; margin: 0;">
-            WELCOME BACK, <span style="color: var(--accent-color);">{{ auth.currentUser()?.username }}</span>
+            WELCOME BACK,             <span style="color: var(--accent-color);">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
           </h1>
           <p style="color: var(--text-dim); margin-top: 10px; font-size: 1.1rem;">
             Ready to optimize your next stint? Your team is waiting in the pit lane.
@@ -22,12 +21,12 @@ import { TranslationService } from '../../core/services/translation.service';
         <div class="user-stats glass-card">
           <div class="stat-item">
             <span class="stat-label">LICENSE</span>
-            <span class="stat-value" style="color: var(--accent-color);">{{ auth.currentUser()?.license }}</span>
+            <span class="stat-value" style="color: var(--accent-color);">{{ auth.currentUser()?.licenseClass }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-label">iRATING</span>
-            <span class="stat-value">{{ auth.currentUser()?.irating }}</span>
+            <span class="stat-value">{{ auth.currentUser()?.iRating }}</span>
           </div>
         </div>
       </div>

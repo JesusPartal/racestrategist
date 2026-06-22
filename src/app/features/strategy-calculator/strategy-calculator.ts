@@ -1,68 +1,37 @@
 import { Component, OnInit, signal, computed, effect, untracked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { CatalogService } from '../../core/services/catalog.service';
 import { TranslationService } from '../../core/services/translation.service';
-import { StrategyService } from '../../core/services/strategy.service';
-import { IRacingEvent, Vehicle, WeatherCondition, TireType, DriverProfile } from '../../core/models/race-strategy.model';
+import { StrategyStore } from '../../core/services/strategy-store.service';
+import { StrategyApiService } from '../../core/services/strategy-api.service';
+import { TeamService } from '../../core/services/team.service';
+import { Vehicle, DriverProfile } from '../../core/models/race-strategy.model';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-strategy-calculator',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, RouterLink, DragDropModule],
   templateUrl: './strategy-calculator.html',
   styleUrl: './strategy-calculator.css'
 })
 export class StrategyCalculator implements OnInit, HasUnsavedChanges {
-  // Color Palette for Drivers (Racing Accent Colors)
-  private readonly colorPalette = [
-    '#FFB000', // Racing Amber (Yellow) - Driver 1
-    '#2979FF', // Electric Blue - Driver 2
-    '#00E676', // Track Green - Driver 3
-    '#FF5252', // Red - Driver 4
-    '#D1C4E9', // Soft Purple - Driver 5
-    '#FF4081', // Pink - Driver 6
-    '#00E5FF', // Cyan - Driver 7
-    '#FF6E40', // Orange - Driver 8
-    '#7C4DFF', // Deep Purple - Driver 9
-    '#B2FF59'  // Lime - Driver 10
-  ];
-
-  // Catalogs
-  events = signal<IRacingEvent[]>([]);
+  events = signal<any[]>([]);
   vehiclesByEvent = signal<Vehicle[]>([]);
 
-  // Selection
   selectedEventId = signal<string>('');
   selectedVehicleId = signal<string>('');
 
-  // Manual Inputs
   fuelPerLap = signal<number>(0);
   lapMin = signal<number>(0);
   lapSec = signal<number>(0);
   lapMs = signal<number>(0);
   tankCapacityOverride = signal<number | null>(null);
 
-  // New Driver Form
-  newDriverName = '';
-  newDriverAccent = '#FFB000';
-  newDriverError = 0.02;
-  newDriverFuel: number | null = null;
-  newDriverLapMin: number | null = null;
-  newDriverLapSec: number | null = null;
-  newDriverLapMs: number | null = null;
-
-  newDriverAvgLapTime = computed(() => {
-    if (this.newDriverLapMin === null && this.newDriverLapSec === null && this.newDriverLapMs === null) return null;
-    return (Number(this.newDriverLapMin || 0) * 60 * 1000) +
-      (Number(this.newDriverLapSec || 0) * 1000) +
-      Number(this.newDriverLapMs || 0);
-  });
-
-  // Derived Values
-  selectedEvent = computed(() => this.events().find(e => e.id === this.selectedEventId()));
+  selectedEvent = computed(() => this.events().find((e: any) => e.id === this.selectedEventId()));
   selectedVehicle = computed(() => this.vehiclesByEvent().find(v => v.id === this.selectedVehicleId()));
 
   avgLapTime = computed(() => {
@@ -81,9 +50,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     return Math.floor(capacity / consumption);
   });
 
-  stintDurationMs = computed(() => {
-    return this.maxLaps() * this.avgLapTime();
-  });
+  stintDurationMs = computed(() => this.maxLaps() * this.avgLapTime());
 
   stintDurationFormatted = computed(() => {
     const ms = this.stintDurationMs();
@@ -92,30 +59,60 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   });
 
   stintsNeeded = computed(() => {
-    const eventMins = this.selectedEvent()?.durationMinutes || 0;
+    const event = this.selectedEvent();
+    if (!event) return 0;
     const stintMs = this.stintDurationMs();
-    if (eventMins <= 0 || stintMs <= 0) return 0;
-
-    const eventMs = eventMins * 60 * 1000;
+    if (stintMs <= 0) return 0;
+    const eventMs = event.durationMinutes * 60 * 1000;
     return Number((eventMs / stintMs).toFixed(2));
   });
 
   canGenerateStints = computed(() => this.stintsNeeded() > 0 && this.stintsNeeded() <= 1000);
 
+  /** Drivers available for stint assignment: team roster + strategy snapshot drivers */
+  availableDrivers = computed(() => {
+    const team = this.team.roster();
+    const snapshot = this.store.drivers();
+    const merged = new Map<string, DriverProfile>();
+    for (const d of team) merged.set(d.id, d);
+    for (const d of snapshot) if (!merged.has(d.id)) merged.set(d.id, d);
+    return [...merged.values()];
+  });
+
+  /** Refreshes stale driver data from team roster into the strategy snapshot */
+  refreshDriversFromRoster() {
+    const roster = this.team.roster();
+    const currentDrivers = this.store.drivers();
+    let changed = false;
+    const updated = currentDrivers.map(sd => {
+      const rosterMatch = roster.find(rd => rd.id === sd.id);
+      if (rosterMatch && (rosterMatch.avgLapTimeMs !== sd.avgLapTimeMs || rosterMatch.fuelPerLapL !== sd.fuelPerLapL)) {
+        changed = true;
+        return { ...sd, ...rosterMatch };
+      }
+      return sd;
+    });
+    if (changed) this.store.drivers.set(updated);
+  }
+
+  getDriverById(id: string): DriverProfile | undefined {
+    return this.availableDrivers().find(d => d.id === id);
+  }
+
   constructor(
     private catalog: CatalogService,
     public trans: TranslationService,
-    public strategyService: StrategyService
+    public store: StrategyStore,
+    private api: StrategyApiService,
+    public team: TeamService
   ) {
-    // React to event changes to filter vehicles
     effect(() => {
       const eventId = this.selectedEventId();
       if (eventId) {
-        this.catalog.getVehiclesByEvent(eventId).subscribe(v => {
+        this.catalog.getVehiclesByEvent(eventId).then(v => {
           this.vehiclesByEvent.set(v);
           if (v.length > 0) {
             const current = untracked(() => this.selectedVehicleId());
-            // Only set default if current vehicle is not in the new list OR if we don't have one yet
             if (!current || !v.some(item => item.id === current)) {
               this.selectedVehicleId.set(v[0].id);
             }
@@ -124,35 +121,30 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       }
     });
 
-    // React to vehicle change to reset override
     effect(() => {
       this.selectedVehicleId();
-      this.untrackOverrideReset();
+      untracked(() => this.tankCapacityOverride.set(null));
     });
 
-    // Ripple Recalculate Effect
     effect(() => {
       const fuel = this.fuelPerLap();
       const lapTime = this.avgLapTime();
       const tank = this.tankCapacity();
-      const drivers = this.strategyService.drivers(); // Watch for driver parameter changes
-      const pitFuel = this.strategyService.pitStopFuelOnlyMs();
-      const pitTires = this.strategyService.pitStopTiresMs();
+      const drivers = this.store.drivers();
+      const pitFuel = this.store.pitStopFuelOnlyMs();
+      const pitTires = this.store.pitStopTiresMs();
 
-      // Just trigger when these change, don't watch stintPlan itself to avoid loop
-      if (untracked(() => this.strategyService.stintPlan()).length > 0) {
-        this.strategyService.recalculateTimeline(fuel, lapTime, tank);
+      if (untracked(() => this.store.stintPlan()).length > 0) {
+        this.store.recalculateTimeline(fuel, lapTime, tank);
       }
     });
 
-    // Auto-dirty tracking: mark dirty on any meaningful change after init
     let dirtyInitSkip = true;
     effect(() => {
-      // Track all user-editable signals
       this.fuelPerLap(); this.lapMin(); this.lapSec(); this.lapMs();
       this.selectedEventId(); this.selectedVehicleId();
-      this.strategyService.pitStopFuelOnlyMs(); this.strategyService.pitStopTiresMs();
-      this.strategyService.stintPlan(); this.strategyService.drivers();
+      this.store.pitStopFuelOnlyMs(); this.store.pitStopTiresMs();
+      this.store.stintPlan(); this.store.drivers();
 
       if (dirtyInitSkip) {
         dirtyInitSkip = false;
@@ -162,76 +154,25 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     });
   }
 
-  private untrackOverrideReset() {
-    this.tankCapacityOverride.set(null);
-  }
-
-  // Editing State
-  editingDriverId = signal<string | null>(null);
-
-  editDriver(driver: DriverProfile) {
-    this.editingDriverId.set(driver.id);
-    this.newDriverName = driver.name;
-    this.newDriverAccent = driver.accentColor || '#FFB000';
-    this.newDriverError = driver.errorFactor;
-    this.newDriverFuel = driver.fuelPerLapL || null;
-
-    // Parse time back to components
-    if (driver.avgLapTimeMs) {
-      const totalSeconds = Math.floor(driver.avgLapTimeMs / 1000);
-      this.newDriverLapMin = Math.floor(totalSeconds / 60);
-      this.newDriverLapSec = totalSeconds % 60;
-      this.newDriverLapMs = driver.avgLapTimeMs % 1000;
+  async ngOnInit() {
+    this.team.loadRoster();
+    this.refreshDriversFromRoster();
+    const events = await this.catalog.getEvents();
+    this.events.set(events);
+    if (events.length > 0 && !this.store.activeStrategyId() && !this.selectedEventId()) {
+      this.selectedEventId.set(events[0].id);
     }
-  }
 
-  cancelEdit() {
-    this.editingDriverId.set(null);
-    this.newDriverName = '';
-    this.newDriverFuel = null;
-    this.newDriverLapMin = null;
-    this.newDriverLapSec = null;
-    this.newDriverLapMs = null;
-    // Reset to next color
-    const nextIndex = this.strategyService.drivers().length % this.colorPalette.length;
-    this.newDriverAccent = this.colorPalette[nextIndex];
-  }
-
-  updateDriver() {
-    const id = this.editingDriverId();
-    if (!id || !this.newDriverName) return;
-
-    this.strategyService.updateDriver(id, {
-      name: this.newDriverName,
-      accentColor: this.newDriverAccent,
-      fuelPerLapL: this.newDriverFuel || undefined,
-      avgLapTimeMs: this.newDriverAvgLapTime() || undefined,
-      errorFactor: this.newDriverError
-    });
-
-    this.cancelEdit();
-  }
-
-  ngOnInit() {
-    this.catalog.getEvents().subscribe(e => {
-      this.events.set(e);
-      // Only set default if no strategy is active or selectedEventId is empty
-      if (e.length > 0 && !this.strategyService.activeStrategyId() && !this.selectedEventId()) {
-        this.selectedEventId.set(e[0].id);
-      }
-    });
-
-    // Check if we have an active strategy to sync
-    if (this.strategyService.activeStrategyId()) {
+    if (this.store.activeStrategyId()) {
       this.syncFromActiveStrategy();
     }
   }
 
   syncFromActiveStrategy() {
-    const eventId = this.strategyService.activeEventId();
-    const vehicleId = this.strategyService.activeVehicleId();
-    const fuel = this.strategyService.activeFuelPerLap();
-    const totalMs = this.strategyService.activeAvgLapTimeMs();
+    const eventId = this.store.activeEventId();
+    const vehicleId = this.store.activeVehicleId();
+    const fuel = this.store.activeFuelPerLap();
+    const totalMs = this.store.activeAvgLapTimeMs();
 
     if (eventId) this.selectedEventId.set(eventId);
     if (vehicleId) this.selectedVehicleId.set(vehicleId);
@@ -245,33 +186,24 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
-  onEventChange(id: string) {
-    this.selectedEventId.set(id);
-  }
+  onEventChange(id: string) { this.selectedEventId.set(id); }
 
-  // ── Strategy Name ────────────────────────────────────────────────────────
   onStrategyNameInput(event: Event) {
-    const val = (event.target as HTMLInputElement).value;
-    this.strategyService.activeStrategyName.set(val);
+    this.store.activeStrategyName.set((event.target as HTMLInputElement).value);
   }
 
   onStrategyNameBlur(event: Event) {
     const val = (event.target as HTMLInputElement).value.trim();
     if (!val) {
-      this.strategyService.activeStrategyName.set('Unnamed Strategy');
+      this.store.activeStrategyName.set('Unnamed Strategy');
       (event.target as HTMLInputElement).value = 'Unnamed Strategy';
     } else {
-      this.strategyService.activeStrategyName.set(val);
+      this.store.activeStrategyName.set(val);
     }
   }
 
-  onStrategyNameEnter(event: Event) {
-    (event.target as HTMLInputElement).blur();
-  }
-
-  onVehicleChange(id: string) {
-    this.selectedVehicleId.set(id);
-  }
+  onStrategyNameEnter(event: Event) { (event.target as HTMLInputElement).blur(); }
+  onVehicleChange(id: string) { this.selectedVehicleId.set(id); }
 
   formatMs(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
@@ -281,57 +213,40 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
-  addDriver() {
-    if (!this.newDriverName) return;
-    this.strategyService.addDriver({
-      name: this.newDriverName,
-      accentColor: this.newDriverAccent,
-      avgLapTimeMs: this.newDriverAvgLapTime() || this.avgLapTime(),
-      fuelPerLapL: this.newDriverFuel || undefined,
-      errorFactor: this.newDriverError
-    });
-
-    this.newDriverName = '';
-    this.newDriverFuel = null;
-    this.newDriverLapMin = null;
-    this.newDriverLapSec = null;
-    this.newDriverLapMs = null;
-
-    // Set next color from palette
-    const nextIndex = this.strategyService.drivers().length % this.colorPalette.length;
-    this.newDriverAccent = this.colorPalette[nextIndex];
-  }
-
   generateStintPlan() {
     const count = Math.ceil(this.stintsNeeded());
-    this.strategyService.generateEmptyStints(count, this.maxLaps(), this.avgLapTime());
-    // Trigger initial calculation
-    this.strategyService.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.generateEmptyStints(count, this.maxLaps());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
   updateStintDriver(stintIndex: number, driverId: string) {
-    this.strategyService.updateStintDriver(stintIndex, driverId);
-    this.strategyService.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.updateStintDriver(stintIndex, driverId);
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
   updateStintTires(stintIndex: number, change: boolean) {
-    this.strategyService.updateStintFields(stintIndex, { changeTires: change });
-    this.strategyService.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.updateStintFields(stintIndex, { changeTires: change });
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
   updateStintExtraTime(stintIndex: number, seconds: number) {
-    this.strategyService.updateStintFields(stintIndex, { additionalTimeMs: (seconds || 0) * 1000 });
-    this.strategyService.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.updateStintFields(stintIndex, { additionalTimeMs: (seconds || 0) * 1000 });
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
   drop(event: CdkDragDrop<string[]>) {
-    this.strategyService.reorderStints(event.previousIndex, event.currentIndex);
-    this.strategyService.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.reorderStints(event.previousIndex, event.currentIndex);
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
+  trackByEventId = (_: number, e: { id: string }) => e.id;
+  trackByVehicleId = (_: number, v: { id: string }) => v.id;
+  trackByDriverId = (_: number, d: { id: string }) => d.id;
+  trackByStintIndex = (_: number, s: { index: number }) => s.index;
+
   getDriverColor(driverId: string): string {
-    if (!driverId) return '#888888'; // Light grey for unassigned
-    return this.strategyService.getDriverById(driverId)?.accentColor || '#888888';
+    if (!driverId) return '#888888';
+    return this.getDriverById(driverId)?.accentColor || '#888888';
   }
 
   scrollToStint(index: number) {
@@ -343,37 +258,18 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
-  // ── Save / Discard / Unsaved Changes Guard ──────────────────────────────────
-
-  /** Tracks whether the user has made changes since last save/load */
   isDirty = signal(false);
-
-  /** Controls visibility of the unsaved-changes modal */
   showUnsavedDialog = signal(false);
-
-  /**
-   * Resolver held by the current canDeactivate call.
-   * When the user picks Save/Discard/Cancel, this is called with true/false
-   * to let the router know whether to proceed.
-   */
   private deactivateResolver: ((allow: boolean) => void) | null = null;
 
-  /**
-   * Called by the CanDeactivate guard automatically when the user tries to
-   * navigate away from this route. Returns a Promise so the router waits for
-   * the user to click a button in the dialog before proceeding.
-   */
   canDeactivate(): boolean | Promise<boolean> {
-    if (!this.isDirty()) return true; // No changes — allow immediately
-
-    // Show the dialog and wait for the user's choice
+    if (!this.isDirty()) return true;
     this.showUnsavedDialog.set(true);
     return new Promise<boolean>(resolve => {
       this.deactivateResolver = resolve;
     });
   }
 
-  /** User clicked "KEEP EDITING" — block navigation and close dialog */
   keepEditing() {
     this.showUnsavedDialog.set(false);
     if (this.deactivateResolver) {
@@ -382,7 +278,6 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
-  /** User clicked "SAVE & CONTINUE" — save then allow navigation */
   saveAndNavigate() {
     this.saveStrategy();
     this.showUnsavedDialog.set(false);
@@ -392,7 +287,6 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
-  /** User clicked "DISCARD" — reset and allow navigation */
   discardAndNavigate() {
     this.discardChanges();
     this.showUnsavedDialog.set(false);
@@ -402,28 +296,54 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
-  /** Persist the current strategy back to the library */
-  saveStrategy() {
-    if (!this.strategyService.activeStrategyId()) {
-      const id = 'strat-' + Date.now();
-      this.strategyService.saveCurrentAsNew(id, 'New Strategy', this.selectedVehicleId());
-    } else {
-      this.strategyService.updateCurrentStrategy(
-        this.selectedEventId(), this.selectedVehicleId(),
+  async saveStrategy() {
+    if (!this.store.activeStrategyId()) {
+      const name = this.store.activeStrategyName() || 'New Strategy';
+      const created = await this.api.createStrategy(
+        name, this.selectedEventId(), this.selectedVehicleId(),
         this.avgLapTime(), this.fuelPerLap()
       );
+      this.store.activeStrategyId.set(created.id);
+      this.store.activeStrategyName.set(name);
+      await this.saveStintsAndDrivers(created.id);
+      await this.loadLibrary();
+    } else {
+      const id = this.store.activeStrategyId()!;
+      await this.api.updateStrategy(id, {
+        eventId: this.selectedEventId(), vehicleId: this.selectedVehicleId(),
+        avgLapTimeMs: this.avgLapTime(), fuelPerLap: this.fuelPerLap(),
+        pitStopFuelOnlyMs: this.store.pitStopFuelOnlyMs(),
+        pitStopTiresMs: this.store.pitStopTiresMs(),
+      } as any);
+      await this.saveStintsAndDrivers(id);
+      await this.loadLibrary();
     }
     this.isDirty.set(false);
   }
 
-  /** Revert to the last-loaded version from the strategy library */
+  private async saveStintsAndDrivers(id: string) {
+    await this.api.updateStints(id, this.store.stintPlan());
+    await this.api.updateDrivers(id, this.store.drivers());
+  }
+
+  private async loadLibrary() {
+    try {
+      const list = await this.api.loadLibrary();
+      this.store.savedStrategies.set(list);
+    } catch {
+      this.store.error.set('Failed to load strategy library');
+    }
+  }
+
   discardChanges() {
-    const id = this.strategyService.activeStrategyId();
+    const id = this.store.activeStrategyId();
     if (id) {
-      this.strategyService.loadStrategy(id);
-      this.syncFromActiveStrategy();
+      this.api.loadStrategy(id).then(strat => {
+        if (strat) this.store.applyLoadedStrategy(strat);
+        this.syncFromActiveStrategy();
+      });
     } else {
-      this.strategyService.clearActive();
+      this.store.clearActive();
     }
     this.isDirty.set(false);
   }

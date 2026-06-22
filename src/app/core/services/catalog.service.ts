@@ -1,37 +1,80 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { API_BASE } from '../api.config';
 import { IRacingEvent, Vehicle } from '../models/race-strategy.model';
+import { lastValueFrom } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CatalogService {
+  private http = inject(HttpClient);
 
-    private readonly events: IRacingEvent[] = [
-        { id: '1', name: '24h of Daytona', trackId: 'daytona_road', durationMinutes: 1440, allowedCarClasses: ['GTP', 'LMP2', 'GT3'] },
-        { id: '2', name: 'Nurburgring 24h', trackId: 'nurburgring_combined', durationMinutes: 1440, allowedCarClasses: ['GT3', 'CUP'] },
-        { id: '3', name: 'Sebring 12h', trackId: 'sebring_intl', durationMinutes: 720, allowedCarClasses: ['GTP', 'LMP2', 'GT3'] }
-    ];
+  private eventsCache: IRacingEvent[] | null = null;
+  private vehiclesCache = new Map<string, Vehicle[]>();
+  private allVehiclesCache: Vehicle[] | null = null;
 
-    private readonly vehicles: Vehicle[] = [
-        { id: 'porsche_gt3', name: 'Porsche 911 GT3 R (992)', fuelTankCapacityL: 110, refuelRateLS: 2.2, vehicleClass: 'GT3' },
-        { id: 'bmw_gt3', name: 'BMW M4 GT3', fuelTankCapacityL: 115, refuelRateLS: 2.2, vehicleClass: 'GT3' },
-        { id: 'cadillac_gtp', name: 'Cadillac V-Series.R', fuelTankCapacityL: 90, refuelRateLS: 3.5, vehicleClass: 'GTP' },
-        { id: 'dallara_lmp2', name: 'Dallara P217', fuelTankCapacityL: 75, refuelRateLS: 3.0, vehicleClass: 'LMP2' }
-    ];
+  loading = signal(false);
+  error = signal<string | null>(null);
 
-    getEvents(): Observable<IRacingEvent[]> {
-        return of(this.events);
+  async getEvents(): Promise<IRacingEvent[]> {
+    if (this.eventsCache) return this.eventsCache;
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      this.eventsCache = await lastValueFrom(
+        this.http.get<IRacingEvent[]>(`${API_BASE}/catalog/events`)
+      );
+      return this.eventsCache;
+    } catch {
+      this.error.set('Failed to load events');
+      return [];
+    } finally {
+      this.loading.set(false);
     }
+  }
 
-    getVehiclesByEvent(eventId: string): Observable<Vehicle[]> {
-        const event = this.events.find(e => e.id === eventId);
-        if (!event) return of([]);
-
-        return of(this.vehicles.filter(v => event.allowedCarClasses.includes(v.vehicleClass)));
+  async getVehiclesByEvent(eventId: string): Promise<Vehicle[]> {
+    if (this.vehiclesCache.has(eventId)) return this.vehiclesCache.get(eventId)!;
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const vehicles = await lastValueFrom(
+        this.http.get<Vehicle[]>(`${API_BASE}/catalog/vehicles?eventId=${eventId}`)
+      );
+      this.vehiclesCache.set(eventId, vehicles);
+      return vehicles;
+    } catch {
+      this.error.set('Failed to load vehicles');
+      return [];
+    } finally {
+      this.loading.set(false);
     }
+  }
 
-    getVehicleById(id: string): Observable<Vehicle | undefined> {
-        return of(this.vehicles.find(v => v.id === id));
+  async getVehicleById(id: string): Promise<Vehicle | undefined> {
+    if (this.allVehiclesCache) return this.allVehiclesCache.find(v => v.id === id);
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      this.allVehiclesCache = await lastValueFrom(
+        this.http.get<Vehicle[]>(`${API_BASE}/catalog/vehicles`)
+      );
+      return this.allVehiclesCache.find(v => v.id === id);
+    } catch {
+      this.error.set('Failed to load vehicles');
+      return undefined;
+    } finally {
+      this.loading.set(false);
     }
+  }
+
+  async resolveVehicleName(vehicleId: string): Promise<string> {
+    const v = await this.getVehicleById(vehicleId);
+    return v?.name || 'Unknown Vehicle';
+  }
+
+  invalidateCache() {
+    this.eventsCache = null;
+    this.vehiclesCache.clear();
+    this.allVehiclesCache = null;
+  }
 }

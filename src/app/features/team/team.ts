@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TeamService } from '../../core/services/team.service';
@@ -13,18 +13,16 @@ type FormMode = 'closed' | 'add' | 'edit';
     templateUrl: './team.html',
     styleUrl: './team.css'
 })
-export class TeamComponent {
+export class TeamComponent implements OnInit {
     team = inject(TeamService);
 
     primaryDriverCount = computed(() =>
         this.team.roster().filter(d => (d.role || 'Primary') === 'Primary').length
     );
 
-    // ── Form State ──────────────────────────────────────────────────────────
     formMode = signal<FormMode>('closed');
     editingId = signal<string | null>(null);
 
-    // Form fields
     form = {
         name: '',
         accentColor: '#FFB000',
@@ -38,6 +36,11 @@ export class TeamComponent {
         fuelPerLapL: null as number | null,
         errorFactor: 0.02
     };
+
+    trackByDriverId = (_: number, d: { id: string }) => d.id;
+    trackByColor = (_: number, c: string) => c;
+    trackByLicense = (_: number, l: any) => l;
+    trackByRole = (_: number, r: any) => r;
 
     readonly colorPalette = [
         '#FFB000', '#2979FF', '#00E676', '#FF5252',
@@ -54,7 +57,11 @@ export class TeamComponent {
         return (m * 60 * 1000) + (s * 1000) + ms;
     });
 
-    // ── Driver actions ──────────────────────────────────────────────────────
+    ngOnInit() {
+        this.team.loadRoster();
+        this.team.loadSettings();
+    }
+
     openAdd() {
         this.resetForm();
         const nextColor = this.colorPalette[this.team.roster().length % this.colorPalette.length];
@@ -91,10 +98,10 @@ export class TeamComponent {
         this.resetForm();
     }
 
-    saveDriver() {
+    async saveDriver() {
         if (!this.form.name.trim()) return;
 
-        const payload: Omit<DriverProfile, 'id'> = {
+        const payload = {
             name: this.form.name.trim(),
             accentColor: this.form.accentColor,
             avgLapTimeMs: this.formLapTimeMs(),
@@ -107,15 +114,15 @@ export class TeamComponent {
         };
 
         if (this.formMode() === 'edit' && this.editingId()) {
-            this.team.updateDriver(this.editingId()!, payload);
+            await this.team.updateDriver(this.editingId()!, payload);
         } else {
-            this.team.addDriver(payload);
+            await this.team.addDriver(payload);
         }
         this.closeForm();
     }
 
-    removeDriver(id: string) {
-        this.team.removeDriver(id);
+    async removeDriver(id: string) {
+        await this.team.removeDriver(id);
         if (this.editingId() === id) this.closeForm();
     }
 

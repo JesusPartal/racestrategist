@@ -8,6 +8,14 @@
 
 # Node
 /node_modules
+backend/node_modules
+backend/racestrategist.db
+backend/racestrategist.db-shm
+backend/racestrategist.db-wal
+backend/.cache
+backend/check_db.js
+backend/.env
+backend/*.log
 npm-debug.log
 yarn-error.log
 

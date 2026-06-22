@@ -30,13 +30,12 @@
     </nav>
 
     <div class="auth-box animate-in">
-      <!-- Only show profile if logged in -->
       <div *ngIf="auth.currentUser()" class="user-profile" (click)="logout()">
         <div class="user-info">
-          <span class="username">{{ auth.currentUser()?.username }}</span>
-          <span class="license">{{ auth.currentUser()?.license }}</span>
+          <span class="username">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
+          <span class="license">{{ auth.currentUser()?.licenseClass }} · {{ auth.currentUser()?.iRating }} iR</span>
         </div>
-        <img [src]="auth.currentUser()?.avatar" class="avatar">
+        <div class="avatar">{{ (auth.currentUser()?.displayName || '?')[0] }}</div>
         <div class="logout-overlay">LOGOUT</div>
       </div>
     </div>

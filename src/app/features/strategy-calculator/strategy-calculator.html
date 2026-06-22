@@ -6,7 +6,7 @@
         </div>
         <h3 class="unsaved-title">UNSAVED CHANGES</h3>
         <p class="unsaved-body">
-            You have unsaved changes to <strong>{{ strategyService.activeStrategyName() }}</strong>.<br>
+            You have unsaved changes to <strong>{{ store.activeStrategyName() }}</strong>.<br>
             What would you like to do?
         </p>
         <div class="unsaved-actions">
@@ -21,19 +21,23 @@
     </div>
 </div>
 
+<div *ngIf="store.error()" class="glass-card" style="margin-top: 20px; display: flex; align-items: center; padding: 15px 25px;">
+    <i class="fa-solid fa-circle-exclamation" style="color: #ff5252;"></i>
+    <span style="margin-left: 10px; color: #ff5252;">{{ store.error() }}</span>
+</div>
 <div class="calculator-container glass-card animate-in stagger-1" style="margin-top: 20px;">
     <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
         <div style="flex: 1; min-width: 0;">
             <div style="font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 8px;">
-                {{ strategyService.activeStrategyId() ? 'EDITING STRATEGY' : 'NEW STRATEGY' }}
-                <span *ngIf="isDirty()" style="color: var(--accent-color); margin-left: 8px;">● UNSAVED</span>
+                {{ store.activeStrategyId() ? trans.translate('editing_strategy') : trans.translate('new_strategy') }}
+                <span *ngIf="isDirty()" style="color: var(--accent-color); margin-left: 8px;">{{ trans.translate('unsaved') }}</span>
             </div>
             <!-- Editable strategy name -->
             <div class="strategy-name-wrap">
                 <i class="fa-solid fa-pen-to-square strategy-name-icon"></i>
                 <input id="strategyNameInput" class="strategy-name-input" type="text"
-                    [value]="strategyService.activeStrategyName()" (input)="onStrategyNameInput($event)"
+                    [value]="store.activeStrategyName()" (input)="onStrategyNameInput($event)"
                     (blur)="onStrategyNameBlur($event)" (keydown.enter)="onStrategyNameEnter($event)"
                     placeholder="Name your strategy..." maxlength="60" spellcheck="false" autocomplete="off">
             </div>
@@ -44,10 +48,10 @@
         </div>
         <div style="display: flex; gap: 12px; align-items: center; margin-left: 30px; flex-shrink: 0;">
             <button class="btn-save" (click)="saveStrategy()" [disabled]="!isDirty()">
-                <i class="fa-solid fa-floppy-disk"></i> SAVE
+                <i class="fa-solid fa-floppy-disk"></i> {{ trans.translate('save') }}
             </button>
             <button class="btn-discard" (click)="discardChanges()" [disabled]="!isDirty()">
-                <i class="fa-solid fa-rotate-left"></i> DISCARD
+                <i class="fa-solid fa-rotate-left"></i> {{ trans.translate('discard') }}
             </button>
             <div class="lang-switcher">
                 <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
@@ -63,14 +67,14 @@
             <div class="form-field">
                 <label for="eventSelect">{{ trans.translate('select_event') }}</label>
                 <select id="eventSelect" [ngModel]="selectedEventId()" (ngModelChange)="onEventChange($event)">
-                    <option *ngFor="let event of events()" [value]="event.id">{{ event.name }}</option>
+                    <option *ngFor="let event of events(); trackBy: trackByEventId" [value]="event.id">{{ event.name }}</option>
                 </select>
             </div>
 
             <div class="form-field">
                 <label for="vehicleSelect">{{ trans.translate('select_vehicle') }}</label>
                 <select id="vehicleSelect" [ngModel]="selectedVehicleId()" (ngModelChange)="onVehicleChange($event)">
-                    <option *ngFor="let vehicle of vehiclesByEvent()" [value]="vehicle.id">{{ vehicle.name }} ({{
+                    <option *ngFor="let vehicle of vehiclesByEvent(); trackBy: trackByVehicleId" [value]="vehicle.id">{{ vehicle.name }} ({{
                         vehicle.vehicleClass }})</option>
                 </select>
             </div>
@@ -89,7 +93,7 @@
 
         <!-- Inputs Section -->
         <div class="inputs-panel" style="padding: 10px;">
-            <h3 style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 25px;">Real-Time Data</h3>
+            <h3 style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 25px;">{{ trans.translate('real_time_data') }}</h3>
             <div class="form-field">
                 <label for="fuelPerLap">{{ trans.translate('fuel_consumption') }}</label>
                 <div style="position: relative;">
@@ -125,19 +129,19 @@
 
             <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
                 <div class="form-field">
-                    <label>PIT (NO TIRES)</label>
+                    <label>{{ trans.translate('pit_no_tires') }}</label>
                     <div style="position: relative;">
-                        <input type="number" [ngModel]="strategyService.pitStopFuelOnlyMs() / 1000"
-                            (ngModelChange)="strategyService.pitStopFuelOnlyMs.set($event * 1000)">
+                        <input type="number" [ngModel]="store.pitStopFuelOnlyMs() / 1000"
+                            (ngModelChange)="store.pitStopFuelOnlyMs.set($event * 1000)">
                         <span
                             style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">SEC</span>
                     </div>
                 </div>
                 <div class="form-field">
-                    <label>PIT (WITH TIRES)</label>
+                    <label>{{ trans.translate('pit_with_tires') }}</label>
                     <div style="position: relative;">
-                        <input type="number" [ngModel]="strategyService.pitStopTiresMs() / 1000"
-                            (ngModelChange)="strategyService.pitStopTiresMs.set($event * 1000)">
+                        <input type="number" [ngModel]="store.pitStopTiresMs() / 1000"
+                            (ngModelChange)="store.pitStopTiresMs.set($event * 1000)">
                         <span
                             style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">SEC</span>
                     </div>
@@ -154,7 +158,7 @@
                 <div class="result-label">{{ trans.translate('max_laps') }}</div>
                 <div class="result-value" style="font-size: 3rem; font-weight: 800; line-height: 1;">{{ maxLaps()
                     }}<span
-                        style="font-size: 0.8rem; font-weight: 400; color: var(--text-dim); margin-left:8px;">LAPS</span>
+                        style="font-size: 0.8rem; font-weight: 400; color: var(--text-dim); margin-left:8px;">{{ trans.translate('laps') }}</span>
                 </div>
             </div>
             <div class="result-row">
@@ -171,125 +175,55 @@
                     style="width: 100%; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;"
                     [style.opacity]="canGenerateStints() ? 1 : 0.4"
                     [style.cursor]="canGenerateStints() ? 'pointer' : 'not-allowed'">
-                    Generate Strategy Plan
+                    {{ trans.translate('generate_plan') }}
                 </button>
                 <p *ngIf="!canGenerateStints()"
                     style="font-size: 0.6rem; color: #ff5252; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4;">
-                    <span *ngIf="stintsNeeded() <= 0">⚠ Fill consumption data first</span>
-                    <span *ngIf="stintsNeeded() > 1000">⚠ Max 1000 stints allowed (Current: {{ stintsNeeded() }})</span>
+                    <span *ngIf="stintsNeeded() <= 0">{{ trans.translate('fill_data_first') }}</span>
+                    <span *ngIf="stintsNeeded() > 1000">{{ trans.translate('max_stints_msg', { count: stintsNeeded() }) }}</span>
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Driver Management Section -->
+<!-- Driver Roster Reference -->
 <div class="glass-card animate-in stagger-2" style="margin-top: 30px;">
-    <h2><span style="font-weight: 300; opacity: 0.6;">TEAM:</span> Drivers</h2>
-    <div class="grid" style="grid-template-columns: 1fr 2fr;">
-        <div class="add-driver-form" style="border-right: 1px solid rgba(255,255,255,0.05); padding-right: 30px;">
-            <h4
-                style="margin-top: 0; font-size: 0.7rem; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px;">
-                {{ editingDriverId() ? 'Update Driver Profile' : 'New Driver Profile' }}
-            </h4>
-            <div class="form-field">
-                <label>{{ trans.translate('driver_name') }}</label>
-                <input type="text" [(ngModel)]="newDriverName" [placeholder]="'e.g. Max Verstappen'">
-            </div>
-            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-field">
-                    <label>{{ trans.translate('driver_fuel') }} (Opt)</label>
-                    <input type="number" [(ngModel)]="newDriverFuel" step="0.01"
-                        [placeholder]="fuelPerLap() > 0 ? fuelPerLap() + ' (Default)' : 'Use Global'">
-                </div>
-                <div class="form-field">
-                    <label>{{ trans.translate('driver_error') }}</label>
-                    <input type="number" [(ngModel)]="newDriverError" step="0.01">
-                </div>
-            </div>
-
-            <div class="form-field">
-                <label>DRIVER LAP TIME (Opt)</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                    <div style="position: relative;">
-                        <input type="number" [(ngModel)]="newDriverLapMin" placeholder="MIN">
-                        <span
-                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">M</span>
-                    </div>
-                    <div style="position: relative;">
-                        <input type="number" [(ngModel)]="newDriverLapSec" placeholder="SEC" max="59">
-                        <span
-                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">S</span>
-                    </div>
-                    <div style="position: relative;">
-                        <input type="number" [(ngModel)]="newDriverLapMs" placeholder="MS">
-                        <span
-                            style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">MS</span>
-                    </div>
-                </div>
-                <p style="font-size: 0.55rem; color: var(--text-dim); margin-top: 5px;">Leave empty to use Global Lap
-                    Time</p>
-            </div>
-            <div class="form-field">
-                <label>{{ trans.translate('driver_color') }}</label>
-                <input type="color" [(ngModel)]="newDriverAccent" style="height: 45px; padding: 2px;">
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button *ngIf="!editingDriverId()" (click)="addDriver()" class="primary"
-                    style="flex: 1; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;">
-                    {{ trans.translate('add_driver') }}
-                </button>
-                <ng-container *ngIf="editingDriverId()">
-                    <button (click)="updateDriver()" class="primary"
-                        style="flex: 2; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;">
-                        Save Changes
-                    </button>
-                    <button (click)="cancelEdit()"
-                        style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-display); font-size: 0.6rem;">
-                        Cancel
-                    </button>
-                </ng-container>
-            </div>
-        </div>
-        <div class="drivers-list"
-            style="display: flex; gap: 15px; flex-wrap: wrap; align-content: flex-start; padding-left: 10px;">
-            <div *ngFor="let driver of strategyService.drivers()" class="driver-badge"
-                [class.editing]="editingDriverId() === driver.id" [style.border-left-color]="driver.accentColor"
-                (click)="editDriver(driver)" style="cursor: pointer;">
-                <div style="font-weight: 700;">{{ driver.name }}</div>
-                <div style="font-size: 0.7rem; color: var(--text-dim);">
-                    {{ driver.fuelPerLapL ? driver.fuelPerLapL + ' L/Lap' : 'Global Fuel' }}
-                    <span *ngIf="driver.avgLapTimeMs" style="margin-left: 8px; color: var(--accent-color);">
-                        ⏱ {{ formatMs(driver.avgLapTimeMs) }}
-                    </span>
-                </div>
-                <div style="font-size: 0.6rem; color: var(--accent-color); margin-top: 4px;"
-                    *ngIf="editingDriverId() === driver.id">EDITING...</div>
-                <button (click)="strategyService.removeDriver(driver.id); $event.stopPropagation()"
-                    class="delete-btn">&times;</button>
-            </div>
-            <div *ngIf="strategyService.drivers().length === 0" style="color: var(--text-dim); font-style: italic;">
-                No drivers added yet.
+    <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('team_roster') }}</span></h2>
+    <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px;">
+        {{ trans.translate('roster_hint') }}
+        <a routerLink="/team" style="color: var(--accent-color); text-decoration: underline;">{{ trans.translate('manage_roster') }}</a>
+    </p>
+    <div class="drivers-list"
+        style="display: flex; gap: 15px; flex-wrap: wrap; align-content: flex-start;">
+        <div *ngFor="let driver of availableDrivers(); trackBy: trackByDriverId" class="driver-badge"
+            [style.border-left-color]="driver.accentColor">
+            <div style="font-weight: 700;">{{ driver.name }}</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);">
+                {{ driver.fuelPerLapL ? driver.fuelPerLapL + ' L/Lap' : 'Global Fuel' }}
+                <span *ngIf="driver.avgLapTimeMs" style="margin-left: 8px; color: var(--accent-color);">
+                    ⏱ {{ formatMs(driver.avgLapTimeMs) }}
+                </span>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Stint Strategy Section (Tiles) -->
-<div *ngIf="strategyService.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
-    <h2><span style="font-weight: 300; opacity: 0.6;">PLAN:</span> {{ trans.translate('team_strategy_title') }}</h2>
+<div *ngIf="store.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
+    <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</h2>
     <div class="stint-timeline" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
-        <div *ngFor="let stint of strategyService.stintPlan()" [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
+        <div *ngFor="let stint of store.stintPlan(); trackBy: trackByStintIndex" [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
             [style.background]="getDriverColor(stint.driverId) + '22'"
             [style.border-left-color]="getDriverColor(stint.driverId)">
             <div class="stint-header">
-                <span class="stint-number">STINT #{{ stint.index }}</span>
-                <span class="stint-laps">{{ stint.laps }} LAPS</span>
+                <span class="stint-number">{{ trans.translate('stint_no') }}{{ stint.index }}</span>
+                <span class="stint-laps">{{ stint.laps }} {{ trans.translate('stint_laps') }}</span>
             </div>
             <div class="stint-body">
                 <select [ngModel]="stint.driverId" (ngModelChange)="updateStintDriver(stint.index, $event)">
                     <option value="">Select Driver</option>
-                    <option *ngFor="let driver of strategyService.drivers()" [value]="driver.id">{{ driver.name }}
+                    <option *ngFor="let driver of availableDrivers(); trackBy: trackByDriverId" [value]="driver.id">{{ driver.name }}
                     </option>
                 </select>
 
@@ -300,7 +234,7 @@
                         <input type="checkbox" [ngModel]="stint.changeTires"
                             (ngModelChange)="updateStintTires(stint.index, $event)"
                             style="width: 14px; height: 14px; cursor: pointer; appearance: auto; -webkit-appearance: auto;">
-                        CHANGE TIRES
+                        {{ trans.translate('change_tires') }}
                     </label>
                     <div style="flex: 1; position: relative;">
                         <input type="number" [ngModel]="(stint.additionalTimeMs || 0) / 1000"
@@ -331,7 +265,7 @@
             style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;">
             Race Overview Matrix</h3>
         <div class="stint-grid">
-            <div *ngFor="let stint of strategyService.stintPlan()" class="mini-tile"
+            <div *ngFor="let stint of store.stintPlan(); trackBy: trackByStintIndex" class="mini-tile"
                 [style.background]="getDriverColor(stint.driverId)" [class.unassigned]="!stint.driverId"
                 (click)="scrollToStint(stint.index)">
                 {{ stint.index }}
@@ -340,11 +274,11 @@
                 <div class="mini-tooltip">
                     <div
                         style="font-weight: 700; color: var(--accent-color); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
-                        STINT #{{ stint.index }}
+                        {{ trans.translate('stint_no') }}{{ stint.index }}
                     </div>
                     <div style="font-size: 0.8rem; font-weight: 600; color: white;">{{
-                        strategyService.getDriverById(stint.driverId)?.name || 'UNASSIGNED' }}</div>
-                    <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 5px; color: white;">{{ stint.laps }} Laps
+                        getDriverById(stint.driverId)?.name || trans.translate('unassigned') }}</div>
+                    <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 5px; color: white;">{{ stint.laps }} {{ trans.translate('stint_laps') }}
                     </div>
                     <div
                         style="font-family: monospace; font-size: 0.7rem; color: var(--accent-color); margin-top: 8px;">

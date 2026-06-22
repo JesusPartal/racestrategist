@@ -1,103 +1,123 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { API_BASE } from '../api.config';
 import { DriverProfile } from '../models/race-strategy.model';
+import { lastValueFrom } from 'rxjs';
 
 export interface TeamSettings {
-    teamName: string;
-    defaultPitFuelOnlyS: number;
-    defaultPitTiresS: number;
+  teamName: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TeamService {
-    private readonly STORAGE_KEY = 'rs_team_roster';
-    private readonly SETTINGS_KEY = 'rs_team_settings';
+  private http = inject(HttpClient);
 
-    // Team Roster (persisted independently of any active strategy)
-    roster = signal<DriverProfile[]>([]);
+  roster = signal<DriverProfile[]>([]);
+  settings = signal<TeamSettings>({ teamName: 'My Racing Team' });
+  loading = signal(false);
+  error = signal<string | null>(null);
 
-    // Global team settings
-    settings = signal<TeamSettings>({
-        teamName: 'My Racing Team',
-        defaultPitFuelOnlyS: 45,
-        defaultPitTiresS: 65
-    });
+  avgIRating = computed(() => {
+    const drivers = this.roster().filter(d => d.iRating);
+    if (!drivers.length) return 0;
+    return Math.round(drivers.reduce((s, d) => s + (d.iRating || 0), 0) / drivers.length);
+  });
 
-    // Stats computed from roster
-    avgIRating = computed(() => {
-        const drivers = this.roster().filter(d => d.iRating);
-        if (!drivers.length) return 0;
-        return Math.round(drivers.reduce((s, d) => s + (d.iRating || 0), 0) / drivers.length);
-    });
-
-    constructor() {
-        this.load();
-        if (this.roster().length === 0) {
-            this.seedMockRoster();
-        }
+  async loadSettings(): Promise<void> {
+    try {
+      const settings = await lastValueFrom(
+        this.http.get<{ teamName: string }>(`${API_BASE}/team/settings`)
+      );
+      this.settings.set(settings);
+    } catch {
+      // default settings already set
     }
+  }
 
-    private load() {
-        try {
-            const raw = localStorage.getItem(this.STORAGE_KEY);
-            if (raw) this.roster.set(JSON.parse(raw));
-            const sRaw = localStorage.getItem(this.SETTINGS_KEY);
-            if (sRaw) this.settings.set(JSON.parse(sRaw));
-        } catch { /* ignore */ }
+  async saveSettings(updates: Partial<TeamSettings>): Promise<void> {
+    try {
+      await lastValueFrom(
+        this.http.put(`${API_BASE}/team/settings`, updates)
+      );
+      this.settings.update(s => ({ ...s, ...updates }));
+    } catch {
+      this.error.set('Failed to save team settings');
     }
+  }
 
-    private save() {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.roster()));
-        localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(this.settings()));
+  async loadRoster(page = 1, limit = 50): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const drivers = await lastValueFrom(
+        this.http.get<DriverProfile[]>(`${API_BASE}/team/drivers?page=${page}&limit=${limit}`)
+      );
+      this.roster.set(drivers);
+    } catch {
+      this.roster.set([]);
+      this.error.set('Failed to load team roster');
+    } finally {
+      this.loading.set(false);
     }
+  }
 
-    addDriver(driver: Omit<DriverProfile, 'id'>) {
-        const newDriver: DriverProfile = { ...driver, id: crypto.randomUUID() };
-        this.roster.update(r => [...r, newDriver]);
-        this.save();
+  async addDriver(driver: Omit<DriverProfile, 'id'>) {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const created = await lastValueFrom(
+        this.http.post<DriverProfile>(`${API_BASE}/team/drivers`, driver)
+      );
+      this.roster.update(r => [...r, created]);
+    } catch {
+      this.error.set('Failed to add driver');
+    } finally {
+      this.loading.set(false);
     }
+  }
 
-    updateDriver(id: string, updates: Partial<DriverProfile>) {
-        this.roster.update(r => r.map(d => d.id === id ? { ...d, ...updates } : d));
-        this.save();
+  async updateDriver(id: string, updates: Partial<DriverProfile>) {
+    const driver = this.roster().find(d => d.id === id);
+    if (!driver) return;
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      await lastValueFrom(
+        this.http.put(`${API_BASE}/team/drivers/${id}`, { ...driver, ...updates })
+      );
+      this.roster.update(r => r.map(d => d.id === id ? { ...d, ...updates } : d));
+    } catch {
+      this.error.set('Failed to update driver');
+    } finally {
+      this.loading.set(false);
     }
+  }
 
-    removeDriver(id: string) {
-        this.roster.update(r => r.filter(d => d.id !== id));
-        this.save();
+  async removeDriver(id: string) {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      await lastValueFrom(
+        this.http.delete(`${API_BASE}/team/drivers/${id}`)
+      );
+      this.roster.update(r => r.filter(d => d.id !== id));
+    } catch {
+      this.error.set('Failed to remove driver');
+    } finally {
+      this.loading.set(false);
     }
+  }
 
-    updateSettings(updates: Partial<TeamSettings>) {
-        this.settings.update(s => ({ ...s, ...updates }));
-        this.save();
-    }
+  updateSettings(updates: Partial<TeamSettings>) {
+    this.settings.update(s => ({ ...s, ...updates }));
+    this.saveSettings(updates);
+  }
 
-    formatLapTime(ms: number): string {
-        if (!ms) return '—';
-        const m = Math.floor(ms / 60000);
-        const s = Math.floor((ms % 60000) / 1000);
-        const msRem = ms % 1000;
-        return `${m}:${s.toString().padStart(2, '0')}.${msRem.toString().padStart(3, '0')}`;
-    }
-
-    private seedMockRoster() {
-        const mock: DriverProfile[] = [
-            {
-                id: 'td-1', name: 'Marco Rossi', accentColor: '#FFB000',
-                avgLapTimeMs: 510000, fuelPerLapL: 12.8, errorFactor: 0.01,
-                licenseClass: 'A', iRating: 4850, nationality: '🇮🇹', role: 'Primary'
-            },
-            {
-                id: 'td-2', name: 'Sophie Müller', accentColor: '#2979FF',
-                avgLapTimeMs: 514000, fuelPerLapL: 13.1, errorFactor: 0.015,
-                licenseClass: 'A', iRating: 4120, nationality: '🇩🇪', role: 'Primary'
-            },
-            {
-                id: 'td-3', name: 'James Park', accentColor: '#00E676',
-                avgLapTimeMs: 520000, fuelPerLapL: undefined, errorFactor: 0.02,
-                licenseClass: 'B', iRating: 3400, nationality: '🇬🇧', role: 'Reserve'
-            }
-        ];
-        this.roster.set(mock);
-        this.save();
-    }
+  formatLapTime(ms: number): string {
+    if (!ms) return '—';
+    const m = Math.floor(ms / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    const msRem = ms % 1000;
+    return `${m}:${s.toString().padStart(2, '0')}.${msRem.toString().padStart(3, '0')}`;
+  }
 }

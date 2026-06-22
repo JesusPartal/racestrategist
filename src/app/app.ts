@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
@@ -11,18 +11,20 @@ import { AuthService } from './core/services/auth.service';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('RaceStrategist');
   auth = inject(AuthService);
   router = inject(Router);
 
-  login() {
-    this.auth.login();
-    // Redirect happens after state update in a real app, here we'll do it manually for smooth UX
-    setTimeout(() => this.router.navigate(['/home']), 600);
+  async login() {
+    try {
+      await this.auth.login('TrackTitan_99', 'demo');
+      this.router.navigate(['/home']);
+    } catch {
+      alert('Login failed');
+    }
   }
 
   logout() {
     this.auth.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 }

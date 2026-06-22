@@ -499,3 +499,30 @@
 .side-panel .form-field select {
     padding: 10px 35px 10px 15px;
 }
+
+.loading-bar, .error-bar {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    margin-bottom: 25px;
+    font-size: 0.85rem;
+}
+
+.retry-btn {
+    margin-left: auto;
+    background: rgba(255, 82, 82, 0.2);
+    border: 1px solid rgba(255, 82, 82, 0.4);
+    color: #ff5252;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.retry-btn:hover {
+    background: rgba(255, 82, 82, 0.3);
+}

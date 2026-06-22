@@ -9,10 +9,12 @@ import { StrategiesListComponent } from './features/strategies-list/strategies-l
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 import { TeamComponent } from './features/team/team';
 
-const authGuard = () => {
+const authGuard = async () => {
     const auth = inject(AuthService);
     const router = inject(Router);
-    return auth.currentUser() ? true : router.parseUrl('/login');
+    if (auth.currentUser()) return true;
+    const valid = await auth.verifyToken();
+    return valid ? true : router.parseUrl('/login');
 };
 
 export const routes: Routes = [

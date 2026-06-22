@@ -1,55 +1,76 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { API_BASE } from '../api.config';
+import { lastValueFrom } from 'rxjs';
 
 export interface UserProfile {
-    id: string;
-    username: string;
-    avatar?: string;
-    license?: string;
-    irating?: number;
+  id: string;
+  username: string;
+  displayName: string;
+  licenseClass: string;
+  iRating: number;
 }
 
-@Injectable({
-    providedIn: 'root'
-})
+interface LoginResponse {
+  token: string;
+  displayName: string;
+  licenseClass: string;
+  iRating: number;
+  userId: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-    currentUser = signal<UserProfile | null>(null);
+  private http = inject(HttpClient);
 
-    constructor() {
-        this.checkAuth();
+  currentUser = signal<UserProfile | null>(null);
+  token = signal<string | null>(null);
+
+  constructor() {
+    this.loadToken();
+  }
+
+  /** Verifies the stored token with the server. Call before guarded navigation. */
+  async verifyToken(): Promise<boolean> {
+    if (this.currentUser()) return true;
+    if (!this.token()) return false;
+    try {
+      const res = await lastValueFrom(
+        this.http.get<UserProfile>(`${API_BASE}/auth/me`)
+      );
+      this.currentUser.set(res);
+      return true;
+    } catch {
+      this.logout();
+      return false;
     }
+  }
 
-    // Simulated iRacing OAuth2 Flow
-    login() {
-        // In a real app, this would redirect to iRacing OAuth2 endpoint
-        // For this demo, we'll simulate a successful login
-        const mockUser: UserProfile = {
-            id: '123456',
-            username: 'TrackTitan_99',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TrackTitan',
-            license: 'Pro-A 4.99',
-            irating: 4500
-        };
+  async login(username: string, password: string): Promise<void> {
+    const res = await lastValueFrom(
+      this.http.post<LoginResponse>(`${API_BASE}/auth/login`, { username, password })
+    );
+    this.token.set(res.token);
+    localStorage.setItem('rs_token', res.token);
+    this.currentUser.set({
+      id: res.userId,
+      username: res.displayName,
+      displayName: res.displayName,
+      licenseClass: res.licenseClass,
+      iRating: res.iRating,
+    });
+  }
 
-        // Simulate a small delay for the login process
-        setTimeout(() => {
-            this.currentUser.set(mockUser);
-            localStorage.setItem('rs_user', JSON.stringify(mockUser));
-        }, 500);
+  logout() {
+    this.currentUser.set(null);
+    this.token.set(null);
+    localStorage.removeItem('rs_token');
+  }
+
+  private loadToken() {
+    const saved = localStorage.getItem('rs_token');
+    if (saved) {
+      this.token.set(saved);
     }
-
-    logout() {
-        this.currentUser.set(null);
-        localStorage.removeItem('rs_user');
-    }
-
-    checkAuth() {
-        const saved = localStorage.getItem('rs_user');
-        if (saved) {
-            try {
-                this.currentUser.set(JSON.parse(saved));
-            } catch (e) {
-                localStorage.removeItem('rs_user');
-            }
-        }
-    }
+  }
 }
