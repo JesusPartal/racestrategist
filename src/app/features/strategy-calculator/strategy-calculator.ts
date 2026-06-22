@@ -21,6 +21,7 @@ import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 })
 export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   private teamsService = inject(TeamsService);
+  private suppressDirty = true;
 
   events = signal<any[]>([]);
   vehiclesByEvent = signal<Vehicle[]>([]);
@@ -147,17 +148,13 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       }
     });
 
-    let dirtyInitSkip = true;
     effect(() => {
       this.fuelPerLap(); this.lapMin(); this.lapSec(); this.lapMs();
       this.selectedEventId(); this.selectedVehicleId();
       this.store.pitStopFuelOnlyMs(); this.store.pitStopTiresMs();
       this.store.stintPlan(); this.store.drivers();
 
-      if (dirtyInitSkip) {
-        dirtyInitSkip = false;
-        return;
-      }
+      if (untracked(() => this.suppressDirty)) return;
       untracked(() => this.isDirty.set(true));
     });
   }
@@ -212,11 +209,11 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   }
 
   syncFromActiveStrategy() {
+    this.suppressDirty = true;
     const eventId = this.store.activeEventId();
     const vehicleId = this.store.activeVehicleId();
     const fuel = this.store.activeFuelPerLap();
     const totalMs = this.store.activeAvgLapTimeMs();
-    const eventStartTime = this.store.activeEventStartTime();
 
     if (eventId) this.selectedEventId.set(eventId);
     if (vehicleId) this.selectedVehicleId.set(vehicleId);
@@ -230,6 +227,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
 
     untracked(() => this.isDirty.set(false));
+    setTimeout(() => { this.suppressDirty = false; });
   }
 
   onEventChange(id: string) { this.selectedEventId.set(id); }
@@ -413,6 +411,8 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       await this.loadLibrary();
     }
     this.isDirty.set(false);
+    this.suppressDirty = true;
+    setTimeout(() => { this.suppressDirty = false; });
   }
 
   private async saveStintsAndDrivers(id: string) {
