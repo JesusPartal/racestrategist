@@ -124,21 +124,6 @@
                     </span>
                 </div>
 
-                <div class="dc-stats">
-                    <div class="dc-stat">
-                        <span class="dc-stat-label">{{ trans.translate('lap_time') }}</span>
-                        <code class="dc-stat-val">{{ formatLapTime(driver.avgLapTimeMs) }}</code>
-                    </div>
-                    <div class="dc-stat">
-                        <span class="dc-stat-label">{{ trans.translate('fuel_per_lap') }}</span>
-                        <code class="dc-stat-val">{{ driver.fuelPerLapL ? (driver.fuelPerLapL | number:'1.1-2') + ' L' : '—' }}</code>
-                    </div>
-                    <div class="dc-stat">
-                        <span class="dc-stat-label">{{ trans.translate('error_factor') }}</span>
-                        <code class="dc-stat-val">{{ (driver.errorFactor * 100 | number:'1.0-1') }}%</code>
-                    </div>
-                </div>
-
                 <button class="dc-delete-btn" (click)="removeDriver(driver.id); $event.stopPropagation()" title="Remove driver">
                     &times;
                 </button>
@@ -220,43 +205,6 @@
                 <select [(ngModel)]="form.role">
                     <option *ngFor="let r of roles; trackBy: trackByRole" [value]="r">{{ r }}</option>
                 </select>
-            </div>
-        </div>
-
-        <!-- Lap Time -->
-        <div class="form-field">
-            <label>{{ trans.translate('avg_lap_time_label') }}</label>
-            <div class="three-col">
-                <div style="position: relative;">
-                    <input type="number" [(ngModel)]="form.lapMin" placeholder="MIN" min="0">
-                    <span class="unit-label">M</span>
-                </div>
-                <div style="position: relative;">
-                    <input type="number" [(ngModel)]="form.lapSec" placeholder="SEC" min="0" max="59">
-                    <span class="unit-label">S</span>
-                </div>
-                <div style="position: relative;">
-                    <input type="number" [(ngModel)]="form.lapMs" placeholder="MS" min="0" max="999">
-                    <span class="unit-label">MS</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Fuel + Error -->
-        <div class="two-col">
-            <div class="form-field">
-                <label>{{ trans.translate('fuel_per_lap_label') }}</label>
-                <div style="position: relative;">
-                    <input type="number" [(ngModel)]="form.fuelPerLapL" placeholder="L" step="0.01">
-                    <span class="unit-label">L</span>
-                </div>
-            </div>
-            <div class="form-field">
-                <label>{{ trans.translate('error_factor_label') }}</label>
-                <div style="position: relative;">
-                    <input type="number" [(ngModel)]="form.errorFactor" step="0.005" min="0" max="0.5">
-                    <span class="unit-label">%</span>
-                </div>
             </div>
         </div>
 

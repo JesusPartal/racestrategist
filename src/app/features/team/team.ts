@@ -42,12 +42,7 @@ export class TeamComponent implements OnInit {
         licenseClass: 'A' as DriverProfile['licenseClass'],
         iRating: null as number | null,
         nationality: '',
-        role: 'Primary' as DriverProfile['role'],
-        lapMin: null as number | null,
-        lapSec: null as number | null,
-        lapMs: null as number | null,
-        fuelPerLapL: null as number | null,
-        errorFactor: 0.02
+        role: 'Primary' as DriverProfile['role']
     };
 
     trackById = (_: number, i: { id: string }) => i.id;
@@ -62,13 +57,6 @@ export class TeamComponent implements OnInit {
 
     readonly licenseClasses: DriverProfile['licenseClass'][] = ['Pro', 'Pro/Am', 'A', 'B', 'C', 'D'];
     readonly roles: DriverProfile['role'][] = ['Primary', 'Reserve', 'Coach'];
-
-    formLapTimeMs = () => {
-        const m = Number(this.form.lapMin || 0);
-        const s = Number(this.form.lapSec || 0);
-        const ms = Number(this.form.lapMs || 0);
-        return (m * 60 * 1000) + (s * 1000) + ms;
-    };
 
     ngOnInit() {
         this.loadTeams();
@@ -161,14 +149,6 @@ export class TeamComponent implements OnInit {
         this.form.iRating = driver.iRating || null;
         this.form.nationality = driver.nationality || '';
         this.form.role = (driver.role || 'Primary') as DriverProfile['role'];
-        this.form.fuelPerLapL = driver.fuelPerLapL || null;
-        this.form.errorFactor = driver.errorFactor;
-        if (driver.avgLapTimeMs) {
-            const totalSec = Math.floor(driver.avgLapTimeMs / 1000);
-            this.form.lapMin = Math.floor(totalSec / 60);
-            this.form.lapSec = totalSec % 60;
-            this.form.lapMs = driver.avgLapTimeMs % 1000;
-        }
         this.editingId.set(driver.id);
         this.formMode.set('edit');
     }
@@ -186,9 +166,6 @@ export class TeamComponent implements OnInit {
         const payload: any = {
             name: this.form.name.trim(),
             accentColor: this.form.accentColor,
-            avgLapTimeMs: this.formLapTimeMs(),
-            fuelPerLapL: this.form.fuelPerLapL || undefined,
-            errorFactor: this.form.errorFactor,
             licenseClass: this.form.licenseClass,
             iRating: this.form.iRating || undefined,
             nationality: this.form.nationality || undefined,
@@ -222,14 +199,6 @@ export class TeamComponent implements OnInit {
         }
     }
 
-    formatLapTime(ms: number): string {
-        if (!ms) return '—';
-        const m = Math.floor(ms / 60000);
-        const s = Math.floor((ms % 60000) / 1000);
-        const msRem = ms % 1000;
-        return `${m}:${s.toString().padStart(2, '0')}.${msRem.toString().padStart(3, '0')}`;
-    }
-
     getLicenseBadgeColor(cls?: string): string {
         const map: Record<string, string> = {
             'Pro': '#FFB000', 'Pro/Am': '#FF6E40',
@@ -242,8 +211,7 @@ export class TeamComponent implements OnInit {
         this.form = {
             name: '', accentColor: '#FFB000',
             licenseClass: 'A', iRating: null, nationality: '',
-            role: 'Primary', lapMin: null, lapSec: null, lapMs: null,
-            fuelPerLapL: null, errorFactor: 0.02
+            role: 'Primary'
         };
     }
 }
