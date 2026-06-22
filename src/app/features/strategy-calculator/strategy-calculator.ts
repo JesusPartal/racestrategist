@@ -398,7 +398,9 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       await this.loadLibrary();
     } else {
       const id = this.store.activeStrategyId()!;
+      const name = this.store.activeStrategyName() || 'Unnamed Strategy';
       await this.api.updateStrategy(id, {
+        name,
         eventId: this.selectedEventId(), vehicleId: this.selectedVehicleId(),
         avgLapTimeMs: this.avgLapTime(), fuelPerLap: this.fuelPerLap(),
         pitStopFuelOnlyMs: this.store.pitStopFuelOnlyMs(),
