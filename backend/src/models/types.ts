@@ -61,6 +61,7 @@ export interface User {
   licenseClass: string;
   iRating: number;
   teamId: string;
+  isAdmin: boolean;
 }
 
 export interface TeamDriver {
@@ -89,6 +90,7 @@ export interface LoginResponse {
   iRating: number;
   userId: string;
   teamId: string;
+  isAdmin: boolean;
 }
 
 export interface StrategySummaryDto {

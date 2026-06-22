@@ -77,6 +77,7 @@ export function initializeDatabase(): void {
   // Migrate existing tables
   try { db.exec('ALTER TABLE users ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0'); } catch {}
 }
 
 export default db;

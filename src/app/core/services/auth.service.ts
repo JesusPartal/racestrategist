@@ -10,6 +10,7 @@ export interface UserProfile {
   licenseClass: string;
   iRating: number;
   teamId: string;
+  isAdmin?: boolean;
 }
 
 interface LoginResponse {
@@ -19,6 +20,7 @@ interface LoginResponse {
   iRating: number;
   userId: string;
   teamId: string;
+  isAdmin: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +63,7 @@ export class AuthService {
       licenseClass: res.licenseClass,
       iRating: res.iRating,
       teamId: res.teamId,
+      isAdmin: res.isAdmin,
     });
   }
 
@@ -77,6 +80,7 @@ export class AuthService {
       licenseClass: res.licenseClass,
       iRating: res.iRating,
       teamId: res.teamId,
+      isAdmin: res.isAdmin,
     });
   }
 

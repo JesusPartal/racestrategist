@@ -15,8 +15,9 @@ export function seedData(): void {
 
   for (const u of users) {
     const hash = bcrypt.hashSync(u.password, 10);
-    db.prepare('INSERT OR IGNORE INTO users (id, username, password_hash, display_name, license_class, i_rating, team_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      u.id, u.username, hash, u.display, u.license, u.irating, 'default');
+    const isAdmin = u.username === 'JesusPartal' ? 1 : 0;
+    db.prepare('INSERT OR IGNORE INTO users (id, username, password_hash, display_name, license_class, i_rating, team_id, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+      u.id, u.username, hash, u.display, u.license, u.irating, 'default', isAdmin);
   }
 
   // Seed events

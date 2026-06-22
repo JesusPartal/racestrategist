@@ -24,6 +24,9 @@
         <a routerLink="/team" routerLinkActive="active" style="text-decoration: none;">
           <span class="nav-link">{{ trans.translate('nav_team') }}</span>
         </a>
+        <a routerLink="/admin" routerLinkActive="active" style="text-decoration: none;" *ngIf="auth.currentUser()?.isAdmin">
+          <span class="nav-link">{{ trans.translate('nav_admin') }}</span>
+        </a>
         <span class="nav-link disabled">{{ trans.translate('nav_telemetry') }}</span>
         <span class="nav-link disabled">{{ trans.translate('nav_tempest') }}</span>
       </div>

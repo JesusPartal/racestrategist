@@ -9,6 +9,7 @@ import { StrategiesListComponent } from './features/strategies-list/strategies-l
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 import { TeamComponent } from './features/team/team';
 import { JoinStrategyComponent } from './features/join/join';
+import { AdminComponent } from './features/admin/admin';
 
 const authGuard = async () => {
     const auth = inject(AuthService);
@@ -39,6 +40,7 @@ export const routes: Routes = [
     { path: 'home', component: HomeComponent, canActivate: [authGuard] },
     { path: 'strategies', component: StrategiesListComponent, canActivate: [authGuard] },
     { path: 'join', component: JoinStrategyComponent },
+    { path: 'admin', component: AdminComponent, canActivate: [authGuard] },
     { path: 'team', component: TeamComponent, canActivate: [authGuard] },
     {
         path: 'strategy',

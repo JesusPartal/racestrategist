@@ -10,8 +10,9 @@ export function login(req: LoginRequest): LoginResponse | null {
   const valid = bcrypt.compareSync(req.password, row.password_hash);
   if (!valid) return null;
 
-  const token = generateToken(row.id, row.username, row.team_id);
-  return { token, displayName: row.display_name, licenseClass: row.license_class, iRating: row.i_rating, userId: row.id, teamId: row.team_id };
+  const isAdmin = !!(row.is_admin);
+  const token = generateToken(row.id, row.username, row.team_id, isAdmin);
+  return { token, displayName: row.display_name, licenseClass: row.license_class, iRating: row.i_rating, userId: row.id, teamId: row.team_id, isAdmin };
 }
 
 export function register(req: LoginRequest): LoginResponse | null {
@@ -23,12 +24,12 @@ export function register(req: LoginRequest): LoginResponse | null {
   db.prepare('INSERT INTO users (id, username, password_hash, display_name, license_class, i_rating, team_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
     id, req.username, hash, req.username, 'Rookie', 1350, 'default');
 
-  const token = generateToken(id, req.username, 'default');
-  return { token, displayName: req.username, licenseClass: 'Rookie', iRating: 1350, userId: id, teamId: 'default' };
+  const token = generateToken(id, req.username, 'default', false);
+  return { token, displayName: req.username, licenseClass: 'Rookie', iRating: 1350, userId: id, teamId: 'default', isAdmin: false };
 }
 
 export function getUserById(userId: string): Omit<User, 'passwordHash'> | null {
-  const row = db.prepare('SELECT id, username, display_name, license_class, i_rating, team_id FROM users WHERE id = ?').get(userId) as any;
+  const row = db.prepare('SELECT id, username, display_name, license_class, i_rating, team_id, is_admin FROM users WHERE id = ?').get(userId) as any;
   if (!row) return null;
   return {
     id: row.id,
@@ -37,5 +38,6 @@ export function getUserById(userId: string): Omit<User, 'passwordHash'> | null {
     licenseClass: row.license_class,
     iRating: row.i_rating,
     teamId: row.team_id,
+    isAdmin: !!(row.is_admin),
   } as any;
 }
