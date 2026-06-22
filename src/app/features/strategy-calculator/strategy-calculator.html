@@ -338,6 +338,23 @@
 </div>
 
 <style>
+    .panel-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-box {
+        width: 90%;
+        max-width: 480px;
+        padding: 30px;
+        margin: auto;
+    }
+
     /* Hide Chrome/Safari/Edge spin buttons */
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button {
@@ -736,8 +753,8 @@
 </style>
 
 <!-- Team Selector Modal -->
-<div class="panel-overlay" *ngIf="showTeamSelector()" (click)="closeTeamSelector()" style="z-index: 10001;">
-    <div class="modal-box glass-card animate-in" (click)="$event.stopPropagation()" style="max-width: 480px; margin: auto;">
+<div class="panel-overlay" *ngIf="showTeamSelector()" (click)="closeTeamSelector()">
+    <div class="modal-box glass-card animate-in" (click)="$event.stopPropagation()">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="font-family: var(--font-display); font-size: 1rem; margin: 0; letter-spacing: 1px;">{{ trans.translate('select_team_to_load') }}</h2>
             <button class="panel-close" (click)="closeTeamSelector()">&times;</button>
