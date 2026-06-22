@@ -91,6 +91,8 @@ export function initializeDatabase(): void {
   try { db.exec('ALTER TABLE teams ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0'); } catch {}
   try { db.exec('ALTER TABLE team_drivers ADD COLUMN fuel_per_lap_l REAL DEFAULT 0'); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN event_start_time INTEGER DEFAULT 0'); } catch {}
+  try { db.exec('ALTER TABLE strategies ADD COLUMN created_by TEXT'); } catch {}
+  try { db.exec('ALTER TABLE strategies ADD COLUMN source_id TEXT'); } catch {}
 }
 
 export default db;

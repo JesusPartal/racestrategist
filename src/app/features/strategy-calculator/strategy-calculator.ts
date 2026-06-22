@@ -228,6 +228,8 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       this.lapSec.set(totalSeconds % 60);
       this.lapMs.set(totalMs % 1000);
     }
+
+    untracked(() => this.isDirty.set(false));
   }
 
   onEventChange(id: string) { this.selectedEventId.set(id); }

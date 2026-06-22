@@ -46,7 +46,7 @@ export function getStrategyById(id: string): RaceStrategy | null {
   return rowToStrategy(row);
 }
 
-export function createStrategy(req: CreateStrategyRequest, teamId?: string): RaceStrategy | null {
+export function createStrategy(req: CreateStrategyRequest, teamId?: string, userId?: string): RaceStrategy | null {
   const eventExists = db.prepare('SELECT id FROM events WHERE id = ?').get(req.eventId);
   if (!eventExists) return null;
 
@@ -56,8 +56,8 @@ export function createStrategy(req: CreateStrategyRequest, teamId?: string): Rac
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, event_start_time, drivers, stints, team_id)
-    VALUES (?, ?, ?, ?, '', ?, ?, ?, ?, '[]', '[]', ?)`).run(id, req.name, req.eventId, req.vehicleId, req.avgLapTimeMs, req.fuelPerLap, now, req.eventStartTime || 0, teamId || 'default');
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, event_start_time, drivers, stints, team_id, created_by)
+    VALUES (?, ?, ?, ?, '', ?, ?, ?, ?, '[]', '[]', ?, ?)`).run(id, req.name, req.eventId, req.vehicleId, req.avgLapTimeMs, req.fuelPerLap, now, req.eventStartTime || 0, teamId || 'default', userId || null);
 
   return getStrategyById(id)!;
 }
@@ -105,7 +105,7 @@ export function updateDrivers(strategyId: string, drivers: DriverProfile[]): boo
   return true;
 }
 
-export function cloneStrategy(sourceId: string, targetTeamId: string): RaceStrategy | null {
+export function cloneStrategy(sourceId: string, targetTeamId: string, userId?: string): RaceStrategy | null {
   const original = getStrategyById(sourceId);
   if (!original) return null;
 
@@ -114,22 +114,27 @@ export function cloneStrategy(sourceId: string, targetTeamId: string): RaceStrat
   const vehicleExists = db.prepare('SELECT id FROM vehicles WHERE id = ?').get(original.vehicleId);
   if (!vehicleExists) return null;
 
+  // Prevent duplicate clones: if this team already cloned this source strategy, return the existing clone
+  const existingClone = db.prepare('SELECT id FROM strategies WHERE source_id = ? AND team_id = ?').get(sourceId, targetTeamId) as any;
+  if (existingClone) return getStrategyById(existingClone.id);
+
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, drivers, stints, team_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, drivers, stints, team_id, created_by, source_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     id, original.name, original.eventId, original.vehicleId, original.vehicleName || '',
     original.avgLapTimeMs, original.fuelPerLap, original.pitStopFuelOnlyMs, original.pitStopTiresMs,
-    now, original.eventStartTime || 0, JSON.stringify(original.drivers), JSON.stringify(original.stints), targetTeamId
+    now, original.eventStartTime || 0, JSON.stringify(original.drivers), JSON.stringify(original.stints), targetTeamId, userId || null, sourceId
   );
 
   return getStrategyById(id)!;
 }
 
-export function deleteStrategy(id: string): boolean {
-  const existing = db.prepare('SELECT id FROM strategies WHERE id = ?').get(id);
-  if (!existing) return false;
+export function deleteStrategy(id: string, userId?: string, isAdmin?: boolean): boolean {
+  const row = db.prepare('SELECT created_by FROM strategies WHERE id = ?').get(id) as any;
+  if (!row) return false;
+  if (!isAdmin && row.created_by && userId && row.created_by !== userId) return false;
   db.prepare('DELETE FROM strategies WHERE id = ?').run(id);
   return true;
 }

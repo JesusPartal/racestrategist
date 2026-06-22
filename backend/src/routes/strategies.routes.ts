@@ -42,7 +42,7 @@ router.post('/', (req: AuthRequest, res: Response) => {
     res.status(400).json({ error: 'name, eventId, and vehicleId are required' });
     return;
   }
-  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0 }, req.teamId);
+  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0 }, req.teamId, req.userId);
   if (!strategy) {
     res.status(400).json({ error: 'Invalid eventId or vehicleId' });
     return;
@@ -59,8 +59,8 @@ router.put('/:id', (req: AuthRequest, res: Response) => {
 
 router.delete('/:id', (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const deleted = strategyService.deleteStrategy(id);
-  if (!deleted) { res.status(404).json({ error: 'Strategy not found' }); return; }
+  const deleted = strategyService.deleteStrategy(id, req.userId, req.isAdmin);
+  if (!deleted) { res.status(403).json({ error: 'Only the creator can delete this strategy' }); return; }
   res.status(204).send();
 });
 
@@ -95,7 +95,7 @@ router.post('/invite/:token/accept', (req: AuthRequest, res: Response) => {
   try {
     const payload = jwt.verify(req.params.token as string, INVITE_SECRET);
     const decoded = payload as unknown as { strategyId: string };
-    const cloned = strategyService.cloneStrategy(decoded.strategyId, req.teamId!);
+    const cloned = strategyService.cloneStrategy(decoded.strategyId, req.teamId!, req.userId);
     if (!cloned) { res.status(400).json({ error: 'Could not clone strategy' }); return; }
     res.json(cloned);
   } catch {
