@@ -101,9 +101,6 @@
             <button class="btn-invite-top" (click)="openInvite()" [disabled]="!store.activeStrategyId()" title="Invite">
                 <i class="fa-solid fa-link"></i>
             </button>
-            <button class="btn-secondary" (click)="toggleTimeMode()" style="padding: 4px 10px; font-size: 0.75rem;">
-                {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
-            </button>
         </div>
     </div>
 
@@ -300,7 +297,12 @@
 
 <!-- Stint Strategy Section (Tiles) -->
 <div *ngIf="store.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
-    <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</h2>
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</h2>
+        <button class="btn-time-toggle" (click)="toggleTimeMode()">
+            <i class="fa-solid fa-clock"></i> {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
+        </button>
+    </div>
     <div class="stint-timeline" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         <div *ngFor="let stint of store.stintPlan(); trackBy: trackByStintIndex" [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
             [style.background]="getDriverColor(stint.driverId) + '22'"

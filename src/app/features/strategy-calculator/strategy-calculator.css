@@ -236,3 +236,27 @@
 .btn-cancel-modal:hover {
     color: #fff;
 }
+
+/* ── Time Toggle Button ─────────────────────────────────────────────────── */
+.btn-time-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-time-toggle:hover {
+    background: rgba(255, 176, 0, 0.1);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
