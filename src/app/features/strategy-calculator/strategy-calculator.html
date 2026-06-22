@@ -266,14 +266,13 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Collapsed DASH summary -->
-<div *ngIf="dashCollapsed()" (click)="toggleDash()" style="
-    display: flex; gap: 24px; align-items: center;
-    padding: 10px 18px; background: rgba(255,255,255,0.03);
-    border-radius: 8px; cursor: pointer; margin-top: 15px;
-    border: 1px solid rgba(255,255,255,0.05);">
+    <!-- Collapsed DASH summary -->
+    <div *ngIf="dashCollapsed()" (click)="toggleDash()" style="
+        display: flex; gap: 24px; align-items: center;
+        padding: 10px 18px; background: rgba(255,255,255,0.03);
+        border-radius: 8px; cursor: pointer; margin-top: 15px;
+        border: 1px solid rgba(255,255,255,0.05);">
     <span style="font-size: 0.65rem; font-weight: 700; letter-spacing: 2px; opacity: 0.4;">DASH</span>
     <span style="font-size: 0.8rem; opacity: 0.7;">
         <i class="fa-solid fa-flag" style="opacity: 0.4; margin-right: 4px;"></i>
@@ -296,6 +295,7 @@
         {{ store.stintPlan().length }} {{ trans.translate('stint_label') || 'stints' }}
     </span>
     <i class="fa-solid fa-chevron-down" style="margin-left: auto; opacity: 0.4;"></i>
+</div>
 </div>
 
 <!-- Stint Strategy Section (Tiles) -->
