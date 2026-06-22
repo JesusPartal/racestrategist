@@ -2,7 +2,8 @@ FROM node:20 AS build
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+COPY patch-iracing-api.mjs ./
+RUN npm ci && node patch-iracing-api.mjs
 COPY . .
 RUN npm run build
 
