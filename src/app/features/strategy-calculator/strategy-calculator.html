@@ -593,6 +593,8 @@
         border-radius: 12px;
         padding: 20px;
         transition: var(--transition);
+        display: flex;
+        flex-direction: column;
     }
 
     .stint-header {
@@ -616,6 +618,12 @@
         font-weight: 700;
     }
 
+    .stint-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+    }
+
     .stint-body select {
         margin-bottom: 20px;
         font-size: 0.85rem;
@@ -626,6 +634,7 @@
         justify-content: space-between;
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         padding-top: 15px;
+        margin-top: auto;
     }
 
     .stint-times label {
