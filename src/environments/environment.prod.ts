@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://tu-backend.up.railway.app/api'
+  apiUrl: 'https://racestrategist-production.up.railway.app/api'
 };
