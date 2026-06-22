@@ -6,7 +6,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-slim AS runtime
+FROM node:20 AS runtime
 
 WORKDIR /app
 COPY --from=build /app/dist ./dist
