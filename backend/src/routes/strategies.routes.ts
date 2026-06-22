@@ -1,6 +1,9 @@
 import { Router, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import * as strategyService from '../services/strategy.service';
+
+const INVITE_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
 const router = Router();
 router.use(authMiddleware);
@@ -62,6 +65,26 @@ router.put('/:id/drivers', (req: AuthRequest, res: Response) => {
   const updated = strategyService.updateDrivers(id, drivers);
   if (!updated) { res.status(404).json({ error: 'Strategy not found' }); return; }
   res.json(strategyService.getStrategyById(id));
+});
+
+router.post('/:id/invite', (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const strategy = strategyService.getStrategyById(id);
+  if (!strategy) { res.status(404).json({ error: 'Strategy not found' }); return; }
+
+  const token = jwt.sign({ strategyId: id }, INVITE_SECRET, { expiresIn: '7d' });
+  res.json({ token, url: `/join?token=${token}` });
+});
+
+router.get('/invite/:token', (req: AuthRequest, res: Response) => {
+  try {
+    const decoded = jwt.verify(req.params.token, INVITE_SECRET) as { strategyId: string };
+    const strategy = strategyService.getStrategyById(decoded.strategyId);
+    if (!strategy) { res.status(404).json({ error: 'Strategy not found' }); return; }
+    res.json({ strategyId: decoded.strategyId, strategy });
+  } catch {
+    res.status(400).json({ error: 'Invalid or expired invite token' });
+  }
 });
 
 export default router;

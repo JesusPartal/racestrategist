@@ -79,4 +79,16 @@ export class StrategyApiService {
       this.http.put(`${API_BASE}/strategies/${strategyId}/drivers`, { drivers })
     );
   }
+
+  async generateInvite(strategyId: string): Promise<{ token: string; url: string }> {
+    return lastValueFrom(
+      this.http.post<{ token: string; url: string }>(`${API_BASE}/strategies/${strategyId}/invite`, {})
+    );
+  }
+
+  async resolveInvite(token: string): Promise<{ strategyId: string; strategy: RaceStrategy }> {
+    return lastValueFrom(
+      this.http.get<{ strategyId: string; strategy: RaceStrategy }>(`${API_BASE}/strategies/invite/${token}`)
+    );
+  }
 }
