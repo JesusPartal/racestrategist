@@ -10,6 +10,7 @@ export function seedData(): void {
     { id: 'user_5', username: 'JesusPartal',     password: 'jesus23',  display: 'Jesús Partal',    license: 'Pro', irating: 4000 },
     { id: 'user_6', username: 'BicorValencia',   password: 'bicor23',  display: 'Bicor Valencia',  license: 'A',   irating: 3500 },
     { id: 'user_7', username: 'OrlandoDoniz',    password: 'orlando23',display: 'Orlando Doniz',    license: 'B',   irating: 2800 },
+    { id: 'user_8', username: 'RaycoLeon',       password: 'rayco23',  display: 'Rayco León',      license: 'A',   irating: 3100 },
   ];
 
   for (const u of users) {
