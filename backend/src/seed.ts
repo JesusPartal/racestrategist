@@ -21,12 +21,9 @@ export function seedData(): void {
   }
 
   // Seed events
-  db.prepare('INSERT OR IGNORE INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
-    'daytona24', '24h of Daytona', 'daytona_road', 1440, JSON.stringify(['GT3', 'GTP', 'LMP2']));
-  db.prepare('INSERT OR IGNORE INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
-    'nurburgring24', 'Nürburgring 24h', 'nurburgring_24h', 1440, JSON.stringify(['GT3', 'GT4', 'TCR']));
-  db.prepare('INSERT OR IGNORE INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
-    'sebring12', 'Sebring 12h', 'sebring_international', 720, JSON.stringify(['GT3', 'GTP', 'LMP2']));
+  db.prepare('DELETE FROM events').run();
+  db.prepare('INSERT INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
+    'spa24', '24h of Spa', 'spa_francorchamps', 1440, JSON.stringify(['GT3']));
 
   // Clean up old vehicles and seed new ones
   db.prepare('DELETE FROM vehicles WHERE id IN (?, ?, ?, ?)').run('porsche992_gt3r', 'cadillac_vseries', 'dallara_p217', 'bmw_m4_gt3');
