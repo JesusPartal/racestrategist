@@ -351,6 +351,40 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     }
   }
 
+  inviteUrl = signal<string | null>(null);
+  inviteCopied = signal(false);
+
+  async openInvite() {
+    const id = this.store.activeStrategyId();
+    if (!id) return;
+    try {
+      const { token } = await this.api.generateInvite(id);
+      const base = window.location.origin;
+      this.inviteUrl.set(`${base}/join?token=${token}`);
+      this.inviteCopied.set(false);
+    } catch {
+      this.store.error.set('Failed to generate invite');
+    }
+  }
+
+  closeInvite() {
+    this.inviteUrl.set(null);
+    this.inviteCopied.set(false);
+  }
+
+  async copyInvite() {
+    const url = this.inviteUrl();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.inviteCopied.set(true);
+      setTimeout(() => this.inviteCopied.set(false), 2000);
+    } catch {
+      const input = document.querySelector('.invite-url-input') as HTMLInputElement;
+      input?.select();
+    }
+  }
+
   discardChanges() {
     const id = this.store.activeStrategyId();
     if (id) {

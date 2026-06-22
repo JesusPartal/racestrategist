@@ -73,6 +73,9 @@ interface ConfirmDeleteState {
 
           <div class="card-footer">
             <button class="load-btn" (click)="loadStrategy(strat); $event.stopPropagation()">{{ trans.translate('load_module') }}</button>
+            <button class="invite-btn-card" (click)="openInvite(strat); $event.stopPropagation()" title="Invite">
+              <i class="fa-solid fa-link"></i>
+            </button>
             <button class="delete-btn-card" (click)="confirmDelete(strat); $event.stopPropagation()">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -85,6 +88,26 @@ interface ConfirmDeleteState {
           <i class="fa-solid fa-ghost" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 20px;"></i>
           <h3>{{ trans.translate('no_strategies_found') }}</h3>
           <p style="color: var(--text-dim);">{{ trans.translate('no_strategies_desc') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div class="delete-overlay" *ngIf="inviteUrl()" (click)="closeInvite()">
+      <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="delete-icon">
+          <i class="fa-solid fa-link"></i>
+        </div>
+        <h3 class="delete-title">{{ trans.translate('invite_title') }}</h3>
+        <p class="delete-body">{{ trans.translate('invite_body') }}</p>
+        <div class="invite-url-row">
+          <input type="text" [value]="inviteUrl()" readonly class="invite-url-input" (click)="$event.target.select()">
+          <button class="btn-copy" (click)="copyInvite()">
+            <i class="fa-solid fa-copy"></i> {{ trans.translate('copy') }}
+          </button>
+        </div>
+        <div class="delete-actions">
+          <button class="btn-delete-cancel" (click)="closeInvite()">{{ trans.translate('close') }}</button>
         </div>
       </div>
     </div>
@@ -119,6 +142,12 @@ interface ConfirmDeleteState {
     .card-header { display: flex; justify-content: space-between; align-items: center; }
     .track-tag { font-size: 0.55rem; letter-spacing: 2px; color: var(--accent-color); font-weight: 800; background: rgba(255, 176, 0, 0.1); padding: 3px 8px; border-radius: 4px; }
     .date { font-family: monospace; font-size: 0.7rem; color: var(--text-dim); }
+.invite-btn-card { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--accent-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+.invite-btn-card:hover { background: rgba(255,176,0,0.1); border-color: var(--accent-color); }
+.invite-url-row { display: flex; gap: 10px; margin: 15px 0; }
+.invite-url-input { flex: 1; padding: 12px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.8rem; }
+.btn-copy { display: flex; align-items: center; gap: 6px; background: var(--accent-color); color: #000; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.btn-copy:hover { background: #ffc926; }
     .strat-title { font-family: var(--font-display); font-size: 1.1rem; margin: 0; line-height: 1.4; }
     .strat-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.05); }
     .detail-item { display: flex; flex-direction: column; gap: 5px; }
@@ -216,6 +245,38 @@ export class StrategiesListComponent implements OnInit {
       await this.loadLibrary();
     } catch {
       this.store.error.set('Failed to delete strategy');
+    }
+  }
+
+  inviteUrl = signal<string | null>(null);
+  inviteCopied = signal(false);
+
+  async openInvite(strat: StrategySummary) {
+    try {
+      const { token } = await this.api.generateInvite(strat.id);
+      const base = window.location.origin;
+      this.inviteUrl.set(`${base}/join?token=${token}`);
+      this.inviteCopied.set(false);
+    } catch {
+      this.store.error.set('Failed to generate invite');
+    }
+  }
+
+  closeInvite() {
+    this.inviteUrl.set(null);
+    this.inviteCopied.set(false);
+  }
+
+  async copyInvite() {
+    const url = this.inviteUrl();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.inviteCopied.set(true);
+      setTimeout(() => this.inviteCopied.set(false), 2000);
+    } catch {
+      const input = document.querySelector('.invite-url-input') as HTMLInputElement;
+      input?.select();
     }
   }
 

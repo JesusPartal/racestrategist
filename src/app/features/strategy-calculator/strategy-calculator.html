@@ -40,6 +40,26 @@
     </div>
 </div>
 
+<!-- Invite Modal -->
+<div class="delete-overlay" *ngIf="inviteUrl()" (click)="closeInvite()">
+    <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="delete-icon">
+            <i class="fa-solid fa-link"></i>
+        </div>
+        <h3 class="delete-title">{{ trans.translate('invite_title') }}</h3>
+        <p class="delete-body">{{ trans.translate('invite_body') }}</p>
+        <div class="invite-url-row">
+            <input type="text" [value]="inviteUrl()" readonly class="invite-url-input" (click)="$event.target.select()">
+            <button class="btn-copy" (click)="copyInvite()">
+                <i class="fa-solid fa-copy"></i> {{ trans.translate('copy') }}
+            </button>
+        </div>
+        <div class="delete-actions">
+            <button class="btn-delete-cancel" (click)="closeInvite()">{{ trans.translate('close') }}</button>
+        </div>
+    </div>
+</div>
+
 <div *ngIf="store.error()" class="glass-card" style="margin-top: 20px; display: flex; align-items: center; padding: 15px 25px;">
     <i class="fa-solid fa-circle-exclamation" style="color: #ff5252;"></i>
     <span style="margin-left: 10px; color: #ff5252;">{{ store.error() }}</span>
@@ -74,6 +94,9 @@
             </button>
             <button class="btn-delete-top" (click)="showDeleteDialog.set(true)" [disabled]="!store.activeStrategyId()">
                 <i class="fa-solid fa-trash"></i>
+            </button>
+            <button class="btn-invite-top" (click)="openInvite()" [disabled]="!store.activeStrategyId()" title="Invite">
+                <i class="fa-solid fa-link"></i>
             </button>
         </div>
     </div>
@@ -672,6 +695,13 @@
     .btn-delete-top { background: transparent; border: 1px solid rgba(255, 82, 82, 0.3); color: #ff5252; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
     .btn-delete-top:hover { background: rgba(255, 82, 82, 0.15); border-color: #ff5252; }
     .btn-delete-top:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-invite-top { background: transparent; border: 1px solid rgba(255,176,0,0.3); color: var(--accent-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+    .btn-invite-top:hover { background: rgba(255,176,0,0.15); border-color: var(--accent-color); }
+    .btn-invite-top:disabled { opacity: 0.3; cursor: not-allowed; }
+    .invite-url-row { display: flex; gap: 10px; margin: 15px 0; }
+    .invite-url-input { flex: 1; padding: 12px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.8rem; }
+    .btn-copy { display: flex; align-items: center; gap: 6px; background: var(--accent-color); color: #000; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .btn-copy:hover { background: #ffc926; }
 
     .delete-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
     .delete-modal { max-width: 400px; width: 90%; padding: 40px; text-align: center; }

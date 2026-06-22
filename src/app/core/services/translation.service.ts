@@ -135,6 +135,11 @@ export class TranslationService {
             'use_global': 'Use global',
             'add_driver_panel': 'ADD DRIVER',
             'edit_driver_panel': 'EDIT DRIVER',
+
+            'invite_title': 'INVITE TO STRATEGY',
+            'invite_body': 'Share this link with your team to collaborate on this strategy.',
+            'copy': 'COPY',
+            'close': 'CLOSE',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -262,6 +267,11 @@ export class TranslationService {
             'use_global': 'Usar global',
             'add_driver_panel': 'A\u00d1ADIR PILOTO',
             'edit_driver_panel': 'EDITAR PILOTO',
+
+            'invite_title': 'INVITAR A ESTRATEGIA',
+            'invite_body': 'Comparte este enlace con tu equipo para colaborar.',
+            'copy': 'COPIAR',
+            'close': 'CERRAR',
         }
     };
 
