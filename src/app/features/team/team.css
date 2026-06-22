@@ -526,3 +526,10 @@
 .retry-btn:hover {
     background: rgba(255, 82, 82, 0.3);
 }
+
+.iracing-lookup-row { display: flex; gap: 8px; align-items: center; }
+.iracing-input { flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.85rem; }
+.iracing-input:focus { outline: none; border-color: var(--accent-color); }
+.btn-lookup-driver { display: flex; align-items: center; gap: 6px; background: rgba(255,176,0,0.15); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 10px 16px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.btn-lookup-driver:hover:not(:disabled) { background: rgba(255,176,0,0.25); }
+.btn-lookup-driver:disabled { opacity: 0.4; cursor: not-allowed; }

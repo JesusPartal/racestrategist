@@ -1,9 +1,12 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { TeamService } from '../../core/services/team.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { DriverProfile } from '../../core/models/race-strategy.model';
+import { API_BASE } from '../../core/api.config';
+import { lastValueFrom } from 'rxjs';
 
 type FormMode = 'closed' | 'add' | 'edit';
 
@@ -17,6 +20,7 @@ type FormMode = 'closed' | 'add' | 'edit';
 export class TeamComponent implements OnInit {
     trans = inject(TranslationService);
     team = inject(TeamService);
+    private http = inject(HttpClient);
 
     primaryDriverCount = computed(() =>
         this.team.roster().filter(d => (d.role || 'Primary') === 'Primary').length
@@ -24,6 +28,10 @@ export class TeamComponent implements OnInit {
 
     formMode = signal<FormMode>('closed');
     editingId = signal<string | null>(null);
+    lookingUp = signal(false);
+
+    iracingId = '';
+    autoFilled = false;
 
     form = {
         name: '',
@@ -64,8 +72,30 @@ export class TeamComponent implements OnInit {
         this.team.loadSettings();
     }
 
+    async lookupDriver() {
+        if (!this.iracingId) return;
+        this.lookingUp.set(true);
+        try {
+            const driver = await lastValueFrom(
+                this.http.get<{ displayName: string; licenseClass: string; iRating: number }>(`${API_BASE}/iracing/driver/${this.iracingId}`)
+            );
+            if (this.formMode() === 'add') {
+                this.form.name = driver.displayName;
+                this.form.licenseClass = driver.licenseClass as DriverProfile['licenseClass'];
+                this.form.iRating = driver.iRating;
+                this.autoFilled = true;
+            }
+        } catch {
+            // ignore
+        } finally {
+            this.lookingUp.set(false);
+        }
+    }
+
     openAdd() {
         this.resetForm();
+        this.iracingId = '';
+        this.autoFilled = false;
         const nextColor = this.colorPalette[this.team.roster().length % this.colorPalette.length];
         this.form.accentColor = nextColor;
         this.editingId.set(null);

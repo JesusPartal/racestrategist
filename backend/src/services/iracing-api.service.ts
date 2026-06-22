@@ -62,6 +62,37 @@ export async function getCars(forceRefresh = false): Promise<IracingCar[]> {
   return mapped;
 }
 
+const LICENSE_LEVEL_MAP: Record<number, string> = {
+  1: 'Rookie', 2: 'D', 3: 'C', 4: 'B', 5: 'A', 6: 'Pro', 7: 'Pro/WC',
+};
+
+export async function getDriverByCustId(custId: number): Promise<{
+  custId: number;
+  displayName: string;
+  licenseClass: string;
+  iRating: number;
+  clubName: string;
+  country: string;
+} | null> {
+  const client = await getClient();
+  const profile = await client.member.getMemberProfile({ customerId: custId });
+  if (!profile?.memberInfo) return null;
+
+  const info = profile.memberInfo;
+  const roadLicense = info.licenses?.find((l: any) => l.categoryId === 2);
+  const licenseLevel = roadLicense?.licenseLevel ?? 1;
+  const iRating = roadLicense?.irating ?? 0;
+
+  return {
+    custId: info.custId,
+    displayName: info.displayName,
+    licenseClass: LICENSE_LEVEL_MAP[licenseLevel] || 'Rookie',
+    iRating,
+    clubName: info.clubName || '',
+    country: info.country || '',
+  };
+}
+
 export function clearCache(): void {
   carsCache = null;
   carsCacheTime = 0;

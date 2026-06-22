@@ -28,12 +28,20 @@ interface AdminUser {
       <div class="glass-card" style="padding: 25px; margin-bottom: 30px;">
         <h3 style="font-family: var(--font-display); font-size: 0.9rem; margin: 0 0 20px;">{{ trans.translate('admin_add_user') }}</h3>
         <div class="add-form">
+          <input type="text" [(ngModel)]="newIracingId" placeholder="iRacing ID" class="admin-input" style="max-width: 120px;">
+          <button class="btn-lookup" (click)="lookupIracing()" [disabled]="!newIracingId || lookingUp()">
+            <i class="fa-solid fa-search"></i> {{ trans.translate('lookup') }}
+          </button>
           <input type="text" [(ngModel)]="newUsername" placeholder="Username" class="admin-input">
           <input type="password" [(ngModel)]="newPassword" placeholder="Password" class="admin-input">
-          <input type="text" [(ngModel)]="newDisplayName" placeholder="Display name" class="admin-input">
+          <input type="text" [(ngModel)]="newDisplayName" placeholder="Display name" class="admin-input" [readonly]="autoFilled">
           <button class="btn-add" (click)="addUser()" [disabled]="saving()">
             <i class="fa-solid fa-plus"></i> {{ trans.translate('admin_add') }}
           </button>
+        </div>
+        <div class="auto-info" *ngIf="autoFilled">
+          <span>{{ trans.translate('admin_auto_license') }}: <strong>{{ newLicenseClass }}</strong></span>
+          <span>{{ trans.translate('admin_auto_irating') }}: <strong>{{ newIRating }}</strong></span>
         </div>
         <div class="error-msg" *ngIf="error()">{{ error() }}</div>
         <div class="success-msg" *ngIf="success()">{{ success() }}</div>
@@ -122,6 +130,11 @@ interface AdminUser {
     .btn-add { display: flex; align-items: center; gap: 6px; background: var(--accent-color); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
     .btn-add:hover:not(:disabled) { background: #ffc926; }
     .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-lookup { display: flex; align-items: center; gap: 6px; background: rgba(255,176,0,0.15); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 10px 16px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .btn-lookup:hover:not(:disabled) { background: rgba(255,176,0,0.25); }
+    .btn-lookup:disabled { opacity: 0.4; cursor: not-allowed; }
+    .auto-info { display: flex; gap: 20px; margin-top: 10px; font-size: 0.75rem; color: var(--text-dim); }
+    .auto-info strong { color: #fff; }
     .btn-edit { background: transparent; border: 1px solid rgba(255,176,0,0.3); color: var(--accent-color); padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
     .btn-edit:hover { background: rgba(255,176,0,0.15); border-color: var(--accent-color); }
     .btn-delete { background: transparent; border: 1px solid rgba(255,82,82,0.3); color: #ff5252; padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
@@ -156,6 +169,11 @@ export class AdminComponent implements OnInit {
   newUsername = '';
   newPassword = '';
   newDisplayName = '';
+  newIracingId = '';
+  newLicenseClass = '';
+  newIRating = 0;
+  lookingUp = signal(false);
+  autoFilled = false;
   saving = signal(false);
   error = signal<string | null>(null);
   success = signal<string | null>(null);
@@ -180,6 +198,29 @@ export class AdminComponent implements OnInit {
     }
   }
 
+  async lookupIracing() {
+    if (!this.newIracingId) return;
+    this.lookingUp.set(true);
+    this.error.set(null);
+    this.autoFilled = false;
+    try {
+      const driver = await lastValueFrom(
+        this.http.get<{ displayName: string; licenseClass: string; iRating: number }>(`${API_BASE}/iracing/driver/${this.newIracingId}`)
+      );
+      this.newDisplayName = driver.displayName;
+      this.newLicenseClass = driver.licenseClass;
+      this.newIRating = driver.iRating;
+      this.autoFilled = true;
+      if (!this.newUsername) {
+        this.newUsername = this.newIracingId;
+      }
+    } catch {
+      this.error.set('Could not find driver with that iRacing ID');
+    } finally {
+      this.lookingUp.set(false);
+    }
+  }
+
   async addUser() {
     if (!this.newUsername || !this.newPassword) {
       this.error.set('Username and password are required');
@@ -193,10 +234,16 @@ export class AdminComponent implements OnInit {
         username: this.newUsername,
         password: this.newPassword,
         displayName: this.newDisplayName || this.newUsername,
+        licenseClass: this.autoFilled ? this.newLicenseClass : undefined,
+        iRating: this.autoFilled ? this.newIRating : undefined,
       }));
       this.newUsername = '';
       this.newPassword = '';
       this.newDisplayName = '';
+      this.newIracingId = '';
+      this.newLicenseClass = '';
+      this.newIRating = 0;
+      this.autoFilled = false;
       this.success.set('User created successfully');
       await this.loadUsers();
     } catch (e: any) {
