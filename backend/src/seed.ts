@@ -20,8 +20,11 @@ export function seedData(): void {
       u.id, u.username, hash, u.display, u.license, u.irating, 'default', isAdmin);
   }
 
-  // Seed events
+  // Seed events — only Spa 24HR, clean up old data
+  db.exec('PRAGMA foreign_keys = OFF');
+  db.prepare('DELETE FROM strategies WHERE event_id != ?').run('spa24');
   db.prepare('DELETE FROM events').run();
+  db.exec('PRAGMA foreign_keys = ON');
   db.prepare('INSERT INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
     'spa24', '24h of Spa', 'spa_francorchamps', 1440, JSON.stringify(['GT3']));
 
