@@ -300,6 +300,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
 
 updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.updateStintFields(stintIndex, { additionalTimeMs: (seconds || 0) * 1000 });
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
   toggleExtraTimeInput(stintIndex: number) {
