@@ -269,6 +269,14 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
+  formatLapTime(ms: number): string {
+    if (!ms) return '—';
+    const m = Math.floor(ms / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    const msRem = ms % 1000;
+    return `${m}:${s.toString().padStart(2, '0')}.${msRem.toString().padStart(3, '0')}`;
+  }
+
   formatAbsoluteTime(stintMs: number): string {
     if (this.useRelativeTime()) {
       return this.formatMs(stintMs);
