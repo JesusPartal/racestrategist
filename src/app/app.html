@@ -1,30 +1,27 @@
 <div class="shell">
   <header class="header">
-    <div class="logo" style="display: flex; align-items: center; gap: 15px;">
-      <div style="color: var(--accent-color); font-size: 1.8rem; display: flex; align-items: center;">
+    <div class="logo">
+      <div class="logo-icon">
         <i class="fa-solid fa-headset"></i>
       </div>
-      <div>
-        <span
-          style="font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; color: var(--accent-color); letter-spacing: 2px;">RACE</span>
-        <span
-          style="font-family: var(--font-display); font-weight: 300; font-size: 1.1rem; color: #fff; letter-spacing: 1px;">STRATEGIST</span>
+      <div class="logo-text">
+        <span class="logo-race">RACE</span>
+        <span class="logo-strategist">STRATEGIST</span>
       </div>
     </div>
 
-    <nav class="animate-in" style="animation-duration: 1.2s; flex: 1; margin-left: 50px;">
-      <div *ngIf="auth.currentUser()"
-        style="display: flex; gap: 30px; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-        <a routerLink="/home" routerLinkActive="active" style="text-decoration: none;">
+    <nav class="nav-desktop animate-in" style="animation-duration: 1.2s;">
+      <div *ngIf="auth.currentUser()" class="nav-links">
+        <a routerLink="/home" routerLinkActive="active" class="nav-anchor">
           <span class="nav-link">{{ trans.translate('nav_dashboard') }}</span>
         </a>
-        <a routerLink="/strategies" routerLinkActive="active" style="text-decoration: none;">
+        <a routerLink="/strategies" routerLinkActive="active" class="nav-anchor">
           <span class="nav-link">{{ trans.translate('nav_strategy') }}</span>
         </a>
-        <a routerLink="/team" routerLinkActive="active" style="text-decoration: none;">
+        <a routerLink="/team" routerLinkActive="active" class="nav-anchor">
           <span class="nav-link">{{ trans.translate('nav_team') }}</span>
         </a>
-        <a routerLink="/admin" routerLinkActive="active" style="text-decoration: none;" *ngIf="auth.currentUser()?.isAdmin">
+        <a routerLink="/admin" routerLinkActive="active" class="nav-anchor" *ngIf="auth.currentUser()?.isAdmin">
           <span class="nav-link">{{ trans.translate('nav_admin') }}</span>
         </a>
         <span class="nav-link disabled">{{ trans.translate('nav_telemetry') }}</span>
@@ -32,22 +29,49 @@
       </div>
     </nav>
 
-    <div class="lang-switcher">
-      <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
-      <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
-    </div>
-
-    <div class="auth-box animate-in">
-      <div *ngIf="auth.currentUser()" class="user-profile" (click)="logout()">
-        <div class="user-info">
-          <span class="username">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
-          <span class="license">{{ auth.currentUser()?.licenseClass }} · {{ auth.currentUser()?.iRating }} iR</span>
-        </div>
-        <div class="avatar"><span>{{ (auth.currentUser()?.displayName || '?')[0] }}</span></div>
-        <div class="logout-overlay">{{ trans.translate('logout') }}</div>
+    <div class="header-right">
+      <div class="lang-switcher">
+        <button (click)="trans.setLanguage('en')" [class.active]="trans.currentLang() === 'en'">EN</button>
+        <button (click)="trans.setLanguage('es')" [class.active]="trans.currentLang() === 'es'">ES</button>
       </div>
+
+      <div class="auth-box animate-in">
+        <div *ngIf="auth.currentUser()" class="user-profile" (click)="logout()">
+          <div class="user-info">
+            <span class="username">{{ auth.currentUser()?.displayName || auth.currentUser()?.username }}</span>
+            <span class="license">{{ auth.currentUser()?.licenseClass }} · {{ auth.currentUser()?.iRating }} iR</span>
+          </div>
+          <div class="avatar"><span>{{ (auth.currentUser()?.displayName || '?')[0] }}</span></div>
+          <div class="logout-overlay">{{ trans.translate('logout') }}</div>
+        </div>
+      </div>
+
+      <button class="hamburger" (click)="mobileNavOpen.set(!mobileNavOpen())" [class.open]="mobileNavOpen()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </header>
+
+  <!-- Mobile nav drawer -->
+  <div class="mobile-nav-overlay" *ngIf="mobileNavOpen()" (click)="mobileNavOpen.set(false)"></div>
+  <nav class="mobile-nav" [class.open]="mobileNavOpen()" *ngIf="auth.currentUser()">
+    <a routerLink="/home" routerLinkActive="active" (click)="mobileNavOpen.set(false)">
+      <i class="fa-solid fa-gauge-high"></i> {{ trans.translate('nav_dashboard') }}
+    </a>
+    <a routerLink="/strategies" routerLinkActive="active" (click)="mobileNavOpen.set(false)">
+      <i class="fa-solid fa-flag-checkered"></i> {{ trans.translate('nav_strategy') }}
+    </a>
+    <a routerLink="/team" routerLinkActive="active" (click)="mobileNavOpen.set(false)">
+      <i class="fa-solid fa-users"></i> {{ trans.translate('nav_team') }}
+    </a>
+    <a routerLink="/admin" routerLinkActive="active" (click)="mobileNavOpen.set(false)" *ngIf="auth.currentUser()?.isAdmin">
+      <i class="fa-solid fa-shield-halved"></i> {{ trans.translate('nav_admin') }}
+    </a>
+    <span class="mobile-nav-disabled"><i class="fa-solid fa-chart-line"></i> {{ trans.translate('nav_telemetry') }}</span>
+    <span class="mobile-nav-disabled"><i class="fa-solid fa-wind"></i> {{ trans.translate('nav_tempest') }}</span>
+  </nav>
 
   <main class="main-content">
     <div class="container" style="max-width: 1400px; margin: 0 auto;">
@@ -55,8 +79,7 @@
     </div>
   </main>
 
-  <footer
-    style="padding: 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;">
+  <footer class="footer">
     &copy; 2026 RACE STRATEGIST // DESIGNED_FOR_VICTORY
   </footer>
 </div>

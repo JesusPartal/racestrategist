@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
@@ -15,6 +15,7 @@ export class App {
   auth = inject(AuthService);
   trans = inject(TranslationService);
   router = inject(Router);
+  mobileNavOpen = signal(false);
 
   async login() {
     try {
