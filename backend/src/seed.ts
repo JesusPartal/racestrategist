@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import db from './db';
-import { v4 as uuid } from 'uuid';
 
 export function seedData(): void {
   const users = [
@@ -19,22 +18,6 @@ export function seedData(): void {
     const isAdmin = u.username === 'JesusPartal' ? 1 : 0;
     db.prepare('INSERT OR IGNORE INTO users (id, username, password_hash, display_name, license_class, i_rating, team_id, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
       u.id, u.username, hash, u.display, u.license, u.irating, 'default', isAdmin);
-  }
-
-  // Seed a default team for user_1 (JesusPartal)
-  const teamId = 'team_' + uuid().slice(0, 8);
-  db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
-    teamId, 'user_5', 'Racing Club Valencia', Date.now());
-
-  // Seed drivers for this team
-  const drivers = [
-    { name: 'Jesús Partal', accentColor: '#FFB000', avgLapTimeMs: 104500, fuelPerLapL: 3.2, errorFactor: 0.02, licenseClass: 'Pro', iRating: 4000, nationality: 'ES', role: 'Primary' },
-    { name: 'Bicor Valencia', accentColor: '#00E676', avgLapTimeMs: 105200, fuelPerLapL: 3.1, errorFactor: 0.03, licenseClass: 'A', iRating: 3500, nationality: 'ES', role: 'Primary' },
-    { name: 'Orlando Doniz', accentColor: '#448AFF', avgLapTimeMs: 106000, fuelPerLapL: 3.0, errorFactor: 0.04, licenseClass: 'B', iRating: 2800, nationality: 'ES', role: 'Reserve' },
-  ];
-  for (const d of drivers) {
-    db.prepare('INSERT OR IGNORE INTO team_drivers (id, team_id, name, accent_color, avg_lap_time_ms, fuel_per_lap_l, error_factor, license_class, i_rating, nationality, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-      'td_' + uuid().slice(0, 8), teamId, d.name, d.accentColor, d.avgLapTimeMs, d.fuelPerLapL, d.errorFactor, d.licenseClass, d.iRating, d.nationality, d.role);
   }
 
   // Seed events
@@ -65,23 +48,6 @@ export function seedData(): void {
     db.prepare('INSERT OR REPLACE INTO vehicles (id, name, fuel_tank_capacity_l, refuel_rate_ls, vehicle_class) VALUES (?, ?, ?, ?, ?)').run(
       v.id, v.name, v.tank, v.refuel, 'GT3');
   }
-
-  // Seed mock strategy
-  const mockDrivers = JSON.stringify([
-    { id: 'driver_1', name: 'TrackTitan_99', accentColor: '#FFB000', avgLapTimeMs: 104500, errorFactor: 0.02, licenseClass: 'Pro', iRating: 4500, role: 'Primary' },
-    { id: 'driver_2', name: 'SpeedDemon', accentColor: '#00E676', avgLapTimeMs: 105200, errorFactor: 0.03, licenseClass: 'A', iRating: 3200, role: 'Primary' },
-    { id: 'driver_3', name: 'NightOwl', accentColor: '#448AFF', avgLapTimeMs: 106000, errorFactor: 0.04, licenseClass: 'B', iRating: 2800, role: 'Reserve' },
-  ]);
-
-  const mockStints = JSON.stringify([
-    { index: 0, driverId: 'driver_1', startTimeMs: 0, endTimeMs: 2100000, laps: 20, changeTires: true, isCompleted: false },
-    { index: 1, driverId: 'driver_2', startTimeMs: 2100000, endTimeMs: 4200000, laps: 20, changeTires: false, isCompleted: false },
-  ]);
-
-  db.prepare(`INSERT OR IGNORE INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, drivers, stints, team_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    'strat_001', 'Daytona 24h - Baseline', 'daytona24', 'porsche_992_gt3r', 'Porsche 992 GT3 R',
-    105000, 3.2, 45000, 65000, Date.now(), mockDrivers, mockStints, 'default');
 
   console.log('Database seeded successfully');
 }
