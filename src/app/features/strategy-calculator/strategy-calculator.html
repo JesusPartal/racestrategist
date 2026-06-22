@@ -297,7 +297,7 @@
 
 <!-- Stint Strategy Section (Tiles) -->
 <div *ngIf="store.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
-    <div style="display: flex; align-items: center; gap: 16px;">
+    <div class="section-header-row">
         <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</h2>
         <button class="btn-time-toggle" (click)="toggleTimeMode()">
             <i class="fa-solid fa-clock"></i> {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
