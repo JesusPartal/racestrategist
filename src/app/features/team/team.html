@@ -89,7 +89,22 @@
 
         <div class="panel-header">
             <div>
-                <h2 class="panel-title">{{ selectedTeam()!.name }}</h2>
+                <div *ngIf="!editingTeamName()" style="display: flex; align-items: center; gap: 8px;">
+                    <h2 class="panel-title">{{ selectedTeam()!.name }}</h2>
+                    <button (click)="startEditTeamName()" title="Edit team name" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </div>
+                <div *ngIf="editingTeamName()" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="text" [(ngModel)]="editingTeamValue" (keyup.enter)="renameTeam()" (keyup.escape)="editingTeamName.set(false)"
+                        style="font-size: 1.3rem; font-weight: 700; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-color); border-radius: 6px; padding: 4px 10px; color: white; outline: none; width: 280px;">
+                    <button (click)="renameTeam()" style="background: none; border: none; cursor: pointer; color: var(--accent-color); font-size: 0.9rem;">
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                    <button (click)="editingTeamName.set(false)" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.9rem;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
                 <span class="panel-subtitle">{{ selectedTeam()!.drivers.length }} {{ trans.translate('drivers') }}</span>
             </div>
             <button class="panel-close" (click)="closeTeam()">&times;</button>

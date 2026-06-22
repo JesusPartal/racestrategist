@@ -30,6 +30,9 @@ export class TeamComponent implements OnInit {
     showCreateForm = signal(false);
     newTeamName = '';
 
+    editingTeamName = signal(false);
+    editingTeamValue = '';
+
     formMode = signal<FormMode>('closed');
     editingId = signal<string | null>(null);
     lookingUp = signal(false);
@@ -89,6 +92,26 @@ export class TeamComponent implements OnInit {
 
     closeTeam() {
         this.selectedTeam.set(null);
+        this.editingTeamName.set(false);
+    }
+
+    startEditTeamName() {
+        this.editingTeamValue = this.selectedTeam()?.name || '';
+        this.editingTeamName.set(true);
+    }
+
+    async renameTeam() {
+        const team = this.selectedTeam();
+        if (!team || !this.editingTeamValue.trim()) return;
+        try {
+            await this.teamsService.updateTeam(team.id, this.editingTeamValue.trim());
+            const newName = this.editingTeamValue.trim();
+            this.selectedTeam.update(t => t ? { ...t, name: newName } : t);
+            this.teams.update(ts => ts.map(x => x.id === team.id ? { ...x, name: newName } : x));
+            this.editingTeamName.set(false);
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to rename team');
+        }
     }
 
     async createTeam() {
