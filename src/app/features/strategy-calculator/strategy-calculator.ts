@@ -271,7 +271,11 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   formatAbsoluteTime(stintMs: number): string {
     const ts = this.store.activeEventStartTime();
     if (!ts) return '—';
-    return this.formatMs(ts + stintMs);
+    const d = new Date(ts + stintMs);
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+    const s = d.getSeconds().toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
   }
 
   generateStintPlan() {
