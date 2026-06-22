@@ -328,9 +328,24 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   showUnsavedDialog = signal(false);
   showDeleteDialog = signal(false);
   useLocalTime = signal(false);
+  dashCollapsed = signal(false);
 
   toggleTimeMode() {
     this.useLocalTime.set(!this.useLocalTime());
+  }
+
+  toggleDash() {
+    this.dashCollapsed.set(!this.dashCollapsed());
+  }
+
+  getSummaryEventName(): string {
+    const id = this.selectedEventId();
+    return id ? this.events().find(e => e.id === id)?.name || '—' : '—';
+  }
+
+  getSummaryVehicleName(): string {
+    const id = this.selectedVehicleId();
+    return id ? this.vehiclesByEvent().find(v => v.id === id)?.name || '—' : '—';
   }
 
   private deactivateResolver: ((allow: boolean) => void) | null = null;

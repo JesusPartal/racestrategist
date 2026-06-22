@@ -81,8 +81,11 @@
                     placeholder="Name your strategy..." maxlength="60" spellcheck="false" autocomplete="off">
             </div>
             <h2
-                style="margin: 4px 0 0; font-family: var(--font-display); font-size: 0.85rem; opacity: 0.5; font-weight: 400;">
+                style="margin: 4px 0 0; font-family: var(--font-display); font-size: 0.85rem; opacity: 0.5; font-weight: 400; display: flex; align-items: center; gap: 8px;">
                 <span style="font-weight: 300;">DASH:</span> {{ trans.translate('calculator_title') }}
+                <button (click)="toggleDash()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 0.7rem; opacity: 0.7;" [title]="dashCollapsed() ? 'Expand' : 'Collapse'">
+                    <i class="fa-solid" [class.fa-chevron-down]="dashCollapsed()" [class.fa-chevron-up]="!dashCollapsed()"></i>
+                </button>
             </h2>
         </div>
         <div style="display: flex; gap: 12px; align-items: center; margin-left: 30px; flex-shrink: 0;">
@@ -98,10 +101,13 @@
             <button class="btn-invite-top" (click)="openInvite()" [disabled]="!store.activeStrategyId()" title="Invite">
                 <i class="fa-solid fa-link"></i>
             </button>
+            <button class="btn-secondary" (click)="toggleTimeMode()" style="padding: 4px 10px; font-size: 0.75rem;">
+                {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
+            </button>
         </div>
     </div>
 
-    <div class="grid">
+    <div class="grid" *ngIf="!dashCollapsed()">
         <!-- Selection Section -->
         <div class="config-panel" style="padding: 10px;">
             <h3 style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 25px;">{{ trans.translate('select_event') }}</h3>
@@ -122,15 +128,9 @@
 
             <div class="form-field">
                 <label for="eventStart">{{ trans.translate('event_start_datetime') }}</label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="datetime-local" id="eventStart"
-                        [ngModel]="getEventStartDateString()"
-                        (ngModelChange)="onEventStartChange($event)">
-                    <button class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; white-space: nowrap;"
-                        (click)="toggleTimeMode()">
-                        {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
-                    </button>
-                </div>
+                <input type="datetime-local" id="eventStart"
+                    [ngModel]="getEventStartDateString()"
+                    (ngModelChange)="onEventStartChange($event)">
             </div>
 
             <div class="form-field">
@@ -266,6 +266,36 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Collapsed DASH summary -->
+<div *ngIf="dashCollapsed()" (click)="toggleDash()" style="
+    display: flex; gap: 24px; align-items: center;
+    padding: 10px 18px; background: rgba(255,255,255,0.03);
+    border-radius: 8px; cursor: pointer; margin-top: 15px;
+    border: 1px solid rgba(255,255,255,0.05);">
+    <span style="font-size: 0.65rem; font-weight: 700; letter-spacing: 2px; opacity: 0.4;">DASH</span>
+    <span style="font-size: 0.8rem; opacity: 0.7;">
+        <i class="fa-solid fa-flag" style="opacity: 0.4; margin-right: 4px;"></i>
+        {{ getSummaryEventName() }}
+    </span>
+    <span style="font-size: 0.8rem; opacity: 0.7;">
+        <i class="fa-solid fa-car" style="opacity: 0.4; margin-right: 4px;"></i>
+        {{ getSummaryVehicleName() }}
+    </span>
+    <span style="font-size: 0.8rem; opacity: 0.7;">
+        <i class="fa-regular fa-clock" style="opacity: 0.4; margin-right: 4px;"></i>
+        {{ formatMs(avgLapTime()) }}
+    </span>
+    <span style="font-size: 0.8rem; opacity: 0.7;">
+        <i class="fa-solid fa-droplet" style="opacity: 0.4; margin-right: 4px;"></i>
+        {{ fuelPerLap() }} L
+    </span>
+    <span style="font-size: 0.8rem; opacity: 0.7;">
+        <i class="fa-solid fa-layer-group" style="opacity: 0.4; margin-right: 4px;"></i>
+        {{ store.stintPlan().length }} {{ trans.translate('stint_label') || 'stints' }}
+    </span>
+    <i class="fa-solid fa-chevron-down" style="margin-left: auto; opacity: 0.4;"></i>
 </div>
 
 <!-- Stint Strategy Section (Tiles) -->
