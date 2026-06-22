@@ -1,11 +1,22 @@
-import { readFileSync, writeFileSync, globSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { join, extname } from 'node:path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, 'node_modules/iracing-api/lib');
+function walkDir(dir) {
+  const files = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    const stat = statSync(full);
+    if (stat.isDirectory()) {
+      files.push(...walkDir(full));
+    } else if (extname(entry) === '.js') {
+      files.push(full);
+    }
+  }
+  return files;
+}
 
-const files = globSync('**/*.js', { cwd: root, withFileTypes: false }).map(f => resolve(root, f));
+const root = 'node_modules/iracing-api/lib';
+const files = walkDir(root);
 let patched = 0;
 
 const RE_FROM = /(from\s+['"])(\.\.?\/[^'"]+)(['"])/g;
