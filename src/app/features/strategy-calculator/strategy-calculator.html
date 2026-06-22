@@ -736,8 +736,8 @@
 </style>
 
 <!-- Team Selector Modal -->
-<div class="panel-overlay" *ngIf="showTeamSelector()" (click)="closeTeamSelector()" style="z-index: 10001; position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
-    <div class="modal-box glass-card animate-in" (click)="$event.stopPropagation()" style="max-width: 480px;">
+<div class="panel-overlay" *ngIf="showTeamSelector()" (click)="closeTeamSelector()" style="z-index: 10001;">
+    <div class="modal-box glass-card animate-in" (click)="$event.stopPropagation()" style="max-width: 480px; margin: auto;">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="font-family: var(--font-display); font-size: 1rem; margin: 0; letter-spacing: 1px;">{{ trans.translate('select_team_to_load') }}</h2>
             <button class="panel-close" (click)="closeTeamSelector()">&times;</button>
