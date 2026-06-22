@@ -298,7 +298,7 @@
     <div class="section-header-row">
         <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</h2>
         <button class="btn-time-toggle" (click)="toggleTimeMode()">
-            <i class="fa-solid fa-clock"></i> {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
+            <i class="fa-solid fa-clock"></i> {{ timeModeLabel() }}
         </button>
     </div>
     <div class="stint-timeline" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">

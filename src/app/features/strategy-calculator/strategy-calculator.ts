@@ -269,6 +269,9 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   }
 
   formatAbsoluteTime(stintMs: number): string {
+    if (this.useRelativeTime()) {
+      return this.formatMs(stintMs);
+    }
     const ts = this.store.activeEventStartTime();
     if (!ts) return '—';
     const d = new Date(ts + stintMs);
@@ -328,10 +331,23 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   showUnsavedDialog = signal(false);
   showDeleteDialog = signal(false);
   useLocalTime = signal(false);
+  useRelativeTime = signal(false);
   dashCollapsed = signal(false);
 
   toggleTimeMode() {
-    this.useLocalTime.set(!this.useLocalTime());
+    if (!this.useLocalTime() && !this.useRelativeTime()) {
+      this.useLocalTime.set(true);
+    } else if (this.useLocalTime()) {
+      this.useLocalTime.set(false);
+      this.useRelativeTime.set(true);
+    } else {
+      this.useRelativeTime.set(false);
+    }
+  }
+
+  timeModeLabel(): string {
+    if (this.useRelativeTime()) return 'REL';
+    return this.useLocalTime() ? 'LOCAL' : 'UTC';
   }
 
   toggleDash() {
