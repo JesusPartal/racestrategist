@@ -300,11 +300,11 @@
                 <div class="stint-times">
                     <div>
                         <label>{{ trans.translate('start_time') }}</label>
-                        <code>{{ formatMs(stint.startTimeMs) }}</code>
+                        <code>{{ formatAbsoluteTime(stint.startTimeMs) }}</code>
                     </div>
                     <div style="text-align: right;">
                         <label>{{ trans.translate('end_time') }}</label>
-                        <code>{{ formatMs(stint.endTimeMs) }}</code>
+                        <code>{{ formatAbsoluteTime(stint.endTimeMs) }}</code>
                     </div>
                 </div>
             </div>
@@ -335,8 +335,8 @@
                     </div>
                     <div
                         style="font-family: monospace; font-size: 0.7rem; color: var(--accent-color); margin-top: 8px;">
-                        {{ formatMs(stint.startTimeMs) }} <br>
-                        {{ formatMs(stint.endTimeMs) }}
+                        {{ formatAbsoluteTime(stint.startTimeMs) }} <br>
+                        {{ formatAbsoluteTime(stint.endTimeMs) }}
                     </div>
                 </div>
             </div>

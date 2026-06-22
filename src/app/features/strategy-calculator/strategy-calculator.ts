@@ -267,6 +267,13 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
+  formatAbsoluteTime(stintMs: number): string {
+    const ts = this.store.activeEventStartTime();
+    if (!ts) return this.formatMs(stintMs);
+    return this.formatMs(ts + stintMs);
+  }
+  }
+
   generateStintPlan() {
     const count = Math.ceil(this.stintsNeeded());
     this.store.generateEmptyStints(count, this.maxLaps());
@@ -313,6 +320,8 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   }
 
   isDirty = signal(false);
+
+  showUnsavedDialog() { return false; }
   showUnsavedDialog = signal(false);
   showDeleteDialog = signal(false);
   private deactivateResolver: ((allow: boolean) => void) | null = null;
