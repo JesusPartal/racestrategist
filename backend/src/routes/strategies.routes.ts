@@ -78,7 +78,8 @@ router.post('/:id/invite', (req: AuthRequest, res: Response) => {
 
 router.get('/invite/:token', (req: AuthRequest, res: Response) => {
   try {
-    const decoded = jwt.verify(req.params.token, INVITE_SECRET) as { strategyId: string };
+    const payload = jwt.verify(req.params.token as string, INVITE_SECRET);
+    const decoded = payload as unknown as { strategyId: string };
     const strategy = strategyService.getStrategyById(decoded.strategyId);
     if (!strategy) { res.status(404).json({ error: 'Strategy not found' }); return; }
     res.json({ strategyId: decoded.strategyId, strategy });
