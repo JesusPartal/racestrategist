@@ -272,10 +272,10 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     const ts = this.store.activeEventStartTime();
     if (!ts) return '—';
     const d = new Date(ts + stintMs);
-    const h = d.getHours().toString().padStart(2, '0');
-    const m = d.getMinutes().toString().padStart(2, '0');
-    const s = d.getSeconds().toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
+    const h = this.useLocalTime() ? d.getHours() : d.getUTCHours();
+    const m = this.useLocalTime() ? d.getMinutes() : d.getUTCMinutes();
+    const s = this.useLocalTime() ? d.getSeconds() : d.getUTCSeconds();
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
   generateStintPlan() {
@@ -327,6 +327,12 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
 
   showUnsavedDialog = signal(false);
   showDeleteDialog = signal(false);
+  useLocalTime = signal(false);
+
+  toggleTimeMode() {
+    this.useLocalTime.set(!this.useLocalTime());
+  }
+
   private deactivateResolver: ((allow: boolean) => void) | null = null;
 
   canDeactivate(): boolean | Promise<boolean> {

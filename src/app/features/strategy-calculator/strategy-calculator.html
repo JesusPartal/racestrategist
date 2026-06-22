@@ -122,9 +122,15 @@
 
             <div class="form-field">
                 <label for="eventStart">{{ trans.translate('event_start_datetime') }}</label>
-                <input type="datetime-local" id="eventStart"
-                    [ngModel]="getEventStartDateString()"
-                    (ngModelChange)="onEventStartChange($event)">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="datetime-local" id="eventStart"
+                        [ngModel]="getEventStartDateString()"
+                        (ngModelChange)="onEventStartChange($event)">
+                    <button class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; white-space: nowrap;"
+                        (click)="toggleTimeMode()">
+                        {{ useLocalTime() ? 'LOCAL' : 'UTC' }}
+                    </button>
+                </div>
             </div>
 
             <div class="form-field">

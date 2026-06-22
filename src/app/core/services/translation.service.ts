@@ -203,7 +203,7 @@ export class TranslationService {
             'discard': 'DESCARTAR',
             'select_event': 'Seleccionar Evento iRacing',
             'select_vehicle': 'Seleccionar Veh\u00edculo',
-            'event_start_datetime': 'Fecha y Hora de Inicio de Carrera',
+            'event_start_datetime': 'Fecha y hora de Inicio de Carrera (UTC)',
             'tank_capacity': 'Capacidad del Tanque (L)',
             'fuel_consumption': 'Consumo por vuelta (L)',
             'avg_lap_time': 'Tiempo medio de vuelta (ms)',
