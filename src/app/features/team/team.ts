@@ -1,8 +1,8 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { TeamService } from '../../core/services/team.service';
+import { TeamsService, TeamSummary, TeamDetail, TeamDriver } from '../../core/services/teams.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { DriverProfile } from '../../core/models/race-strategy.model';
 import { API_BASE } from '../../core/api.config';
@@ -19,17 +19,20 @@ type FormMode = 'closed' | 'add' | 'edit';
 })
 export class TeamComponent implements OnInit {
     trans = inject(TranslationService);
-    team = inject(TeamService);
+    private teamsService = inject(TeamsService);
     private http = inject(HttpClient);
 
-    primaryDriverCount = computed(() =>
-        this.team.roster().filter(d => (d.role || 'Primary') === 'Primary').length
-    );
+    teams = signal<TeamSummary[]>([]);
+    selectedTeam = signal<TeamDetail | null>(null);
+    loading = signal(false);
+    error = signal<string | null>(null);
+
+    showCreateForm = signal(false);
+    newTeamName = '';
 
     formMode = signal<FormMode>('closed');
     editingId = signal<string | null>(null);
     lookingUp = signal(false);
-
     iracingId = '';
     autoFilled = false;
 
@@ -47,7 +50,7 @@ export class TeamComponent implements OnInit {
         errorFactor: 0.02
     };
 
-    trackByDriverId = (_: number, d: { id: string }) => d.id;
+    trackById = (_: number, i: { id: string }) => i.id;
     trackByColor = (_: number, c: string) => c;
     trackByLicense = (_: number, l: any) => l;
     trackByRole = (_: number, r: any) => r;
@@ -60,16 +63,69 @@ export class TeamComponent implements OnInit {
     readonly licenseClasses: DriverProfile['licenseClass'][] = ['Pro', 'Pro/Am', 'A', 'B', 'C', 'D'];
     readonly roles: DriverProfile['role'][] = ['Primary', 'Reserve', 'Coach'];
 
-    formLapTimeMs = computed(() => {
+    formLapTimeMs = () => {
         const m = Number(this.form.lapMin || 0);
         const s = Number(this.form.lapSec || 0);
         const ms = Number(this.form.lapMs || 0);
         return (m * 60 * 1000) + (s * 1000) + ms;
-    });
+    };
 
     ngOnInit() {
-        this.team.loadRoster();
-        this.team.loadSettings();
+        this.loadTeams();
+    }
+
+    async loadTeams() {
+        this.loading.set(true);
+        this.error.set(null);
+        try {
+            this.teams.set(await this.teamsService.loadTeams());
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to load teams');
+        } finally {
+            this.loading.set(false);
+        }
+    }
+
+    async selectTeam(id: string) {
+        this.loading.set(true);
+        this.error.set(null);
+        try {
+            this.selectedTeam.set(await this.teamsService.loadTeam(id));
+            this.closeForm();
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to load team');
+        } finally {
+            this.loading.set(false);
+        }
+    }
+
+    closeTeam() {
+        this.selectedTeam.set(null);
+    }
+
+    async createTeam() {
+        if (!this.newTeamName.trim()) return;
+        try {
+            const team = await this.teamsService.createTeam(this.newTeamName.trim());
+            this.teams.update(t => [team, ...t]);
+            this.newTeamName = '';
+            this.showCreateForm.set(false);
+            await this.selectTeam(team.id);
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to create team');
+        }
+    }
+
+    async deleteTeam(id: string, event: Event) {
+        event.stopPropagation();
+        if (!confirm('Delete this team and all its drivers?')) return;
+        try {
+            await this.teamsService.deleteTeam(id);
+            this.teams.update(t => t.filter(x => x.id !== id));
+            if (this.selectedTeam()?.id === id) this.selectedTeam.set(null);
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to delete team');
+        }
     }
 
     async lookupDriver() {
@@ -85,41 +141,34 @@ export class TeamComponent implements OnInit {
                 this.form.iRating = driver.iRating;
                 this.autoFilled = true;
             }
-        } catch {
-            // ignore
-        } finally {
-            this.lookingUp.set(false);
-        }
+        } catch { /* ignore */ }
+        finally { this.lookingUp.set(false); }
     }
 
     openAdd() {
         this.resetForm();
         this.iracingId = '';
         this.autoFilled = false;
-        const nextColor = this.colorPalette[this.team.roster().length % this.colorPalette.length];
-        this.form.accentColor = nextColor;
         this.editingId.set(null);
         this.formMode.set('add');
     }
 
-    openEdit(driver: DriverProfile) {
+    openEdit(driver: TeamDriver) {
         this.resetForm();
         this.form.name = driver.name;
         this.form.accentColor = driver.accentColor;
-        this.form.licenseClass = driver.licenseClass || 'A';
+        this.form.licenseClass = (driver.licenseClass || 'A') as DriverProfile['licenseClass'];
         this.form.iRating = driver.iRating || null;
         this.form.nationality = driver.nationality || '';
-        this.form.role = driver.role || 'Primary';
+        this.form.role = (driver.role || 'Primary') as DriverProfile['role'];
         this.form.fuelPerLapL = driver.fuelPerLapL || null;
         this.form.errorFactor = driver.errorFactor;
-
         if (driver.avgLapTimeMs) {
             const totalSec = Math.floor(driver.avgLapTimeMs / 1000);
             this.form.lapMin = Math.floor(totalSec / 60);
             this.form.lapSec = totalSec % 60;
             this.form.lapMs = driver.avgLapTimeMs % 1000;
         }
-
         this.editingId.set(driver.id);
         this.formMode.set('edit');
     }
@@ -127,13 +176,14 @@ export class TeamComponent implements OnInit {
     closeForm() {
         this.formMode.set('closed');
         this.editingId.set(null);
-        this.resetForm();
+        this.iracingId = '';
+        this.autoFilled = false;
     }
 
     async saveDriver() {
-        if (!this.form.name.trim()) return;
-
-        const payload = {
+        if (!this.form.name.trim() || !this.selectedTeam()) return;
+        const teamId = this.selectedTeam()!.id;
+        const payload: any = {
             name: this.form.name.trim(),
             accentColor: this.form.accentColor,
             avgLapTimeMs: this.formLapTimeMs(),
@@ -144,18 +194,40 @@ export class TeamComponent implements OnInit {
             nationality: this.form.nationality || undefined,
             role: this.form.role
         };
-
-        if (this.formMode() === 'edit' && this.editingId()) {
-            await this.team.updateDriver(this.editingId()!, payload);
-        } else {
-            await this.team.addDriver(payload);
+        try {
+            if (this.formMode() === 'edit' && this.editingId()) {
+                const updated = await this.teamsService.updateDriver(teamId, this.editingId()!, payload);
+                this.selectedTeam.update(t => t ? {
+                    ...t, drivers: t.drivers.map(d => d.id === this.editingId() ? updated : d)
+                } : t);
+            } else {
+                const created = await this.teamsService.addDriver(teamId, payload);
+                this.selectedTeam.update(t => t ? { ...t, drivers: [...t.drivers, created] } : t);
+            }
+            this.closeForm();
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to save driver');
         }
-        this.closeForm();
     }
 
     async removeDriver(id: string) {
-        await this.team.removeDriver(id);
-        if (this.editingId() === id) this.closeForm();
+        if (!this.selectedTeam()) return;
+        const teamId = this.selectedTeam()!.id;
+        try {
+            await this.teamsService.deleteDriver(teamId, id);
+            this.selectedTeam.update(t => t ? { ...t, drivers: t.drivers.filter(d => d.id !== id) } : t);
+            if (this.editingId() === id) this.closeForm();
+        } catch (e: any) {
+            this.error.set(e?.error?.error || 'Failed to remove driver');
+        }
+    }
+
+    formatLapTime(ms: number): string {
+        if (!ms) return '—';
+        const m = Math.floor(ms / 60000);
+        const s = Math.floor((ms % 60000) / 1000);
+        const msRem = ms % 1000;
+        return `${m}:${s.toString().padStart(2, '0')}.${msRem.toString().padStart(3, '0')}`;
     }
 
     getLicenseBadgeColor(cls?: string): string {

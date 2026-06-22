@@ -235,6 +235,11 @@
         {{ trans.translate('roster_hint') }}
         <a routerLink="/team" style="color: var(--accent-color); text-decoration: underline;">{{ trans.translate('manage_roster') }}</a>
     </p>
+    <div style="margin-bottom: 15px;">
+        <button class="btn-add" style="background: rgba(255,176,0,0.1); border: 1px solid var(--accent-color); color: var(--accent-color);" (click)="openTeamSelector()">
+            <i class="fa-solid fa-users"></i> {{ trans.translate('load_team') }}
+        </button>
+    </div>
     <div class="drivers-list"
         style="display: flex; gap: 15px; flex-wrap: wrap; align-content: flex-start;">
         <div *ngFor="let driver of availableDrivers(); trackBy: trackByDriverId" class="driver-badge"
@@ -729,3 +734,37 @@
         }
     }
 </style>
+
+<!-- Team Selector Modal -->
+<div class="panel-overlay" *ngIf="showTeamSelector()" (click)="closeTeamSelector()">
+    <div class="modal-box glass-card animate-in" (click)="$event.stopPropagation()" style="max-width: 480px;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-family: var(--font-display); font-size: 1rem; margin: 0; letter-spacing: 1px;">{{ trans.translate('select_team_to_load') }}</h2>
+            <button class="panel-close" (click)="closeTeamSelector()">&times;</button>
+        </div>
+
+        <div *ngIf="teamsLoading()" style="text-align: center; padding: 30px; color: var(--text-dim);">
+            <i class="fa-solid fa-spinner fa-spin" style="color: var(--accent-color);"></i>
+        </div>
+
+        <div *ngIf="!teamsLoading()" class="teams-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <div *ngFor="let team of availableTeams()"
+                class="team-option"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;"
+                (click)="loadTeamIntoStrategy(team.id)">
+                <div>
+                    <div style="font-weight: 700; font-size: 0.9rem;">{{ team.name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-dim);">{{ team.driverCount }} {{ trans.translate('drivers') }}</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: var(--text-dim);"></i>
+            </div>
+            <div *ngIf="availableTeams().length === 0" style="text-align: center; padding: 20px; color: var(--text-dim);">
+                {{ trans.translate('no_teams_available') }}
+            </div>
+        </div>
+
+        <div style="margin-top: 15px; text-align: right;">
+            <button class="btn-delete-cancel" (click)="closeTeamSelector()">{{ trans.translate('cancel') }}</button>
+        </div>
+    </div>
+</div>

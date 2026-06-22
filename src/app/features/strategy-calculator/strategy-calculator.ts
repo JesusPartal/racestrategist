@@ -8,6 +8,7 @@ import { TranslationService } from '../../core/services/translation.service';
 import { StrategyStore } from '../../core/services/strategy-store.service';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { TeamService } from '../../core/services/team.service';
+import { TeamsService, TeamSummary } from '../../core/services/teams.service';
 import { Vehicle, DriverProfile } from '../../core/models/race-strategy.model';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 
@@ -19,6 +20,8 @@ import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
   styleUrl: './strategy-calculator.css'
 })
 export class StrategyCalculator implements OnInit, HasUnsavedChanges {
+  private teamsService = inject(TeamsService);
+
   events = signal<any[]>([]);
   vehiclesByEvent = signal<Vehicle[]>([]);
 
@@ -30,6 +33,10 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   lapSec = signal<number>(0);
   lapMs = signal<number>(0);
   tankCapacityOverride = signal<number | null>(null);
+
+  showTeamSelector = signal(false);
+  availableTeams = signal<TeamSummary[]>([]);
+  teamsLoading = signal(false);
 
   selectedEvent = computed(() => this.events().find((e: any) => e.id === this.selectedEventId()));
   selectedVehicle = computed(() => this.vehiclesByEvent().find(v => v.id === this.selectedVehicleId()));
@@ -167,6 +174,41 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     if (this.store.activeStrategyId()) {
       this.syncFromActiveStrategy();
     }
+  }
+
+  async openTeamSelector() {
+    this.teamsLoading.set(true);
+    this.availableTeams.set([]);
+    try {
+      const teams = await this.teamsService.loadTeams();
+      this.availableTeams.set(teams);
+      this.showTeamSelector.set(true);
+    } catch { /* ignore */ }
+    finally { this.teamsLoading.set(false); }
+  }
+
+  async loadTeamIntoStrategy(teamId: string) {
+    try {
+      const team = await this.teamsService.loadTeam(teamId);
+      const drivers: DriverProfile[] = team.drivers.map(d => ({
+        id: d.id,
+        name: d.name,
+        accentColor: d.accentColor,
+        avgLapTimeMs: d.avgLapTimeMs,
+        fuelPerLapL: d.fuelPerLapL || 0,
+        errorFactor: d.errorFactor,
+        licenseClass: d.licenseClass as any,
+        iRating: d.iRating || 0,
+        nationality: d.nationality || '',
+        role: d.role as any
+      }));
+      this.store.drivers.set(drivers);
+      this.showTeamSelector.set(false);
+    } catch { /* ignore */ }
+  }
+
+  closeTeamSelector() {
+    this.showTeamSelector.set(false);
   }
 
   syncFromActiveStrategy() {

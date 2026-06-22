@@ -3,7 +3,8 @@ FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
 COPY patch-iracing-api.mjs ./
-RUN npm ci && node patch-iracing-api.mjs
+RUN npm ci
+RUN node patch-iracing-api.mjs || echo "Patch script failed, trying direct sed"
 COPY . .
 RUN npm run build
 

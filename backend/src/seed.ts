@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import db from './db';
+import { v4 as uuid } from 'uuid';
 
 export function seedData(): void {
   const users = [
@@ -18,6 +19,22 @@ export function seedData(): void {
     const isAdmin = u.username === 'JesusPartal' ? 1 : 0;
     db.prepare('INSERT OR IGNORE INTO users (id, username, password_hash, display_name, license_class, i_rating, team_id, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
       u.id, u.username, hash, u.display, u.license, u.irating, 'default', isAdmin);
+  }
+
+  // Seed a default team for user_1 (JesusPartal)
+  const teamId = 'team_' + uuid().slice(0, 8);
+  db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
+    teamId, 'user_5', 'Racing Club Valencia', Date.now());
+
+  // Seed drivers for this team
+  const drivers = [
+    { name: 'Jesús Partal', accentColor: '#FFB000', avgLapTimeMs: 104500, fuelPerLapL: 3.2, errorFactor: 0.02, licenseClass: 'Pro', iRating: 4000, nationality: 'ES', role: 'Primary' },
+    { name: 'Bicor Valencia', accentColor: '#00E676', avgLapTimeMs: 105200, fuelPerLapL: 3.1, errorFactor: 0.03, licenseClass: 'A', iRating: 3500, nationality: 'ES', role: 'Primary' },
+    { name: 'Orlando Doniz', accentColor: '#448AFF', avgLapTimeMs: 106000, fuelPerLapL: 3.0, errorFactor: 0.04, licenseClass: 'B', iRating: 2800, nationality: 'ES', role: 'Reserve' },
+  ];
+  for (const d of drivers) {
+    db.prepare('INSERT OR IGNORE INTO team_drivers (id, team_id, name, accent_color, avg_lap_time_ms, fuel_per_lap_l, error_factor, license_class, i_rating, nationality, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      'td_' + uuid().slice(0, 8), teamId, d.name, d.accentColor, d.avgLapTimeMs, d.fuelPerLapL, d.errorFactor, d.licenseClass, d.iRating, d.nationality, d.role);
   }
 
   // Seed events

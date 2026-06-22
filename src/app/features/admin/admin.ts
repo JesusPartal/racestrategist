@@ -88,6 +88,15 @@ interface AdminUser {
         </div>
         <h3 class="delete-title">{{ trans.translate('admin_edit_title') }}: {{ editTarget()?.username }}</h3>
         <div class="edit-fields">
+          <div class="edit-field" style="display: flex; gap: 8px; align-items: flex-end;">
+            <div style="flex: 1;">
+              <label>{{ trans.translate('admin_iracing_id') }}</label>
+              <input type="text" [(ngModel)]="editIracingId" placeholder="iRacing ID" class="admin-input">
+            </div>
+            <button class="btn-lookup-sm" (click)="lookupEditIracing()" [disabled]="!editIracingId || editLookingUp()">
+              <i class="fa-solid fa-search"></i> {{ trans.translate('lookup') }}
+            </button>
+          </div>
           <div class="edit-field">
             <label>{{ trans.translate('admin_display_name') }}</label>
             <input type="text" [(ngModel)]="editDisplayName" class="admin-input">
@@ -133,6 +142,9 @@ interface AdminUser {
     .btn-lookup { display: flex; align-items: center; gap: 6px; background: rgba(255,176,0,0.15); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 10px 16px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
     .btn-lookup:hover:not(:disabled) { background: rgba(255,176,0,0.25); }
     .btn-lookup:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-lookup-sm { display: flex; align-items: center; gap: 4px; background: rgba(255,176,0,0.15); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 10px 12px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .btn-lookup-sm:hover:not(:disabled) { background: rgba(255,176,0,0.25); }
+    .btn-lookup-sm:disabled { opacity: 0.4; cursor: not-allowed; }
     .auto-info { display: flex; gap: 20px; margin-top: 10px; font-size: 0.75rem; color: var(--text-dim); }
     .auto-info strong { color: #fff; }
     .btn-edit { background: transparent; border: 1px solid rgba(255,176,0,0.3); color: var(--accent-color); padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
@@ -184,6 +196,8 @@ export class AdminComponent implements OnInit {
   editIRating = 0;
   editTeamId = '';
   editPassword = '';
+  editIracingId = '';
+  editLookingUp = signal(false);
 
   async ngOnInit() {
     await this.loadUsers();
@@ -266,6 +280,25 @@ export class AdminComponent implements OnInit {
 
   closeEdit() {
     this.editTarget.set(null);
+    this.editIracingId = '';
+  }
+
+  async lookupEditIracing() {
+    if (!this.editIracingId) return;
+    this.editLookingUp.set(true);
+    this.error.set(null);
+    try {
+      const driver = await lastValueFrom(
+        this.http.get<{ displayName: string; licenseClass: string; iRating: number }>(`${API_BASE}/iracing/driver/${this.editIracingId}`)
+      );
+      this.editDisplayName = driver.displayName;
+      this.editLicenseClass = driver.licenseClass;
+      this.editIRating = driver.iRating;
+    } catch {
+      this.error.set('Could not find driver with that iRacing ID');
+    } finally {
+      this.editLookingUp.set(false);
+    }
   }
 
   async saveEdit() {

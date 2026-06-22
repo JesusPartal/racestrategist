@@ -53,24 +53,27 @@ export function initializeDatabase(): void {
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
     );
 
-    CREATE TABLE IF NOT EXISTS team_settings (
-      id TEXT PRIMARY KEY DEFAULT 'default',
-      team_name TEXT NOT NULL DEFAULT 'My Racing Team'
+    CREATE TABLE IF NOT EXISTS teams (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL DEFAULT 'My Racing Team',
+      created_at INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (user_id) REFERENCES users(id)
     );
-
-    INSERT OR IGNORE INTO team_settings (id, team_name) VALUES ('default', 'My Racing Team');
 
     CREATE TABLE IF NOT EXISTS team_drivers (
       id TEXT PRIMARY KEY,
+      team_id TEXT NOT NULL,
       name TEXT NOT NULL,
       accent_color TEXT NOT NULL DEFAULT '#FFB000',
       avg_lap_time_ms REAL NOT NULL DEFAULT 0,
-      fuel_per_lap_l REAL,
+      fuel_per_lap_l REAL DEFAULT 0,
       error_factor REAL NOT NULL DEFAULT 0,
       license_class TEXT,
       i_rating INTEGER,
       nationality TEXT,
-      role TEXT
+      role TEXT,
+      FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     );
   `);
 
@@ -78,6 +81,10 @@ export function initializeDatabase(): void {
   try { db.exec('ALTER TABLE users ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0'); } catch {}
+  try { db.exec('ALTER TABLE team_drivers ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
+  try { db.exec('ALTER TABLE teams ADD COLUMN user_id TEXT NOT NULL DEFAULT \'user_1\''); } catch {}
+  try { db.exec('ALTER TABLE teams ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0'); } catch {}
+  try { db.exec('ALTER TABLE team_drivers ADD COLUMN fuel_per_lap_l REAL DEFAULT 0'); } catch {}
 }
 
 export default db;
