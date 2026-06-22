@@ -153,6 +153,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
       this.selectedEventId(); this.selectedVehicleId();
       this.store.pitStopFuelOnlyMs(); this.store.pitStopTiresMs();
       this.store.stintPlan(); this.store.drivers();
+      this.store.activeStrategyName(); this.store.activeEventStartTime();
 
       if (untracked(() => this.suppressDirty)) return;
       untracked(() => this.isDirty.set(true));
@@ -297,9 +298,12 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
   }
 
-  updateStintExtraTime(stintIndex: number, seconds: number) {
+updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.updateStintFields(stintIndex, { additionalTimeMs: (seconds || 0) * 1000 });
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+  }
+
+  toggleExtraTimeInput(stintIndex: number) {
+    this.extraTimeOpen.set(this.extraTimeOpen() === stintIndex ? -1 : stintIndex);
   }
 
   drop(event: CdkDragDrop<string[]>) {
@@ -333,6 +337,7 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
   useLocalTime = signal(false);
   useRelativeTime = signal(false);
   dashCollapsed = signal(false);
+  extraTimeOpen = signal(-1);
 
   toggleTimeMode() {
     if (!this.useLocalTime() && !this.useRelativeTime()) {

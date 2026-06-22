@@ -308,6 +308,16 @@
             <div class="stint-header">
                 <span class="stint-number">{{ trans.translate('stint_no') }}{{ stint.index }}</span>
                 <span class="stint-laps">{{ stint.laps }} {{ trans.translate('stint_laps') }}</span>
+                <button class="btn-add-time" (click)="toggleExtraTimeInput(stint.index)" title="{{ trans.translate('add_buffer_time') }}">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div class="extra-time-row" *ngIf="extraTimeOpen() === stint.index">
+                <input type="number" [ngModel]="(stint.additionalTimeMs || 0) / 1000"
+                    (ngModelChange)="updateStintExtraTime(stint.index, $event)" placeholder="0"
+                    class="extra-time-input">
+                <span class="extra-time-unit">{{ trans.translate('seconds') }}</span>
+                <button class="btn-close-extra" (click)="toggleExtraTimeInput(-1)"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="stint-body">
                 <select [ngModel]="stint.driverId" (ngModelChange)="updateStintDriver(stint.index, $event)">
@@ -325,13 +335,6 @@
                             style="width: 14px; height: 14px; cursor: pointer; appearance: auto; -webkit-appearance: auto;">
                         {{ trans.translate('change_tires') }}
                     </label>
-                    <div style="flex: 1; position: relative;">
-                        <input type="number" [ngModel]="(stint.additionalTimeMs || 0) / 1000"
-                            (ngModelChange)="updateStintExtraTime(stint.index, $event)" placeholder="+ SEC"
-                            style="padding: 5px 25px 5px 8px; font-size: 0.7rem; background: rgba(0,0,0,0.2);">
-                        <span
-                            style="position: absolute; right: 5px; top: 6px; font-size: 0.5rem; opacity: 0.5;">SEC</span>
-                    </div>
                 </div>
                 <div class="stint-times">
                     <div>
