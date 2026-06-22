@@ -11,7 +11,7 @@ router.get('/', (req: Request, res: Response) => {
   const teams = db.prepare('SELECT id, name, created_at FROM teams WHERE user_id = ? ORDER BY created_at DESC').all(userId) as any[];
   const teamsWithCount = teams.map(t => {
     const driverCount = db.prepare('SELECT COUNT(*) as c FROM team_drivers WHERE team_id = ?').get(t.id) as any;
-    return { ...t, driverCount: driverCount?.c || 0 };
+    return { id: t.id, name: t.name, createdAt: t.created_at, driverCount: driverCount?.c || 0 };
   });
   res.json(teamsWithCount);
 });
