@@ -87,6 +87,12 @@ export class TelemetryService {
     this.ws.onopen = () => {
       this.connectionStatus.set(TelemetryConnectionStatus.CONNECTED);
       this.consecutiveFails.set(0);
+      // Send auth token via message (not query param) for security
+      const pending = this._pendingAuthToken;
+      if (pending) {
+        this._pendingAuthToken = null;
+        this.ws?.send(JSON.stringify({ type: 'auth', token: pending }));
+      }
     };
 
     this.ws.onmessage = (event) => {
@@ -133,9 +139,12 @@ export class TelemetryService {
       this.connectionStatus.set(TelemetryConnectionStatus.DISCONNECTED);
       return;
     }
-    const url = `${relayUrl}?token=${encodeURIComponent(token)}`;
-    this.connect(url);
+    // Connect without token in URL — send auth via message after handshake
+    this.connect(relayUrl);
+    this._pendingAuthToken = token;
   }
+
+  private _pendingAuthToken: string | null = null;
 
   disconnect(): void {
     if (this.reconnectTimer) {
@@ -152,6 +161,7 @@ export class TelemetryService {
     this.isInPit.set(false);
     this.pitStop.set({ inPit: false, enteredAt: null, exitedAt: null, durationMs: 0 });
     this.activeDriverId.set(null);
+    this._pendingAuthToken = null;
   }
 
   resetPitDetection(): void {

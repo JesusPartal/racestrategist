@@ -132,20 +132,51 @@ export class TelemetryRelayService {
   }
 
   private handleLiveConnection(ws: WebSocket, req: IncomingMessage): void {
+    // Check query param first (backward compat), then wait for auth message
     const query = url.parse(req.url || '', true).query;
-    const token = query.token as string;
+    const queryToken = query.token as string;
 
-    if (!token) {
-      ws.close(4001, 'Missing token');
+    if (queryToken) {
+      const auth = this.resolveAuth(queryToken);
+      if (!auth) {
+        ws.close(4001, 'Invalid token');
+        return;
+      }
+      this.finalizeLiveConnection(ws, auth);
       return;
     }
 
-    const auth = this.resolveAuth(token);
-    if (!auth) {
-      ws.close(4001, 'Invalid token');
-      return;
-    }
+    // No query token — wait for auth message from client
+    ws.send(JSON.stringify({ type: 'auth_required' }));
 
+    const onMessage = (data: Buffer) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'auth' && msg.token) {
+          const auth = this.resolveAuth(msg.token);
+          if (!auth) {
+            ws.close(4001, 'Invalid token');
+            return;
+          }
+          ws.removeListener('message', onMessage);
+          this.finalizeLiveConnection(ws, auth);
+        }
+      } catch { /* ignore malformed */ }
+    };
+
+    ws.on('message', onMessage);
+
+    // Timeout: close if no auth within 10s
+    const timeout = setTimeout(() => {
+      ws.removeListener('message', onMessage);
+      ws.close(4001, 'Auth timeout');
+    }, 10000);
+
+    ws.once('close', () => clearTimeout(timeout));
+    ws.once('error', () => clearTimeout(timeout));
+  }
+
+  private finalizeLiveConnection(ws: WebSocket, auth: { username: string; teamId: string }): void {
     this.liveClients.add(ws);
     console.log(`Telemetry live client connected (total: ${this.liveClients.size})`);
 
