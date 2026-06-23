@@ -16,8 +16,26 @@ function rowToToken(row: any): AgentToken {
   };
 }
 
+export function ensureTable(): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_tokens (
+      id TEXT PRIMARY KEY,
+      team_id TEXT NOT NULL,
+      driver_id TEXT NOT NULL,
+      driver_name TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_used_at INTEGER,
+      created_by TEXT NOT NULL
+    );
+  `);
+}
+
 export function getRelayUrl(): string {
-  return process.env.RELAY_URL || `ws://localhost:${process.env.PORT || 3000}/ws/telemetry/agent`;
+  if (process.env.RELAY_URL) return process.env.RELAY_URL;
+  const host = process.env.RAILWAY_PUBLIC_DOMAIN || `localhost:${process.env.PORT || 3000}`;
+  const protocol = host.includes('localhost') ? 'ws' : 'wss';
+  return `${protocol}://${host}/ws/telemetry/agent`;
 }
 
 export function createAgentToken(teamId: string, driverId: string, driverName: string, createdBy: string): AgentToken {
