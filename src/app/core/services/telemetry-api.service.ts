@@ -10,6 +10,7 @@ export interface AgentTokenDto {
   driverName: string;
   token: string;
   createdAt: number;
+  expiresAt: number;
   lastUsedAt: number | null;
   createdBy: string;
 }

@@ -306,6 +306,7 @@
                 <span style="flex:1; font-size: 0.75rem;">
                     <strong>{{ t.driverName }}</strong>
                     <span style="opacity: 0.4; margin-left: 8px; font-family: monospace; font-size: 0.6rem;">{{ t.token.slice(0, 16) }}...</span>
+                    <br><span style="opacity: 0.3; font-size: 0.55rem;">{{ trans.translate('expires') || 'Expires' }}: {{ (t.expiresAt | date:'short') || '90d' }}</span>
                 </span>
                 <button style="background: none; border: none; color: #00E676; cursor: pointer; font-size: 0.7rem; padding: 4px 8px;" (click)="copyToken(t); $event.stopPropagation()" [title]="t.token">
                     <i class="fa-solid" [class.fa-copy]="copiedTokenId() !== t.id" [class.fa-check]="copiedTokenId() === t.id"></i>

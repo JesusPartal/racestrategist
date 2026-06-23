@@ -2,7 +2,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
 import jwt from 'jsonwebtoken';
 import url from 'url';
-import { validateAgentToken } from './telemetry.service';
+import { validateAgentToken, cleanupExpiredTokens } from './telemetry.service';
 
 const JWT_SECRET = (() => {
   const secret = process.env.JWT_SECRET;
@@ -56,7 +56,11 @@ export class TelemetryRelayService {
       }
     });
 
-    setInterval(() => this.cleanup(), 30000);
+    setInterval(() => {
+      this.cleanup();
+      const removed = cleanupExpiredTokens();
+      if (removed > 0) console.log(`Cleaned up ${removed} expired agent token(s)`);
+    }, 30000);
   }
 
   private resolveAuth(token: string): { username: string; teamId: string } | null {

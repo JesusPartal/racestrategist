@@ -146,6 +146,7 @@ export interface AgentToken {
   driverName: string;
   token: string;
   createdAt: number;
+  expiresAt: number;
   lastUsedAt: number | null;
   createdBy: string;
 }
