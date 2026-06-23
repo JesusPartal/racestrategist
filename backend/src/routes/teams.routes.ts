@@ -6,6 +6,21 @@ import { v4 as uuid } from 'uuid';
 const router = Router();
 router.use(authMiddleware);
 
+function rowToDriver(row: any) {
+  return {
+    id: row.id,
+    name: row.name,
+    accentColor: row.accent_color,
+    avgLapTimeMs: row.avg_lap_time_ms,
+    fuelPerLapL: row.fuel_per_lap_l,
+    errorFactor: row.error_factor,
+    licenseClass: row.license_class,
+    iRating: row.i_rating,
+    nationality: row.nationality,
+    role: row.role,
+  };
+}
+
 router.get('/', (req: Request, res: Response) => {
   const userId = (req as any).userId;
   const teams = db.prepare('SELECT id, name, created_at FROM teams WHERE user_id = ? ORDER BY created_at DESC').all(userId) as any[];
@@ -30,8 +45,8 @@ router.get('/:id', (req: Request, res: Response) => {
   const userId = (req as any).userId;
   const team = db.prepare('SELECT * FROM teams WHERE id = ? AND user_id = ?').get(req.params.id, userId) as any;
   if (!team) { res.status(404).json({ error: 'Team not found' }); return; }
-  const drivers = db.prepare('SELECT * FROM team_drivers WHERE team_id = ?').all(team.id) as any[];
-  res.json({ ...team, drivers });
+  const drivers = (db.prepare('SELECT * FROM team_drivers WHERE team_id = ?').all(team.id) as any[]).map(rowToDriver);
+  res.json({ id: team.id, name: team.name, createdAt: team.created_at, drivers });
 });
 
 router.put('/:id', (req: Request, res: Response) => {
@@ -61,10 +76,11 @@ router.post('/:id/drivers', (req: Request, res: Response) => {
   const { name, accentColor, licenseClass, iRating, nationality, role } = req.body as any;
   if (!name?.trim()) { res.status(400).json({ error: 'Driver name is required' }); return; }
   const id = 'td_' + uuid().slice(0, 8);
+  const color = accentColor || '#FFB000';
   db.prepare(`INSERT INTO team_drivers (id, team_id, name, accent_color, license_class, i_rating, nationality, role)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    id, team.id, name.trim(), accentColor || '#FFB000', licenseClass || null, iRating || null, nationality || null, role || 'Primary');
-  res.json({ id, team_id: team.id, name: name.trim(), accent_color: accentColor || '#FFB000', license_class: licenseClass, i_rating: iRating, nationality, role: role || 'Primary' });
+    id, team.id, name.trim(), color, licenseClass || null, iRating || null, nationality || null, role || 'Primary');
+  res.json({ id, team_id: team.id, name: name.trim(), accentColor: color, licenseClass: licenseClass || null, iRating: iRating || null, nationality: nationality || null, role: role || 'Primary' });
 });
 
 router.put('/:id/drivers/:driverId', (req: Request, res: Response) => {
@@ -80,7 +96,7 @@ router.put('/:id/drivers/:driverId', (req: Request, res: Response) => {
     nationality = COALESCE(?, nationality), role = COALESCE(?, role) WHERE id = ?`).run(
     name?.trim() || null, accentColor || null, licenseClass ?? null, iRating ?? null, nationality ?? null, role ?? null, driver.id);
   const updated = db.prepare('SELECT * FROM team_drivers WHERE id = ?').get(driver.id) as any;
-  res.json(updated);
+  res.json(rowToDriver(updated));
 });
 
 router.delete('/:id/drivers/:driverId', (req: Request, res: Response) => {
