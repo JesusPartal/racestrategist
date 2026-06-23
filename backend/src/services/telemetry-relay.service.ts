@@ -26,13 +26,14 @@ export class TelemetryRelayService {
   private agents = new Map<string, AgentInfo>();
   private liveClients = new Set<WebSocket>();
   private wss: WebSocketServer;
+  private liveWss: WebSocketServer;
 
   constructor(server: any) {
     this.wss = new WebSocketServer({ server, path: '/ws/telemetry/agent', perMessageDeflate: false });
     this.setupAgentEndpoint();
 
-    const liveWss = new WebSocketServer({ server, path: '/ws/telemetry/live', perMessageDeflate: false });
-    this.setupLiveEndpoint(liveWss);
+    this.liveWss = new WebSocketServer({ server, path: '/ws/telemetry/live', perMessageDeflate: false });
+    this.setupLiveEndpoint(this.liveWss);
 
     setInterval(() => this.cleanup(), 30000);
   }
