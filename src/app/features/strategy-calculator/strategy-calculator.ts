@@ -354,18 +354,18 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   showUnsavedDialog = signal(false);
   showDeleteDialog = signal(false);
   useLocalTime = signal(false);
-  useRelativeTime = signal(false);
+  useRelativeTime = signal(true);
   dashCollapsed = signal(false);
   extraTimeOpen = signal(-1);
 
   toggleTimeMode() {
-    if (!this.useLocalTime() && !this.useRelativeTime()) {
+    if (this.useRelativeTime()) {
+      this.useRelativeTime.set(false);
+    } else if (!this.useLocalTime()) {
       this.useLocalTime.set(true);
-    } else if (this.useLocalTime()) {
+    } else {
       this.useLocalTime.set(false);
       this.useRelativeTime.set(true);
-    } else {
-      this.useRelativeTime.set(false);
     }
   }
 
