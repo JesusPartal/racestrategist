@@ -138,9 +138,10 @@ export class TelemetryService {
       this.connectionStatus.set(TelemetryConnectionStatus.DISCONNECTED);
       return;
     }
-    // Connect without token in URL — send auth via message after handshake
-    this.connect(relayUrl);
     this._pendingAuthToken = token;
+    // Token in query param for immediate auth; also sent via message as backup
+    const separator = relayUrl.includes('?') ? '&' : '?';
+    this.connect(`${relayUrl}${separator}token=${encodeURIComponent(token)}`);
   }
 
   private _pendingAuthToken: string | null = null;
