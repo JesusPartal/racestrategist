@@ -38,6 +38,15 @@ export class TelemetryPanelComponent {
     return pct.toFixed(1);
   }
 
+  formatSessionTime(ms: number): string {
+    if (!ms || ms <= 0) return '--:--:--';
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
   detectStintTransition(packet: any): number | null {
     const lap = packet?.lapDetails?.currentLap;
     if (!lap) return null;

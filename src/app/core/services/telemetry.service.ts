@@ -49,6 +49,14 @@ export class TelemetryService {
   lastLapTime = computed(() => this.lastPacket()?.lapDetails.lastLapTime ?? 0);
   trackTemp = computed(() => this.lastPacket()?.lapDetails.trackTemp ?? 0);
   airTemp = computed(() => this.lastPacket()?.lapDetails.airTemp ?? 0);
+  sessionElapsedMs = computed(() => {
+    const s = this.lastPacket()?.lapDetails.sessionTime;
+    return s != null ? s * 1000 : 0;
+  });
+  sessionRemainingMs = computed(() => {
+    const s = this.lastPacket()?.lapDetails.sessionTimeRemain;
+    return s != null ? s * 1000 : 0;
+  });
 
   connect(url: string = DEFAULT_WS_URL): void {
     if (this.ws) this.disconnect();

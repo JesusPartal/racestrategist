@@ -162,6 +162,37 @@
   background: rgba(255,255,255,0.1);
 }
 
+.tp-race-timer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tp-timer-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.tp-timer-elapsed {
+  font-family: var(--font-display, 'Michroma', monospace);
+  font-size: 1.1rem;
+  color: var(--accent-color, #FFB000);
+  letter-spacing: 1px;
+}
+
+.tp-timer-remaining {
+  font-family: var(--font-display, 'Michroma', monospace);
+  font-size: 1.1rem;
+  color: #2979FF;
+  letter-spacing: 1px;
+}
+
 .tp-lap-info {
   display: grid;
   grid-template-columns: 1fr 1fr;

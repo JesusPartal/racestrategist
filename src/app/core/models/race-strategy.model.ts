@@ -93,6 +93,8 @@ export interface LapTelemetry {
   lastLapTime?: number;
   trackTemp?: number;
   airTemp?: number;
+  sessionTime?: number;
+  sessionTimeRemain?: number;
 }
 
 export interface TelemetryPacket {

@@ -38,6 +38,17 @@
       </div>
     </div>
 
+    <div class="tp-race-timer" *ngIf="telemetry.sessionElapsedMs() > 0">
+      <div class="tp-timer-block">
+        <span class="tp-label">{{ trans.translate('race_time') || 'RACE TIME' }}</span>
+        <span class="tp-value tp-timer-elapsed">{{ formatSessionTime(telemetry.sessionElapsedMs()) }}</span>
+      </div>
+      <div class="tp-timer-block" *ngIf="telemetry.sessionRemainingMs() > 0">
+        <span class="tp-label">{{ trans.translate('remaining') || 'REMAINING' }}</span>
+        <span class="tp-value tp-timer-remaining">{{ formatSessionTime(telemetry.sessionRemainingMs()) }}</span>
+      </div>
+    </div>
+
     <div class="tp-lap-info">
       <div class="tp-lap-row">
         <span class="tp-label">{{ trans.translate('current_lap') || 'LAP' }}</span>
