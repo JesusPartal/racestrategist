@@ -667,7 +667,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
 
   onStrategyDriverChange(driverId: string) {
     this.selectedStrategyDriverId.set(driverId || null);
-    const driver = this.store.drivers().find(d => d.id === driverId);
+    const driver = this.availableDrivers().find(d => d.id === driverId);
     this.agentDriverName = driver?.name || '';
   }
 
