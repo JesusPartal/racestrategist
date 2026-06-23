@@ -1,4 +1,5 @@
 import express from 'express';
+import helmet from 'helmet';
 import cors from 'cors';
 import http from 'http';
 import dotenv from 'dotenv';
@@ -37,6 +38,10 @@ if (process.env.TELEMETRY_RELAY !== 'false') {
 app.set('telemetryRelay', telemetryRelay);
 
 // Middleware
+app.use(helmet({
+  contentSecurityPolicy: false,   // CSP handled by frontend server
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:4200'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
