@@ -168,6 +168,17 @@ export class TelemetryRelayService {
     }
   }
 
+  /** Called by the HTTP ingest endpoint to broadcast agent data to live clients */
+  ingestTelemetry(driverId: string, packet: TelemetryPacket): void {
+    // Track last packet per driver (like WS agents do)
+    const existing = this.agents.get(driverId);
+    if (existing) {
+      existing.lastPacket = packet;
+    }
+    packet.driverId = driverId;
+    this.broadcastToLiveClients(packet);
+  }
+
   getConnectedDrivers(): string[] {
     return Array.from(this.agents.keys());
   }

@@ -1,12 +1,43 @@
 import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import * as telemetryService from '../services/telemetry.service';
+import { TelemetryRelayService } from '../services/telemetry-relay.service';
 
 const router = Router();
 
 // Public relay config (no auth needed for agent auto-discovery)
 router.get('/config', (_req, res: Response) => {
   res.json({ relayUrl: telemetryService.getRelayUrl() });
+});
+
+// Agent telemetry ingestion (authenticated by agent token in query param)
+router.post('/ingest', (req: any, res: Response) => {
+  try {
+    const token = req.query.token as string;
+    const driverId = req.query.driverId as string;
+    if (!token || !driverId) {
+      res.status(400).json({ error: 'Missing token or driverId' });
+      return;
+    }
+    const auth = telemetryService.validateAgentToken(token);
+    if (!auth) {
+      res.status(401).json({ error: 'Invalid token' });
+      return;
+    }
+    const packet = req.body;
+    if (!packet || !packet.car) {
+      res.status(400).json({ error: 'Invalid telemetry packet' });
+      return;
+    }
+    const relay: TelemetryRelayService | null = req.app.get('telemetryRelay');
+    if (relay) {
+      relay.ingestTelemetry(driverId, packet);
+    }
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error('[ingest error]', err?.message || err);
+    res.status(500).json({ error: err?.message || 'Unknown error' });
+  }
 });
 
 // Authenticated endpoints for token management

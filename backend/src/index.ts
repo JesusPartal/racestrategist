@@ -34,6 +34,7 @@ if (process.env.TELEMETRY_RELAY !== 'false') {
   telemetryRelay = new TelemetryRelayService(server);
   console.log('Telemetry relay enabled (ws://.../ws/telemetry/live)');
 }
+app.set('telemetryRelay', telemetryRelay);
 
 // Middleware
 app.use(cors({
