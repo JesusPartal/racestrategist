@@ -664,7 +664,6 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   generatingToken = signal(false);
   lastCopiedCommand = '';
   selectedStrategyDriverId = signal<string | null>(null);
-  strategyDrivers = computed(() => this.store.drivers());
 
   onStrategyDriverChange(driverId: string) {
     this.selectedStrategyDriverId.set(driverId || null);
