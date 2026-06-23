@@ -40,8 +40,10 @@ export function getAllStrategies(page = 1, limit = 50, teamId?: string): Strateg
   }));
 }
 
-export function getStrategyById(id: string): RaceStrategy | null {
-  const row = db.prepare(`SELECT ${STRATEGY_COLS}, drivers, stints FROM strategies WHERE id = ?`).get(id) as any;
+export function getStrategyById(id: string, teamId?: string): RaceStrategy | null {
+  const row = teamId
+    ? db.prepare(`SELECT ${STRATEGY_COLS}, drivers, stints FROM strategies WHERE id = ? AND team_id = ?`).get(id, teamId) as any
+    : db.prepare(`SELECT ${STRATEGY_COLS}, drivers, stints FROM strategies WHERE id = ?`).get(id) as any;
   if (!row) return null;
   return rowToStrategy(row);
 }
@@ -62,8 +64,10 @@ export function createStrategy(req: CreateStrategyRequest, teamId?: string, user
   return getStrategyById(id)!;
 }
 
-export function updateStrategy(id: string, req: UpdateStrategyRequest): boolean {
-  const existing = db.prepare('SELECT id FROM strategies WHERE id = ?').get(id);
+export function updateStrategy(id: string, req: UpdateStrategyRequest, teamId?: string): boolean {
+  const existing = teamId
+    ? db.prepare('SELECT id FROM strategies WHERE id = ? AND team_id = ?').get(id, teamId)
+    : db.prepare('SELECT id FROM strategies WHERE id = ?').get(id);
   if (!existing) return false;
 
   const fields: string[] = [];
@@ -87,8 +91,10 @@ export function updateStrategy(id: string, req: UpdateStrategyRequest): boolean 
   return true;
 }
 
-export function updateStints(strategyId: string, stints: StintDto[]): boolean {
-  const existing = db.prepare('SELECT id FROM strategies WHERE id = ?').get(strategyId);
+export function updateStints(strategyId: string, stints: StintDto[], teamId?: string): boolean {
+  const existing = teamId
+    ? db.prepare('SELECT id FROM strategies WHERE id = ? AND team_id = ?').get(strategyId, teamId)
+    : db.prepare('SELECT id FROM strategies WHERE id = ?').get(strategyId);
   if (!existing) return false;
 
   db.prepare('UPDATE strategies SET stints = ?, last_modified = ? WHERE id = ?').run(
@@ -96,8 +102,10 @@ export function updateStints(strategyId: string, stints: StintDto[]): boolean {
   return true;
 }
 
-export function updateDrivers(strategyId: string, drivers: DriverProfile[]): boolean {
-  const existing = db.prepare('SELECT id FROM strategies WHERE id = ?').get(strategyId);
+export function updateDrivers(strategyId: string, drivers: DriverProfile[], teamId?: string): boolean {
+  const existing = teamId
+    ? db.prepare('SELECT id FROM strategies WHERE id = ? AND team_id = ?').get(strategyId, teamId)
+    : db.prepare('SELECT id FROM strategies WHERE id = ?').get(strategyId);
   if (!existing) return false;
 
   db.prepare('UPDATE strategies SET drivers = ?, last_modified = ? WHERE id = ?').run(
@@ -131,8 +139,10 @@ export function cloneStrategy(sourceId: string, targetTeamId: string, userId?: s
   return getStrategyById(id)!;
 }
 
-export function deleteStrategy(id: string, userId?: string, isAdmin?: boolean): boolean {
-  const row = db.prepare('SELECT created_by FROM strategies WHERE id = ?').get(id) as any;
+export function deleteStrategy(id: string, userId?: string, isAdmin?: boolean, teamId?: string): boolean {
+  const row = teamId
+    ? db.prepare('SELECT created_by FROM strategies WHERE id = ? AND team_id = ?').get(id, teamId) as any
+    : db.prepare('SELECT created_by FROM strategies WHERE id = ?').get(id) as any;
   if (!row) return false;
   if (!isAdmin && row.created_by && userId && row.created_by !== userId) return false;
   db.prepare('DELETE FROM strategies WHERE id = ?').run(id);

@@ -37,7 +37,7 @@ router.get('/', (req: AuthRequest, res: Response) => {
 
 router.get('/:id', (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const strategy = strategyService.getStrategyById(id);
+  const strategy = strategyService.getStrategyById(id, req.teamId);
   if (!strategy) { res.status(404).json({ error: 'Strategy not found' }); return; }
   res.json(strategy);
 });
@@ -58,14 +58,14 @@ router.post('/', (req: AuthRequest, res: Response) => {
 
 router.put('/:id', (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const updated = strategyService.updateStrategy(id, req.body);
+  const updated = strategyService.updateStrategy(id, req.body, req.teamId);
   if (!updated) { res.status(404).json({ error: 'Strategy not found' }); return; }
   res.json(strategyService.getStrategyById(id));
 });
 
 router.delete('/:id', (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const deleted = strategyService.deleteStrategy(id, req.userId, req.isAdmin);
+  const deleted = strategyService.deleteStrategy(id, req.userId, req.isAdmin, req.teamId);
   if (!deleted) { res.status(403).json({ error: 'Only the creator can delete this strategy' }); return; }
   res.status(204).send();
 });
@@ -74,7 +74,7 @@ router.put('/:id/stints', (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const { stints } = req.body;
   if (!Array.isArray(stints)) { res.status(400).json({ error: 'stints array is required' }); return; }
-  const updated = strategyService.updateStints(id, stints);
+  const updated = strategyService.updateStints(id, stints, req.teamId);
   if (!updated) { res.status(404).json({ error: 'Strategy not found' }); return; }
   res.json(strategyService.getStrategyById(id));
 });
@@ -83,7 +83,7 @@ router.put('/:id/drivers', (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const { drivers } = req.body;
   if (!Array.isArray(drivers)) { res.status(400).json({ error: 'drivers array is required' }); return; }
-  const updated = strategyService.updateDrivers(id, drivers);
+  const updated = strategyService.updateDrivers(id, drivers, req.teamId);
   if (!updated) { res.status(404).json({ error: 'Strategy not found' }); return; }
   res.json(strategyService.getStrategyById(id));
 });
