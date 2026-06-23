@@ -281,7 +281,7 @@
 </div>
 
 <!-- Live Adjustments -->
-<div class="glass-card animate-in" style="margin-top: 20px;" *ngIf="telemetry.isConnected() && telemetry.actualFuelPerLap() > 0">
+<div class="glass-card animate-in" style="margin-top: 20px;" *ngIf="telemetry.isConnected()">
     <div class="section-header-row">
         <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('live_adjustments') || 'LIVE ADJUSTMENTS' }}</span></h2>
         <div class="live-header-actions">
@@ -297,7 +297,7 @@
         </div>
     </div>
     <div class="live-compare-grid">
-        <div class="live-compare-item">
+        <div class="live-compare-item" *ngIf="telemetry.actualFuelPerLap() > 0">
             <span class="live-compare-label">{{ trans.translate('fuel_consumption') || 'Fuel / Lap' }}</span>
             <div class="live-compare-values">
                 <div class="live-compare-plan">
@@ -317,7 +317,7 @@
                 <i class="fa-solid fa-droplet"></i> {{ trans.translate('apply_fuel') || 'APPLY FUEL' }}
             </button>
         </div>
-        <div class="live-compare-item">
+        <div class="live-compare-item" *ngIf="telemetry.actualAvgLapTime() > 0">
             <span class="live-compare-label">{{ trans.translate('avg_lap_time') || 'Avg Lap Time' }}</span>
             <div class="live-compare-values">
                 <div class="live-compare-plan">
