@@ -88,10 +88,9 @@ export class TelemetryService {
       this.connectionStatus.set(TelemetryConnectionStatus.CONNECTED);
       this.consecutiveFails.set(0);
       // Send auth token via message (not query param) for security
-      const pending = this._pendingAuthToken;
-      if (pending) {
-        this._pendingAuthToken = null;
-        this.ws?.send(JSON.stringify({ type: 'auth', token: pending }));
+      // Token persists across reconnects — only cleared on explicit disconnect()
+      if (this._pendingAuthToken) {
+        this.ws?.send(JSON.stringify({ type: 'auth', token: this._pendingAuthToken }));
       }
     };
 
