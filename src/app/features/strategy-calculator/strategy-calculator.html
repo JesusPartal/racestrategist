@@ -295,12 +295,15 @@
         <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 12px;">{{ trans.translate('agent_setup_desc') || 'Generate tokens so team PCs can send telemetry to this server.' }}</p>
 
         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
-            <select style="flex:1; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem;"
+            <select *ngIf="strategyDrivers().length > 0; else freeTextInput" style="flex:1; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem;"
               [ngModel]="selectedStrategyDriverId()"
               (ngModelChange)="onStrategyDriverChange($event)">
                 <option value="">{{ trans.translate('select_driver') || '-- Select driver --' }}</option>
                 <option *ngFor="let d of strategyDrivers()" [value]="d.id">{{ d.name }}</option>
             </select>
+            <ng-template #freeTextInput>
+                <input type="text" [(ngModel)]="agentDriverName" placeholder="{{ trans.translate('agent_driver_name') || 'Driver name' }}" style="flex:1; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem;">
+            </ng-template>
             <button class="btn-save" style="padding: 10px 18px; white-space: nowrap;" (click)="generateAgentToken()" [disabled]="generatingToken() || !agentDriverName">
                 <i class="fa-solid fa-key"></i> {{ trans.translate('generate') || 'GENERATE' }}
             </button>
