@@ -337,6 +337,32 @@
                 <i class="fa-solid fa-gauge-high"></i> {{ trans.translate('apply_pace') || 'APPLY PACE' }}
             </button>
         </div>
+        <div class="live-compare-item">
+            <span class="live-compare-label">{{ trans.translate('pit_stop') || 'PIT STOP' }}</span>
+            <div class="live-compare-values">
+                <div class="live-compare-plan">
+                    <span class="live-compare-tag">{{ trans.translate('plan') || 'PLAN' }}</span>
+                    <span class="live-compare-num">{{ (store.pitStopFuelOnlyMs() / 1000).toFixed(0) }}s / {{ (store.pitStopTiresMs() / 1000).toFixed(0) }}s</span>
+                </div>
+                <div class="live-compare-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="live-compare-real">
+                    <span class="live-compare-tag">{{ trans.translate('real') || 'REAL' }}</span>
+                    <span class="live-compare-num" style="color: var(--accent-color);" *ngIf="telemetry.lastPitDurationMs() > 0">{{ (telemetry.lastPitDurationMs() / 1000).toFixed(1) }}s</span>
+                    <span class="live-compare-num" style="color: var(--text-dim);" *ngIf="telemetry.lastPitDurationMs() <= 0">---</span>
+                </div>
+                <div class="live-compare-dev" *ngIf="telemetry.avgPitDurationMs() > 0" style="font-size: 0.55rem; opacity: 0.6;">
+                    {{ trans.translate('avg') || 'AVG' }} {{ (telemetry.avgPitDurationMs() / 1000).toFixed(1) }}s
+                </div>
+            </div>
+            <div class="live-pit-actions" *ngIf="telemetry.lastPitDurationMs() > 0">
+                <button class="btn-apply-single" (click)="applyRealPitFuelOnly()">
+                    <i class="fa-solid fa-gas-pump"></i> {{ trans.translate('apply_as_fuel_only') || '→ FUEL ONLY' }}
+                </button>
+                <button class="btn-apply-single" (click)="applyRealPitWithTires()">
+                    <i class="fa-solid fa-tire"></i> {{ trans.translate('apply_as_with_tires') || '→ WITH TIRES' }}
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -991,14 +1017,25 @@
     }
 
     .auto-badge {
-        background: var(--success-color);
-        color: #000;
-        font-size: 0.5rem;
-        font-weight: 800;
-        padding: 1px 6px;
-        border-radius: 8px;
-        font-family: monospace;
-        line-height: 1.4;
+      background: var(--success-color);
+      color: #000;
+      font-size: 0.5rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+
+    .live-pit-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .live-pit-actions .btn-apply-single {
+      font-size: 0.5rem;
+      padding: 4px 10px;
     }
 </style>
 

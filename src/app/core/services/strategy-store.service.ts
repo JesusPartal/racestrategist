@@ -110,4 +110,9 @@ export class StrategyStore {
     this.stintPlan.set(updated);
     this.recalculateTimeline(this.activeFuelPerLap(), this.activeAvgLapTimeMs(), tankCapacity);
   }
+
+  applyRealPitTime(fuelOnlyMs: number, tiresMs: number): void {
+    this.pitStopFuelOnlyMs.set(fuelOnlyMs);
+    this.pitStopTiresMs.set(tiresMs);
+  }
 }

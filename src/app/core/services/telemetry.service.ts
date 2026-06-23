@@ -34,6 +34,16 @@ export class TelemetryService {
   lastStintCompleted = signal<number | null>(null);
   pitExited = signal<number | null>(null);
 
+  actualPitStopDurations = signal<number[]>([]);
+  lastPitDurationMs = computed(() => {
+    const d = this.actualPitStopDurations();
+    return d.length > 0 ? d[d.length - 1] : 0;
+  });
+  avgPitDurationMs = computed(() => {
+    const d = this.actualPitStopDurations();
+    return d.length > 0 ? d.reduce((a, b) => a + b, 0) / d.length : 0;
+  });
+
   fuelLevel = computed(() => this.lastPacket()?.car.fuelLevel ?? 0);
   fuelLevelPct = computed(() => this.lastPacket()?.car.fuelLevelPct ?? 0);
   lastLapTime = computed(() => this.lastPacket()?.lapDetails.lastLapTime ?? 0);
@@ -203,11 +213,18 @@ export class TelemetryService {
       });
       this.isInPit.set(false);
       this.pitExited.set(now);
+      if (durationMs > 1000) {
+        this.actualPitStopDurations.update(d => [...d, durationMs]);
+      }
       this.activeStintIndex.update(i => i + 1);
       this.lastStintCompleted.set(this.activeStintIndex() - 1);
     } else if (current.inPit && current.enteredAt !== null) {
       this.pitStop.update(v => ({ ...v, durationMs: now - v.enteredAt! }));
     }
+  }
+
+  resetPitStopDurations(): void {
+    this.actualPitStopDurations.set([]);
   }
 
   resetStintTracking(): void {
@@ -216,5 +233,6 @@ export class TelemetryService {
     this.lastStintCompleted.set(null);
     this.pitExited.set(null);
     this.lastCompletedLap = 0;
+    this.resetPitStopDurations();
   }
 }

@@ -553,6 +553,20 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.stopAutoUpdate();
   }
 
+  applyRealPitFuelOnly(): void {
+    const actual = this.telemetry.avgPitDurationMs();
+    if (actual <= 0) return;
+    this.store.applyRealPitTime(Math.round(actual), this.store.pitStopTiresMs());
+    this.isDirty.set(true);
+  }
+
+  applyRealPitWithTires(): void {
+    const actual = this.telemetry.avgPitDurationMs();
+    if (actual <= 0) return;
+    this.store.applyRealPitTime(this.store.pitStopFuelOnlyMs(), Math.round(actual));
+    this.isDirty.set(true);
+  }
+
   toggleAutoUpdate(): void {
     if (this.autoUpdateEnabled()) {
       this.stopAutoUpdate();
@@ -597,6 +611,10 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       this.lapMin.set(Math.floor(totalSeconds / 60));
       this.lapSec.set(totalSeconds % 60);
       this.lapMs.set(totalMs % 1000);
+    }
+    if (this.telemetry.avgPitDurationMs() > 0) {
+      const avg = Math.round(this.telemetry.avgPitDurationMs());
+      this.store.applyRealPitTime(avg, avg);
     }
     this.telemetry.setPlannedValues(this.store.activeFuelPerLap(), this.store.activeAvgLapTimeMs());
     this.isDirty.set(true);

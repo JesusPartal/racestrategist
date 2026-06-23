@@ -206,6 +206,10 @@ export class TranslationService {
             'apply_fuel': 'APPLY FUEL',
             'apply_pace': 'APPLY PACE',
             'auto': 'AUTO',
+            'pit_stop': 'PIT STOP',
+            'apply_as_fuel_only': '→ FUEL ONLY',
+            'apply_as_with_tires': '→ WITH TIRES',
+            'avg': 'AVG',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -406,6 +410,10 @@ export class TranslationService {
             'apply_fuel': 'APLICAR COMBUSTIBLE',
             'apply_pace': 'APLICAR RITMO',
             'auto': 'AUTO',
+            'pit_stop': 'PARADA EN BOXES',
+            'apply_as_fuel_only': '→ SÓLO COMBUSTIBLE',
+            'apply_as_with_tires': '→ CON NEUMÁTICOS',
+            'avg': 'PROM',
         }
     };
 
