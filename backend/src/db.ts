@@ -94,6 +94,11 @@ export function initializeDatabase(): void {
   try { db.exec('ALTER TABLE strategies ADD COLUMN created_by TEXT'); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN source_id TEXT'); } catch {}
 
+  // Migrate agent_tokens: v1 had FOREIGN KEY teams(id) which broke inserts
+  // because seed users use team_id='default' but no teams row exists.
+  // Drop and recreate since no rows can exist (FK blocked inserts).
+  try { db.exec('DROP TABLE IF EXISTS agent_tokens'); } catch {}
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS agent_tokens (
       id TEXT PRIMARY KEY,
