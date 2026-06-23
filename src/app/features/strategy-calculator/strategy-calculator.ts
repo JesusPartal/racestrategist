@@ -712,7 +712,12 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   }
 
   connectTelemetry() {
-    this.telemetry.connect();
+    // Prefer relay if auth token available, fall back to direct WS
+    if (this.auth.token()) {
+      this.telemetry.connectRelay();
+    } else {
+      this.telemetry.connect();
+    }
   }
 
   connectTelemetryRelay() {
