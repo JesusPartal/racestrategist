@@ -77,6 +77,16 @@ export class StrategyCalculator implements OnInit, HasUnsavedChanges {
 
   canGenerateStints = computed(() => this.stintsNeeded() > 0 && this.stintsNeeded() <= 1000);
 
+missingFields = computed<string[]>(() => {
+    const missing: string[] = [];
+    if (!this.selectedEventId()) missing.push('select_event');
+    if (!this.selectedVehicleId()) missing.push('select_vehicle');
+    if (this.fuelPerLap() <= 0) missing.push('fuel_consumption');
+    if (this.avgLapTime() <= 0) missing.push('avg_lap_time');
+    if (this.tankCapacity() <= 0) missing.push('tank_capacity');
+    return missing;
+  });
+
   /** Drivers available for stint assignment: team roster + strategy snapshot drivers */
   availableDrivers = computed(() => {
     const team = this.team.roster();

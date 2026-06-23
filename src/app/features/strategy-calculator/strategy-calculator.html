@@ -227,9 +227,14 @@
                     {{ trans.translate('generate_plan') }}
                 </button>
                 <p *ngIf="!canGenerateStints()"
-                    style="font-size: 0.6rem; color: #ff5252; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4;">
-                    <span *ngIf="stintsNeeded() <= 0">{{ trans.translate('fill_data_first') }}</span>
+                    style="font-size: 0.6rem; color: #ff5252; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.6;">
                     <span *ngIf="stintsNeeded() > 1000">{{ trans.translate('max_stints_msg', { count: stintsNeeded() }) }}</span>
+                    <span *ngIf="stintsNeeded() <= 0">
+                        {{ trans.translate('fill_data_first') }}:<br>
+                        <span *ngFor="let field of missingFields()" style="display: block; padding-left: 8px;">
+                            <i class="fa-solid fa-circle-exclamation" style="margin-right: 4px;"></i>{{ trans.translate(field) }}
+                        </span>
+                    </span>
                 </p>
             </div>
         </div>
