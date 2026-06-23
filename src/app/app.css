@@ -5,11 +5,10 @@
   gap: 15px;
 }
 
-.logo-icon {
-  color: var(--accent-color);
-  font-size: 1.8rem;
-  display: flex;
-  align-items: center;
+.logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
 }
 
 .logo-text {
