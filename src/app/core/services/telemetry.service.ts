@@ -49,6 +49,7 @@ export class TelemetryService {
     this.lastStintCompleted.set(null);
     this.pitExited.set(null);
     this.lastCompletedLap = 0;
+    this.resetFuelTracking();
 
     try {
       this.ws = new WebSocket(url);
@@ -112,11 +113,69 @@ export class TelemetryService {
     }, RECONNECT_DELAY_MS);
   }
 
+  private lapStartFuel = 0;
+  actualFuelPerLapValues = signal<number[]>([]);
+  actualAvgLapTimeValues = signal<number[]>([]);
+
+  actualFuelPerLap = computed(() => {
+    const values = this.actualFuelPerLapValues();
+    if (values.length === 0) return 0;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  });
+
+  actualAvgLapTime = computed(() => {
+    const values = this.actualAvgLapTimeValues();
+    if (values.length === 0) return 0;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  });
+
+  fuelDeviation = computed(() => {
+    const planned = this._plannedFuelPerLap();
+    const actual = this.actualFuelPerLap();
+    if (planned <= 0 || actual <= 0) return 0;
+    return ((actual - planned) / planned) * 100;
+  });
+
+  paceDeviation = computed(() => {
+    const planned = this._plannedAvgLapTime();
+    const actual = this.actualAvgLapTime();
+    if (planned <= 0 || actual <= 0) return 0;
+    return ((actual - planned) / planned) * 100;
+  });
+
+  private _plannedFuelPerLap = signal(0);
+  private _plannedAvgLapTime = signal(0);
+
+  setPlannedValues(fuelPerLap: number, avgLapTimeMs: number): void {
+    this._plannedFuelPerLap.set(fuelPerLap);
+    this._plannedAvgLapTime.set(avgLapTimeMs);
+  }
+
+  resetFuelTracking(): void {
+    this.lapStartFuel = 0;
+    this.actualFuelPerLapValues.set([]);
+    this.actualAvgLapTimeValues.set([]);
+  }
+
   private detectLapCompletion(packet: TelemetryPacket): void {
     const currentLap = packet.lapDetails.currentLap;
     if (currentLap > this.lastCompletedLap && this.lastCompletedLap > 0) {
-      const lapTime = packet.lapDetails.lapTimeCurrent;
-      this.actualLapTimes.update(times => [...times, lapTime]);
+      const lapTime = packet.lapDetails.lastLapTime || packet.lapDetails.lapTimeCurrent;
+      if (lapTime > 0) {
+        this.actualAvgLapTimeValues.update(t => [...t, lapTime * 1000]);
+        this.actualLapTimes.update(times => [...times, lapTime]);
+      }
+
+      const fuelNow = packet.car.fuelLevel ?? 0;
+      if (this.lapStartFuel > 0 && fuelNow > 0) {
+        const fuelUsed = this.lapStartFuel - fuelNow;
+        if (fuelUsed > 0 && fuelUsed < 50) {
+          this.actualFuelPerLapValues.update(v => [...v, fuelUsed]);
+        }
+      }
+      this.lapStartFuel = fuelNow;
+    } else if (currentLap === 1 && this.lastCompletedLap === 0) {
+      this.lapStartFuel = packet.car.fuelLevel ?? 0;
     }
     this.lastCompletedLap = currentLap;
   }

@@ -83,4 +83,31 @@ export class StrategyStore {
       )
     );
   }
+
+  applyRealFuelData(actualFuelPerLap: number, tankCapacity: number): void {
+    this.activeFuelPerLap.set(actualFuelPerLap);
+    this.recalculateTimeline(this.activeFuelPerLap(), this.activeAvgLapTimeMs(), tankCapacity);
+  }
+
+  applyRealPaceData(actualAvgLapTimeMs: number, tankCapacity: number): void {
+    this.activeAvgLapTimeMs.set(actualAvgLapTimeMs);
+    this.recalculateTimeline(this.activeFuelPerLap(), this.activeAvgLapTimeMs(), tankCapacity);
+  }
+
+  recalculateRemainingStints(currentLap: number, tankCapacity: number): void {
+    const stints = this.stintPlan();
+    let lapsAccounted = 0;
+
+    const updated = stints.map(s => {
+      const stintStartLap = lapsAccounted + 1;
+      lapsAccounted += s.laps;
+      if (currentLap > stintStartLap) {
+        return { ...s, isCompleted: true };
+      }
+      return s;
+    });
+
+    this.stintPlan.set(updated);
+    this.recalculateTimeline(this.activeFuelPerLap(), this.activeAvgLapTimeMs(), tankCapacity);
+  }
 }

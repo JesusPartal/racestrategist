@@ -240,6 +240,8 @@ missingFields = computed<string[]>(() => {
       this.lapMs.set(totalMs % 1000);
     }
 
+    this.telemetry.setPlannedValues(fuel, totalMs);
+
     untracked(() => this.isDirty.set(false));
     setTimeout(() => { this.suppressDirty = false; });
   }
@@ -307,6 +309,7 @@ missingFields = computed<string[]>(() => {
     const count = Math.ceil(this.stintsNeeded());
     this.store.generateEmptyStints(count, this.maxLaps());
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.telemetry.setPlannedValues(this.fuelPerLap(), this.avgLapTime());
   }
 
   updateStintDriver(stintIndex: number, driverId: string) {
@@ -538,6 +541,40 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       this.tankCapacityOverride.set(null);
     }
     this.isDirty.set(false);
+  }
+
+  useRealTelemetryData = signal(false);
+
+  applyRealFuelToStrategy() {
+    const actual = this.telemetry.actualFuelPerLap();
+    if (actual <= 0) return;
+    this.store.applyRealFuelData(actual, this.tankCapacity());
+    this.fuelPerLap.set(actual);
+    this.telemetry.setPlannedValues(actual, this.store.activeAvgLapTimeMs());
+    this.isDirty.set(true);
+  }
+
+  applyRealPaceToStrategy() {
+    const actual = this.telemetry.actualAvgLapTime();
+    if (actual <= 0) return;
+    const totalMs = Math.round(actual);
+    this.store.applyRealPaceData(totalMs, this.tankCapacity());
+    const totalSeconds = Math.floor(totalMs / 1000);
+    this.lapMin.set(Math.floor(totalSeconds / 60));
+    this.lapSec.set(totalSeconds % 60);
+    this.lapMs.set(totalMs % 1000);
+    this.telemetry.setPlannedValues(this.store.activeFuelPerLap(), totalMs);
+    this.isDirty.set(true);
+  }
+
+  toggleRealTelemetryData() {
+    if (this.useRealTelemetryData()) {
+      this.useRealTelemetryData.set(false);
+    } else {
+      this.applyRealFuelToStrategy();
+      this.applyRealPaceToStrategy();
+      this.useRealTelemetryData.set(true);
+    }
   }
 
   connectTelemetry() {

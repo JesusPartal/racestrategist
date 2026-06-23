@@ -198,6 +198,13 @@ export class TranslationService {
             'telemetry_disconnected': 'Connect to iRacing telemetry to see live data.',
             'last_lap': 'LAST LAP',
             'done': 'DONE',
+            'live_adjustments': 'LIVE ADJUSTMENTS',
+            'apply_real_data': 'APPLY REAL DATA',
+            'using_real_data': 'USING REAL DATA',
+            'plan': 'PLAN',
+            'real': 'REAL',
+            'apply_fuel': 'APPLY FUEL',
+            'apply_pace': 'APPLY PACE',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -390,6 +397,13 @@ export class TranslationService {
             'telemetry_disconnected': 'Conecta a la telemetría de iRacing para ver datos en vivo.',
             'last_lap': 'ÚLTIMA VUELTA',
             'done': 'LISTO',
+            'live_adjustments': 'AJUSTES EN VIVO',
+            'apply_real_data': 'APLICAR DATOS REALES',
+            'using_real_data': 'USANDO DATOS REALES',
+            'plan': 'PLAN',
+            'real': 'REAL',
+            'apply_fuel': 'APLICAR COMBUSTIBLE',
+            'apply_pace': 'APLICAR RITMO',
         }
     };
 
