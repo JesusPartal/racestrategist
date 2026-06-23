@@ -205,6 +205,7 @@ export class TranslationService {
             'real': 'REAL',
             'apply_fuel': 'APPLY FUEL',
             'apply_pace': 'APPLY PACE',
+            'auto': 'AUTO',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -404,6 +405,7 @@ export class TranslationService {
             'real': 'REAL',
             'apply_fuel': 'APLICAR COMBUSTIBLE',
             'apply_pace': 'APLICAR RITMO',
+            'auto': 'AUTO',
         }
     };
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, effect, untracked, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, untracked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,7 +21,7 @@ import { TelemetryPanelComponent } from '../telemetry-panel/telemetry-panel';
   templateUrl: './strategy-calculator.html',
   styleUrl: './strategy-calculator.css'
 })
-export class StrategyCalculator implements OnInit, HasUnsavedChanges {
+export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges {
   private teamsService = inject(TeamsService);
   private suppressDirty = true;
 
@@ -544,6 +544,63 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   }
 
   useRealTelemetryData = signal(false);
+  autoUpdateEnabled = signal(false);
+  autoUpdateIntervalSec = signal(30);
+  autoUpdateCountdown = signal(0);
+  private autoUpdateTimer: ReturnType<typeof setInterval> | null = null;
+
+  ngOnDestroy(): void {
+    this.stopAutoUpdate();
+  }
+
+  toggleAutoUpdate(): void {
+    if (this.autoUpdateEnabled()) {
+      this.stopAutoUpdate();
+    } else {
+      this.startAutoUpdate();
+    }
+  }
+
+  private startAutoUpdate(): void {
+    this.stopAutoUpdate();
+    this.autoUpdateEnabled.set(true);
+    this.autoUpdateCountdown.set(this.autoUpdateIntervalSec());
+    this.autoUpdateTimer = setInterval(() => {
+      const c = this.autoUpdateCountdown() - 1;
+      if (c <= 0) {
+        this.autoApplyTelemetry();
+        this.autoUpdateCountdown.set(this.autoUpdateIntervalSec());
+      } else {
+        this.autoUpdateCountdown.set(c);
+      }
+    }, 1000);
+  }
+
+  private stopAutoUpdate(): void {
+    if (this.autoUpdateTimer !== null) {
+      clearInterval(this.autoUpdateTimer);
+      this.autoUpdateTimer = null;
+    }
+    this.autoUpdateEnabled.set(false);
+    this.autoUpdateCountdown.set(0);
+  }
+
+  private autoApplyTelemetry(): void {
+    if (this.telemetry.actualFuelPerLap() > 0) {
+      this.store.applyRealFuelData(this.telemetry.actualFuelPerLap(), this.tankCapacity());
+      this.fuelPerLap.set(this.telemetry.actualFuelPerLap());
+    }
+    if (this.telemetry.actualAvgLapTime() > 0) {
+      const totalMs = Math.round(this.telemetry.actualAvgLapTime());
+      this.store.applyRealPaceData(totalMs, this.tankCapacity());
+      const totalSeconds = Math.floor(totalMs / 1000);
+      this.lapMin.set(Math.floor(totalSeconds / 60));
+      this.lapSec.set(totalSeconds % 60);
+      this.lapMs.set(totalMs % 1000);
+    }
+    this.telemetry.setPlannedValues(this.store.activeFuelPerLap(), this.store.activeAvgLapTimeMs());
+    this.isDirty.set(true);
+  }
 
   applyRealFuelToStrategy() {
     const actual = this.telemetry.actualFuelPerLap();
