@@ -94,6 +94,10 @@
         <i class="fa-solid fa-check"></i> #{{ telemetry.lastStintCompleted() }} {{ trans.translate('done') || 'DONE' }}
       </span>
     </div>
+
+    <div class="tp-driver-badge" *ngIf="telemetry.activeDriverId()">
+      <i class="fa-solid fa-user"></i> {{ telemetry.activeDriverId() }}
+    </div>
   </div>
 
   <div class="tp-body tp-disconnected" *ngIf="!telemetry.isConnected()">

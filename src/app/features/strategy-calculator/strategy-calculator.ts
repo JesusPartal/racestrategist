@@ -700,11 +700,11 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   }
 
   connectTelemetry() {
-    if (this.auth.token()) {
-      this.telemetry.connectRelay();
-    } else {
-      this.telemetry.connect();
-    }
+    this.telemetry.connect();
+  }
+
+  connectTelemetryRelay() {
+    this.telemetry.connectRelay();
   }
 
   disconnectTelemetry() {

@@ -282,9 +282,14 @@
 
 <!-- Telemetry Agent Setup (multi-PC relay) -->
 <div class="glass-card animate-in" style="margin-top: 16px;" *ngIf="auth.token()">
-    <div class="section-header-row" (click)="showAgentSetup.set(!showAgentSetup())" style="cursor: pointer;">
-        <h2><span style="font-weight: 300; opacity: 0.6;"><i class="fa-solid fa-wifi"></i> {{ trans.translate('telemetry_agents') || 'TELEMETRY AGENTS' }}</span></h2>
-        <i class="fa-solid" [class.fa-chevron-down]="showAgentSetup()" [class.fa-chevron-up]="!showAgentSetup()" style="opacity: 0.4;"></i>
+    <div class="section-header-row">
+        <h2 style="cursor: pointer;" (click)="showAgentSetup.set(!showAgentSetup())"><span style="font-weight: 300; opacity: 0.6;"><i class="fa-solid fa-wifi"></i> {{ trans.translate('telemetry_agents') || 'TELEMETRY AGENTS' }}</span></h2>
+        <div class="live-header-actions">
+            <button class="btn-time-toggle" (click)="connectTelemetryRelay()" *ngIf="!telemetry.isConnected() && auth.token()" style="font-size: 0.6rem;">
+                <i class="fa-solid fa-plug"></i> {{ trans.translate('connect_relay') || 'CONNECT RELAY' }}
+            </button>
+            <i class="fa-solid" [class.fa-chevron-down]="showAgentSetup()" [class.fa-chevron-up]="!showAgentSetup()" style="opacity: 0.4; cursor: pointer;" (click)="showAgentSetup.set(!showAgentSetup())"></i>
+        </div>
     </div>
     <div *ngIf="showAgentSetup()" style="padding: 0 20px 20px;">
         <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 12px;">{{ trans.translate('agent_setup_desc') || 'Generate tokens so team PCs can send telemetry to this server.' }}</p>
