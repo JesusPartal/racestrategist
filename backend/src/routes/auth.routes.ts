@@ -1,8 +1,17 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import * as authService from '../services/auth.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 router.post('/register', (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -28,7 +37,7 @@ router.post('/register', (req: Request, res: Response) => {
   res.status(201).json(result);
 });
 
-router.post('/login', (req: Request, res: Response) => {
+router.post('/login', loginLimiter, (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -44,8 +53,8 @@ router.post('/login', (req: Request, res: Response) => {
 
     res.json(result);
   } catch (err: any) {
-    console.error('[Login Error]', err.message, err.stack);
-    res.status(500).json({ error: err.message || 'Internal server error' });
+    console.error('[Login Error]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
