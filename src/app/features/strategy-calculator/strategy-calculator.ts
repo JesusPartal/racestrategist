@@ -11,6 +11,7 @@ import { TeamService } from '../../core/services/team.service';
 import { TeamsService, TeamSummary } from '../../core/services/teams.service';
 import { Vehicle, DriverProfile } from '../../core/models/race-strategy.model';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
+import { AuthService } from '../../core/services/auth.service';
 import { TelemetryService } from '../../core/services/telemetry.service';
 import { TelemetryPanelComponent } from '../telemetry-panel/telemetry-panel';
 
@@ -126,7 +127,8 @@ missingFields = computed<string[]>(() => {
     private api: StrategyApiService,
     public team: TeamService,
     private router: Router,
-    public telemetry: TelemetryService
+    public telemetry: TelemetryService,
+    private auth: AuthService
   ) {
     effect(() => {
       const eventId = this.selectedEventId();
@@ -653,7 +655,11 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   }
 
   connectTelemetry() {
-    this.telemetry.connect();
+    if (this.auth.token()) {
+      this.telemetry.connectRelay();
+    } else {
+      this.telemetry.connect();
+    }
   }
 
   disconnectTelemetry() {

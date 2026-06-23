@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import http from 'http';
 import dotenv from 'dotenv';
 import { initializeDatabase } from './db';
 import { errorHandler } from './middleware/error';
@@ -10,6 +11,7 @@ import teamRoutes from './routes/team.routes';
 import teamsRoutes from './routes/teams.routes';
 import adminRoutes from './routes/admin.routes';
 import { seedData } from './seed';
+import { TelemetryRelayService } from './services/telemetry-relay.service';
 
 dotenv.config();
 
@@ -21,6 +23,16 @@ initializeDatabase();
 
 // Seed data
 seedData();
+
+// Create shared HTTP server (Express + WebSocket on same port)
+const server = http.createServer(app);
+
+// Telemetry WebSocket relay (multi-PC support)
+let telemetryRelay: TelemetryRelayService | null = null;
+if (process.env.TELEMETRY_RELAY !== 'false') {
+  telemetryRelay = new TelemetryRelayService(server);
+  console.log('Telemetry relay enabled (ws://.../ws/telemetry/live)');
+}
 
 // Middleware
 app.use(cors({
@@ -43,10 +55,19 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
+// Telemetry relay info endpoint
+app.get('/api/telemetry/agents', (_req, res) => {
+  if (!telemetryRelay) {
+    res.json({ enabled: false, agents: [] });
+    return;
+  }
+  res.json({ enabled: true, agents: telemetryRelay.getConnectedDrivers() });
+});
+
 // Error handler
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`RaceStrategist API running on http://localhost:${PORT}`);
 });
 

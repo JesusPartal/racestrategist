@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 import {
   TelemetryPacket,
   TelemetryConnectionStatus,
@@ -11,6 +13,7 @@ const PIT_SPEED_THRESHOLD = 5;
 
 @Injectable({ providedIn: 'root' })
 export class TelemetryService {
+  private auth = inject(AuthService);
   private ws: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private lastCompletedLap = 0;
@@ -33,6 +36,9 @@ export class TelemetryService {
   actualLapTimes = signal<number[]>([]);
   lastStintCompleted = signal<number | null>(null);
   pitExited = signal<number | null>(null);
+
+  /** Driver ID from the relay packet (multi-PC support) */
+  activeDriverId = signal<string | null>(null);
 
   actualPitStopDurations = signal<number[]>([]);
   lastPitDurationMs = computed(() => {
@@ -67,6 +73,7 @@ export class TelemetryService {
     this.lastStintCompleted.set(null);
     this.pitExited.set(null);
     this.lastCompletedLap = 0;
+    this.activeDriverId.set(null);
     this.resetFuelTracking();
 
     try {
@@ -84,7 +91,22 @@ export class TelemetryService {
 
     this.ws.onmessage = (event) => {
       try {
-        const packet: TelemetryPacket = JSON.parse(event.data);
+        const raw = JSON.parse(event.data);
+
+        // Handle relay-wrapped packets
+        const packet: TelemetryPacket = raw.type === 'telemetry' ? raw : raw;
+
+        // Handle relay snapshot (initial state)
+        if (raw.type === 'snapshot') {
+          this.handleSnapshot(raw.agents);
+          return;
+        }
+
+        // Extract driverId from relay packet
+        if (raw.driverId) {
+          this.activeDriverId.set(raw.driverId);
+        }
+
         this.lastPacket.set(packet);
         this.detectLapCompletion(packet);
         this.detectPitStop(packet);
@@ -103,6 +125,18 @@ export class TelemetryService {
     };
   }
 
+  /** Connect via the backend telemetry relay (multi-PC support) */
+  connectRelay(relayUrl: string = environment.telemetryRelayUrl): void {
+    const token = this.auth.token();
+    if (!token) {
+      console.warn('Telemetry: no auth token available for relay connection');
+      this.connectionStatus.set(TelemetryConnectionStatus.DISCONNECTED);
+      return;
+    }
+    const url = `${relayUrl}?token=${encodeURIComponent(token)}`;
+    this.connect(url);
+  }
+
   disconnect(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
@@ -117,6 +151,7 @@ export class TelemetryService {
     this.lastPacket.set(null);
     this.isInPit.set(false);
     this.pitStop.set({ inPit: false, enteredAt: null, exitedAt: null, durationMs: 0 });
+    this.activeDriverId.set(null);
   }
 
   resetPitDetection(): void {
@@ -173,6 +208,22 @@ export class TelemetryService {
     this.lapStartFuel = 0;
     this.actualFuelPerLapValues.set([]);
     this.actualAvgLapTimeValues.set([]);
+  }
+
+  private handleSnapshot(agents: Record<string, any>): void {
+    // Pick the agent with the most recent timestamp
+    let latest: any = null;
+    let latestDriverId: string | null = null;
+    for (const [id, data] of Object.entries(agents)) {
+      if (data && (!latest || data.timestamp > latest.timestamp)) {
+        latest = data;
+        latestDriverId = id;
+      }
+    }
+    if (latest) {
+      this.lastPacket.set(latest);
+      this.activeDriverId.set(latestDriverId);
+    }
   }
 
   private detectLapCompletion(packet: TelemetryPacket): void {
