@@ -26,14 +26,26 @@ export class TelemetryRelayService {
   private agents = new Map<string, AgentInfo>();
   private liveClients = new Set<WebSocket>();
   private wss: WebSocketServer;
-  private liveWss: WebSocketServer;
 
   constructor(server: any) {
-    this.wss = new WebSocketServer({ server, path: '/ws/telemetry/agent', perMessageDeflate: false });
-    this.setupAgentEndpoint();
+    // Single WebSocketServer in noServer mode; manual routing in upgrade handler
+    this.wss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
 
-    this.liveWss = new WebSocketServer({ server, path: '/ws/telemetry/live', perMessageDeflate: false });
-    this.setupLiveEndpoint(this.liveWss);
+    server.on('upgrade', (req: IncomingMessage, socket: any, head: Buffer) => {
+      const pathname = url.parse(req.url || '', true).pathname;
+
+      if (pathname === '/ws/telemetry/agent') {
+        this.wss.handleUpgrade(req, socket, head, (ws) => {
+          this.handleAgentConnection(ws, req);
+        });
+      } else if (pathname === '/ws/telemetry/live') {
+        this.wss.handleUpgrade(req, socket, head, (ws) => {
+          this.handleLiveConnection(ws, req);
+        });
+      } else {
+        socket.destroy();
+      }
+    });
 
     setInterval(() => this.cleanup(), 30000);
   }
@@ -54,100 +66,96 @@ export class TelemetryRelayService {
     return null;
   }
 
-  private setupAgentEndpoint(): void {
-    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-      const query = url.parse(req.url || '', true).query;
-      const token = query.token as string;
-      const driverId = query.driverId as string;
+  private handleAgentConnection(ws: WebSocket, req: IncomingMessage): void {
+    const query = url.parse(req.url || '', true).query;
+    const token = query.token as string;
+    const driverId = query.driverId as string;
 
-      if (!token || !driverId) {
-        ws.close(4001, 'Missing token or driverId');
-        return;
+    if (!token || !driverId) {
+      ws.close(4001, 'Missing token or driverId');
+      return;
+    }
+
+    const auth = this.resolveAuth(token);
+    if (!auth) {
+      ws.close(4001, 'Invalid token');
+      return;
+    }
+
+    const agent: AgentInfo = {
+      ws,
+      driverId,
+      username: auth.username,
+      teamId: auth.teamId,
+      lastPacket: null,
+      connectedAt: Date.now(),
+    };
+
+    const existing = this.agents.get(driverId);
+    if (existing) {
+      try { existing.ws.close(4000, 'Replaced by new connection'); } catch { /* ignore */ }
+    }
+
+    this.agents.set(driverId, agent);
+    console.log(`Telemetry agent connected: ${driverId} (${auth.username})`);
+
+    ws.on('message', (data: Buffer) => {
+      try {
+        const packet: TelemetryPacket = JSON.parse(data.toString());
+        packet.driverId = driverId;
+        agent.lastPacket = packet;
+        this.broadcastToLiveClients(packet);
+      } catch { /* ignore malformed */ }
+    });
+
+    ws.on('close', () => {
+      console.log(`Telemetry agent disconnected: ${driverId}`);
+      if (this.agents.get(driverId)?.ws === ws) {
+        this.agents.delete(driverId);
       }
+    });
 
-      const auth = this.resolveAuth(token);
-      if (!auth) {
-        ws.close(4001, 'Invalid token');
-        return;
+    ws.on('error', () => {
+      if (this.agents.get(driverId)?.ws === ws) {
+        this.agents.delete(driverId);
       }
-
-      const agent: AgentInfo = {
-        ws,
-        driverId,
-        username: auth.username,
-        teamId: auth.teamId,
-        lastPacket: null,
-        connectedAt: Date.now(),
-      };
-
-      const existing = this.agents.get(driverId);
-      if (existing) {
-        try { existing.ws.close(4000, 'Replaced by new connection'); } catch { /* ignore */ }
-      }
-
-      this.agents.set(driverId, agent);
-      console.log(`Telemetry agent connected: ${driverId} (${auth.username})`);
-
-      ws.on('message', (data: Buffer) => {
-        try {
-          const packet: TelemetryPacket = JSON.parse(data.toString());
-          packet.driverId = driverId;
-          agent.lastPacket = packet;
-          this.broadcastToLiveClients(packet);
-        } catch { /* ignore malformed */ }
-      });
-
-      ws.on('close', () => {
-        console.log(`Telemetry agent disconnected: ${driverId}`);
-        if (this.agents.get(driverId)?.ws === ws) {
-          this.agents.delete(driverId);
-        }
-      });
-
-      ws.on('error', () => {
-        if (this.agents.get(driverId)?.ws === ws) {
-          this.agents.delete(driverId);
-        }
-      });
     });
   }
 
-  private setupLiveEndpoint(liveWss: WebSocketServer): void {
-    liveWss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-      const query = url.parse(req.url || '', true).query;
-      const token = query.token as string;
+  private handleLiveConnection(ws: WebSocket, req: IncomingMessage): void {
+    const query = url.parse(req.url || '', true).query;
+    const token = query.token as string;
 
-      if (!token) {
-        ws.close(4001, 'Missing token');
-        return;
-      }
+    if (!token) {
+      ws.close(4001, 'Missing token');
+      return;
+    }
 
-      const auth = this.resolveAuth(token);
-      if (!auth) {
-        ws.close(4001, 'Invalid token');
-        return;
-      }
+    const auth = this.resolveAuth(token);
+    if (!auth) {
+      ws.close(4001, 'Invalid token');
+      return;
+    }
 
-      this.liveClients.add(ws);
-      console.log(`Telemetry live client connected (total: ${this.liveClients.size})`);
+    this.liveClients.add(ws);
+    console.log(`Telemetry live client connected (total: ${this.liveClients.size})`);
 
-      // Send current snapshot
-      const snapshot: Record<string, TelemetryPacket | null> = {};
-      for (const [id, agent] of this.agents) {
-        snapshot[id] = agent.lastPacket;
-      }
-      if (Object.keys(snapshot).length > 0) {
-        try { ws.send(JSON.stringify({ type: 'snapshot', agents: snapshot })); } catch { /* ignore */ }
-      }
+    // Send current snapshot
+    const snapshot: Record<string, TelemetryPacket | null> = {};
+    for (const [id, agent] of this.agents) {
+      snapshot[id] = agent.lastPacket;
+    }
+    if (Object.keys(snapshot).length > 0) {
+      try { ws.send(JSON.stringify({ type: 'snapshot', agents: snapshot })); } catch { /* ignore */ }
+    }
 
-      ws.on('close', () => {
-        this.liveClients.delete(ws);
-        console.log(`Telemetry live client disconnected (total: ${this.liveClients.size})`);
-      });
+    ws.on('close', () => {
+      this.liveClients.delete(ws);
+      console.log(`Telemetry live client disconnected (total: ${this.liveClients.size})`);
+    });
 
-      ws.on('error', () => {
-        this.liveClients.delete(ws);
-      });
+    ws.on('error', () => {
+      this.liveClients.delete(ws);
     });
   }
 
@@ -171,7 +179,6 @@ export class TelemetryRelayService {
 
   /** Called by the HTTP ingest endpoint to broadcast agent data to live clients */
   ingestTelemetry(driverId: string, packet: TelemetryPacket): void {
-    // Track last packet per driver (like WS agents do)
     const existing = this.agents.get(driverId);
     if (existing) {
       existing.lastPacket = packet;
