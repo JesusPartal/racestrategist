@@ -28,20 +28,12 @@ interface AdminUser {
       <div class="glass-card" style="padding: 25px; margin-bottom: 30px;">
         <h3 style="font-family: var(--font-display); font-size: 0.9rem; margin: 0 0 20px;">{{ trans.translate('admin_add_user') }}</h3>
         <div class="add-form">
-          <input type="text" [(ngModel)]="newIracingId" placeholder="iRacing ID" class="admin-input" style="max-width: 120px;">
-          <button class="btn-lookup" (click)="lookupIracing()" [disabled]="!newIracingId || lookingUp()">
-            <i class="fa-solid fa-search"></i> {{ trans.translate('lookup') }}
-          </button>
           <input type="text" [(ngModel)]="newUsername" placeholder="Username" class="admin-input">
           <input type="password" [(ngModel)]="newPassword" placeholder="Password" class="admin-input">
-          <input type="text" [(ngModel)]="newDisplayName" placeholder="Display name" class="admin-input" [readonly]="autoFilled">
+          <input type="text" [(ngModel)]="newDisplayName" placeholder="Display name" class="admin-input">
           <button class="btn-add" (click)="addUser()" [disabled]="saving()">
             <i class="fa-solid fa-plus"></i> {{ trans.translate('admin_add') }}
           </button>
-        </div>
-        <div class="auto-info" *ngIf="autoFilled">
-          <span>{{ trans.translate('admin_auto_license') }}: <strong>{{ newLicenseClass }}</strong></span>
-          <span>{{ trans.translate('admin_auto_irating') }}: <strong>{{ newIRating }}</strong></span>
         </div>
         <div class="error-msg" *ngIf="error()">{{ error() }}</div>
         <div class="success-msg" *ngIf="success()">{{ success() }}</div>
@@ -88,15 +80,6 @@ interface AdminUser {
         </div>
         <h3 class="delete-title">{{ trans.translate('admin_edit_title') }}: {{ editTarget()?.username }}</h3>
         <div class="edit-fields">
-          <div class="edit-field" style="display: flex; gap: 8px; align-items: flex-end;">
-            <div style="flex: 1;">
-              <label>{{ trans.translate('admin_iracing_id') }}</label>
-              <input type="text" [(ngModel)]="editIracingId" placeholder="iRacing ID" class="admin-input">
-            </div>
-            <button class="btn-lookup-sm" (click)="lookupEditIracing()" [disabled]="!editIracingId || editLookingUp()">
-              <i class="fa-solid fa-search"></i> {{ trans.translate('lookup') }}
-            </button>
-          </div>
           <div class="edit-field">
             <label>{{ trans.translate('admin_display_name') }}</label>
             <input type="text" [(ngModel)]="editDisplayName" class="admin-input">
@@ -181,11 +164,6 @@ export class AdminComponent implements OnInit {
   newUsername = '';
   newPassword = '';
   newDisplayName = '';
-  newIracingId = '';
-  newLicenseClass = '';
-  newIRating = 0;
-  lookingUp = signal(false);
-  autoFilled = false;
   saving = signal(false);
   error = signal<string | null>(null);
   success = signal<string | null>(null);
@@ -196,8 +174,6 @@ export class AdminComponent implements OnInit {
   editIRating = 0;
   editTeamId = '';
   editPassword = '';
-  editIracingId = '';
-  editLookingUp = signal(false);
 
   async ngOnInit() {
     await this.loadUsers();
@@ -209,29 +185,6 @@ export class AdminComponent implements OnInit {
       this.users.set(list);
     } catch {
       this.error.set('Failed to load users');
-    }
-  }
-
-  async lookupIracing() {
-    if (!this.newIracingId) return;
-    this.lookingUp.set(true);
-    this.error.set(null);
-    this.autoFilled = false;
-    try {
-      const driver = await lastValueFrom(
-        this.http.get<{ displayName: string; licenseClass: string; iRating: number }>(`${API_BASE}/iracing/driver/${this.newIracingId}`)
-      );
-      this.newDisplayName = driver.displayName;
-      this.newLicenseClass = driver.licenseClass;
-      this.newIRating = driver.iRating;
-      this.autoFilled = true;
-      if (!this.newUsername) {
-        this.newUsername = this.newIracingId;
-      }
-    } catch {
-      this.error.set('Could not find driver with that iRacing ID');
-    } finally {
-      this.lookingUp.set(false);
     }
   }
 
@@ -248,16 +201,10 @@ export class AdminComponent implements OnInit {
         username: this.newUsername,
         password: this.newPassword,
         displayName: this.newDisplayName || this.newUsername,
-        licenseClass: this.autoFilled ? this.newLicenseClass : undefined,
-        iRating: this.autoFilled ? this.newIRating : undefined,
       }));
       this.newUsername = '';
       this.newPassword = '';
       this.newDisplayName = '';
-      this.newIracingId = '';
-      this.newLicenseClass = '';
-      this.newIRating = 0;
-      this.autoFilled = false;
       this.success.set('User created successfully');
       await this.loadUsers();
     } catch (e: any) {
@@ -280,25 +227,6 @@ export class AdminComponent implements OnInit {
 
   closeEdit() {
     this.editTarget.set(null);
-    this.editIracingId = '';
-  }
-
-  async lookupEditIracing() {
-    if (!this.editIracingId) return;
-    this.editLookingUp.set(true);
-    this.error.set(null);
-    try {
-      const driver = await lastValueFrom(
-        this.http.get<{ displayName: string; licenseClass: string; iRating: number }>(`${API_BASE}/iracing/driver/${this.editIracingId}`)
-      );
-      this.editDisplayName = driver.displayName;
-      this.editLicenseClass = driver.licenseClass;
-      this.editIRating = driver.iRating;
-    } catch {
-      this.error.set('Could not find driver with that iRacing ID');
-    } finally {
-      this.editLookingUp.set(false);
-    }
   }
 
   async saveEdit() {

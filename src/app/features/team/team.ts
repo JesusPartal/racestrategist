@@ -1,12 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { TeamsService, TeamSummary, TeamDetail, TeamDriver } from '../../core/services/teams.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { DriverProfile } from '../../core/models/race-strategy.model';
-import { API_BASE } from '../../core/api.config';
-import { lastValueFrom } from 'rxjs';
 
 type FormMode = 'closed' | 'add' | 'edit';
 
@@ -35,9 +32,6 @@ export class TeamComponent implements OnInit {
 
     formMode = signal<FormMode>('closed');
     editingId = signal<string | null>(null);
-    lookingUp = signal(false);
-    iracingId = '';
-    autoFilled = false;
 
     form = {
         name: '',
@@ -139,27 +133,8 @@ export class TeamComponent implements OnInit {
         }
     }
 
-    async lookupDriver() {
-        if (!this.iracingId) return;
-        this.lookingUp.set(true);
-        try {
-            const driver = await lastValueFrom(
-                this.http.get<{ displayName: string; licenseClass: string; iRating: number }>(`${API_BASE}/iracing/driver/${this.iracingId}`)
-            );
-            if (this.formMode() === 'add') {
-                this.form.name = driver.displayName;
-                this.form.licenseClass = driver.licenseClass as DriverProfile['licenseClass'];
-                this.form.iRating = driver.iRating;
-                this.autoFilled = true;
-            }
-        } catch { /* ignore */ }
-        finally { this.lookingUp.set(false); }
-    }
-
     openAdd() {
         this.resetForm();
-        this.iracingId = '';
-        this.autoFilled = false;
         this.editingId.set(null);
         this.formMode.set('add');
     }
@@ -179,8 +154,6 @@ export class TeamComponent implements OnInit {
     closeForm() {
         this.formMode.set('closed');
         this.editingId.set(null);
-        this.iracingId = '';
-        this.autoFilled = false;
     }
 
     async saveDriver() {
