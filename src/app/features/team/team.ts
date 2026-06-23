@@ -17,7 +17,6 @@ type FormMode = 'closed' | 'add' | 'edit';
 export class TeamComponent implements OnInit {
     trans = inject(TranslationService);
     private teamsService = inject(TeamsService);
-    private http = inject(HttpClient);
 
     teams = signal<TeamSummary[]>([]);
     selectedTeam = signal<TeamDetail | null>(null);
