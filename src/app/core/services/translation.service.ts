@@ -224,6 +224,8 @@ export class TranslationService {
             'click_to_copy': 'Click to copy',
             'driver_settings': 'Driver settings',
             'global_fuel': 'Global Fuel',
+            'edit_end_time': 'Edit end time',
+            'reset_to_auto': 'Reset to auto',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -442,6 +444,8 @@ export class TranslationService {
             'click_to_copy': 'Click para copiar',
             'driver_settings': 'Ajustes del piloto',
             'global_fuel': 'Combustible global',
+            'edit_end_time': 'Editar fin de stint',
+            'reset_to_auto': 'Restablecer a automático',
         }
     };
 

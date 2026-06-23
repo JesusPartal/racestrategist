@@ -50,6 +50,7 @@ export interface StintPlanItem {
   additionalTimeMs?: number;
   isCompleted?: boolean;
   actualEndTimeMs?: number;
+  manualEndTimeMs?: number | null;
 }
 
 export interface RaceStrategy {

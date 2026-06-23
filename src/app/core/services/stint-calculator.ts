@@ -33,14 +33,17 @@ export function recalculateTimeline(
     const pitBaseTime = stint.changeTires ? pitStopTiresMs : pitStopFuelOnlyMs;
     const totalPitTime = pitBaseTime + (stint.additionalTimeMs || 0);
 
+    const calculatedEnd = currentTimeMs + duration;
+    const endTimeMs = stint.manualEndTimeMs != null ? stint.manualEndTimeMs : calculatedEnd;
+
     const updated = {
       ...stint,
       startTimeMs: currentTimeMs,
-      endTimeMs: currentTimeMs + duration,
+      endTimeMs,
       laps,
     };
 
-    currentTimeMs = updated.endTimeMs + totalPitTime;
+    currentTimeMs = endTimeMs + totalPitTime;
     return updated;
   });
 }

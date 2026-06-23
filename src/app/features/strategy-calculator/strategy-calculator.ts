@@ -414,6 +414,40 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     return driver.avgLapTimeMs || 0;
   }
 
+  // Manual end time edit for stints
+  endTimeEditOpen = signal<number>(-1);
+  endTimeEditH = signal<number>(0);
+  endTimeEditM = signal<number>(0);
+  endTimeEditS = signal<number>(0);
+
+  toggleEndTimeEdit(stintIndex: number) {
+    if (this.endTimeEditOpen() === stintIndex) {
+      this.endTimeEditOpen.set(-1);
+      return;
+    }
+    const stint = this.store.stintPlan().find(s => s.index === stintIndex);
+    if (!stint) return;
+    const ms = stint.manualEndTimeMs ?? stint.endTimeMs;
+    const totalSec = Math.floor(ms / 1000);
+    this.endTimeEditH.set(Math.floor(totalSec / 3600));
+    this.endTimeEditM.set(Math.floor((totalSec % 3600) / 60));
+    this.endTimeEditS.set(totalSec % 60);
+    this.endTimeEditOpen.set(stintIndex);
+  }
+
+  saveEndTimeEdit(stintIndex: number) {
+    const ms = (this.endTimeEditH() * 3600 + this.endTimeEditM() * 60 + this.endTimeEditS()) * 1000;
+    this.store.updateStintFields(stintIndex, { manualEndTimeMs: ms });
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+    this.endTimeEditOpen.set(-1);
+  }
+
+  clearEndTimeEdit(stintIndex: number) {
+    this.store.updateStintFields(stintIndex, { manualEndTimeMs: null });
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+    this.endTimeEditOpen.set(-1);
+  }
+
   toggleTimeMode() {
     if (this.useRelativeTime()) {
       this.useRelativeTime.set(false);

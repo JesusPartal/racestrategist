@@ -529,8 +529,28 @@
                         <code>{{ formatAbsoluteTime(stint.startTimeMs) }}</code>
                     </div>
                     <div style="text-align: right;">
-                        <label>{{ trans.translate('end_time') }}</label>
-                        <code>{{ formatAbsoluteTime(stint.endTimeMs) }}</code>
+                        <label style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                            {{ trans.translate('end_time') }}
+                            <button class="btn-edit-endtime" (click)="toggleEndTimeEdit(stint.index)" title="{{ trans.translate('edit_end_time') || 'Edit end time' }}">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </label>
+                        <code [style.color]="stint.manualEndTimeMs != null ? 'var(--accent-color)' : ''">{{ formatAbsoluteTime(stint.endTimeMs) }}</code>
+                    </div>
+                </div>
+                <div *ngIf="endTimeEditOpen() === stint.index" class="endtime-edit-row">
+                    <div style="display: flex; gap: 4px; align-items: center; justify-content: center;">
+                        <input type="number" min="0" max="23" [ngModel]="endTimeEditH()" (ngModelChange)="endTimeEditH.set($event)" placeholder="h" class="endtime-input">
+                        <span style="color: var(--text-dim);">:</span>
+                        <input type="number" min="0" max="59" [ngModel]="endTimeEditM()" (ngModelChange)="endTimeEditM.set($event)" placeholder="m" class="endtime-input">
+                        <span style="color: var(--text-dim);">:</span>
+                        <input type="number" min="0" max="59" [ngModel]="endTimeEditS()" (ngModelChange)="endTimeEditS.set($event)" placeholder="s" class="endtime-input">
+                    </div>
+                    <div style="display: flex; gap: 6px; justify-content: center; margin-top: 6px;">
+                        <button class="btn-save" style="padding: 4px 10px; font-size: 0.7rem;" (click)="saveEndTimeEdit(stint.index)">{{ trans.translate('save') || 'SAVE' }}</button>
+                        <button class="btn-cancel" style="padding: 4px 10px; font-size: 0.7rem;" (click)="clearEndTimeEdit(stint.index)" title="{{ trans.translate('reset_to_auto') || 'Reset to auto' }}">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -875,6 +895,39 @@
     .stint-times code {
         color: var(--accent-color);
         font-size: 0.9rem;
+    }
+
+    .btn-edit-endtime {
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        padding: 2px;
+        font-size: 0.6rem;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-edit-endtime:hover {
+        color: var(--accent-color);
+        background: rgba(255, 176, 0, 0.1);
+    }
+
+    .endtime-edit-row {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .endtime-input {
+        width: 50px;
+        padding: 6px 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.8rem;
+        text-align: center;
     }
 
     .cdk-drag-preview {
