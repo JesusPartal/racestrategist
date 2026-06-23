@@ -51,7 +51,7 @@ export class TelemetryService {
   });
 
   fuelLevel = computed(() => this.lastPacket()?.car.fuelLevel ?? 0);
-  fuelLevelPct = computed(() => this.lastPacket()?.car.fuelLevelPct ?? 0);
+  fuelLevelPct = computed(() => (this.lastPacket()?.car.fuelLevelPct ?? 0) * 100);
   lastLapTime = computed(() => this.lastPacket()?.lapDetails.lastLapTime ?? 0);
   trackTemp = computed(() => this.lastPacket()?.lapDetails.trackTemp ?? 0);
   airTemp = computed(() => this.lastPacket()?.lapDetails.airTemp ?? 0);
