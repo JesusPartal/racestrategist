@@ -103,8 +103,7 @@ export function initializeDatabase(): void {
       token TEXT UNIQUE NOT NULL,
       created_at INTEGER NOT NULL,
       last_used_at INTEGER,
-      created_by TEXT NOT NULL,
-      FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+      created_by TEXT NOT NULL
     );
   `);
 }
