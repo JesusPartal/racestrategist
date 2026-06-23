@@ -1,0 +1,92 @@
+<div class="telemetry-panel glass-card" [class.connected]="telemetry.isConnected()">
+  <div class="tp-header">
+    <div class="tp-title-row">
+      <span class="tp-title">
+        <i class="fa-solid fa-tower-broadcast"></i>
+        {{ trans.translate('telemetry') || 'TELEMETRY' }}
+      </span>
+      <span class="tp-status" [class.status-live]="telemetry.isConnected()" [class.status-off]="!telemetry.isConnected()">
+        <span class="status-dot"></span>
+        {{ telemetry.isConnected() ? (trans.translate('live') || 'LIVE') : (trans.translate('offline') || 'OFFLINE') }}
+      </span>
+    </div>
+    <div class="tp-actions">
+      <button *ngIf="!telemetry.isConnected()" class="tp-btn tp-btn-connect" (click)="onConnectClick()">
+        <i class="fa-solid fa-plug"></i> {{ trans.translate('connect') || 'CONNECT' }}
+      </button>
+      <button *ngIf="telemetry.isConnected()" class="tp-btn tp-btn-disconnect" (click)="onDisconnectClick()">
+        <i class="fa-solid fa-plug"></i> {{ trans.translate('disconnect') || 'DISCONNECT' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="tp-body" *ngIf="telemetry.isConnected() && telemetry.lastPacket()">
+    <div class="tp-main-gauges">
+      <div class="tp-gauge tp-speed">
+        <span class="tp-gauge-value">{{ formatSpeed(telemetry.currentSpeed()) }}</span>
+        <span class="tp-gauge-unit">KM/H</span>
+      </div>
+      <div class="tp-gauge-divider"></div>
+      <div class="tp-gauge tp-rpm">
+        <span class="tp-gauge-value">{{ telemetry.currentRpm().toLocaleString() }}</span>
+        <span class="tp-gauge-unit">RPM</span>
+      </div>
+      <div class="tp-gauge-divider"></div>
+      <div class="tp-gauge tp-gear">
+        <span class="tp-gauge-value">{{ telemetry.currentGear() }}</span>
+        <span class="tp-gauge-unit">GEAR</span>
+      </div>
+    </div>
+
+    <div class="tp-lap-info">
+      <div class="tp-lap-row">
+        <span class="tp-label">{{ trans.translate('current_lap') || 'LAP' }}</span>
+        <span class="tp-value tp-lap-number">#{{ telemetry.currentLap() }}</span>
+      </div>
+      <div class="tp-lap-row">
+        <span class="tp-label">{{ trans.translate('lap_time') || 'LAP TIME' }}</span>
+        <span class="tp-value tp-lap-time">{{ formatLapTime(telemetry.currentLapTime()) }}</span>
+      </div>
+      <div class="tp-lap-row" *ngIf="telemetry.lastLapTime() > 0">
+        <span class="tp-label">{{ trans.translate('last_lap') || 'LAST LAP' }}</span>
+        <span class="tp-value tp-last-lap">{{ formatLapTime(telemetry.lastLapTime()) }}</span>
+      </div>
+      <div class="tp-lap-row">
+        <span class="tp-label">{{ trans.translate('distance') || 'DISTANCE' }}</span>
+        <span class="tp-value tp-distance">{{ formatDistance(telemetry.distancePercentage()) }}%</span>
+      </div>
+    </div>
+
+    <div class="tp-fuel-temp-row" *ngIf="telemetry.fuelLevelPct() > 0">
+      <div class="tp-fuel-gauge">
+        <div class="tp-fuel-bar" [style.width.%]="Math.min(telemetry.fuelLevelPct(), 100)"></div>
+        <span class="tp-fuel-text">{{ telemetry.fuelLevel().toFixed(1) }}L ({{ telemetry.fuelLevelPct().toFixed(0) }}%)</span>
+      </div>
+      <div class="tp-temps" *ngIf="telemetry.trackTemp() > 0">
+        <span class="tp-temp" title="Track"><i class="fa-solid fa-road"></i> {{ telemetry.trackTemp().toFixed(0) }}°</span>
+        <span class="tp-temp" title="Air"><i class="fa-solid fa-wind"></i> {{ telemetry.airTemp().toFixed(0) }}°</span>
+      </div>
+    </div>
+
+    <div class="tp-pit-status" [class.in-pit]="telemetry.isInPit()">
+      <i class="fa-solid" [class.fa-gas-pump]="telemetry.isInPit()" [class.fa-road]="!telemetry.isInPit()"></i>
+      {{ telemetry.isInPit() ? (trans.translate('in_pit') || 'IN PITS') : (trans.translate('on_track') || 'ON TRACK') }}
+      <span *ngIf="telemetry.pitStop().durationMs > 0 && telemetry.isInPit()" class="tp-pit-timer">
+        {{ (telemetry.pitStop().durationMs / 1000).toFixed(1) }}s
+      </span>
+    </div>
+
+    <div class="tp-stint-tracker" *ngIf="stintPlan().length > 0">
+      <span class="tp-label">{{ trans.translate('active_stint') || 'ACTIVE STINT' }}</span>
+      <span class="tp-value tp-stint-active">#{{ telemetry.activeStintIndex() }} / {{ stintPlan().length }}</span>
+      <span *ngIf="telemetry.lastStintCompleted()" class="tp-stint-done">
+        <i class="fa-solid fa-check"></i> #{{ telemetry.lastStintCompleted() }} {{ trans.translate('done') || 'DONE' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="tp-body tp-disconnected" *ngIf="!telemetry.isConnected()">
+    <i class="fa-solid fa-tower-broadcast tp-disconnected-icon"></i>
+    <p>{{ trans.translate('telemetry_disconnected') || 'Connect to iRacing telemetry to see live data.' }}</p>
+  </div>
+</div>

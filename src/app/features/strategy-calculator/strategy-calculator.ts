@@ -11,11 +11,13 @@ import { TeamService } from '../../core/services/team.service';
 import { TeamsService, TeamSummary } from '../../core/services/teams.service';
 import { Vehicle, DriverProfile } from '../../core/models/race-strategy.model';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
+import { TelemetryService } from '../../core/services/telemetry.service';
+import { TelemetryPanelComponent } from '../telemetry-panel/telemetry-panel';
 
 @Component({
   selector: 'app-strategy-calculator',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DragDropModule],
+  imports: [CommonModule, FormsModule, RouterLink, DragDropModule, TelemetryPanelComponent],
   templateUrl: './strategy-calculator.html',
   styleUrl: './strategy-calculator.css'
 })
@@ -123,7 +125,8 @@ missingFields = computed<string[]>(() => {
     public store: StrategyStore,
     private api: StrategyApiService,
     public team: TeamService,
-    private router: Router
+    private router: Router,
+    public telemetry: TelemetryService
   ) {
     effect(() => {
       const eventId = this.selectedEventId();
@@ -535,5 +538,13 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       this.tankCapacityOverride.set(null);
     }
     this.isDirty.set(false);
+  }
+
+  connectTelemetry() {
+    this.telemetry.connect();
+  }
+
+  disconnectTelemetry() {
+    this.telemetry.disconnect();
   }
 }

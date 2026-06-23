@@ -48,6 +48,8 @@ export interface StintPlanItem {
   laps: number;
   changeTires?: boolean;
   additionalTimeMs?: number;
+  isCompleted?: boolean;
+  actualEndTimeMs?: number;
 }
 
 export interface RaceStrategy {
@@ -74,4 +76,40 @@ export interface StrategySummary {
   stintCount: number;
   driverCount: number;
   lastModified: number;
+}
+
+export interface CarTelemetry {
+  speed: number;
+  rpm: number;
+  gear: number;
+  fuelLevel?: number;
+  fuelLevelPct?: number;
+}
+
+export interface LapTelemetry {
+  currentLap: number;
+  lapTimeCurrent: number;
+  distancePercentage: number;
+  lastLapTime?: number;
+  trackTemp?: number;
+  airTemp?: number;
+}
+
+export interface TelemetryPacket {
+  timestamp: number;
+  car: CarTelemetry;
+  lapDetails: LapTelemetry;
+}
+
+export enum TelemetryConnectionStatus {
+  DISCONNECTED = 'DISCONNECTED',
+  CONNECTING = 'CONNECTING',
+  CONNECTED = 'CONNECTED',
+}
+
+export interface PitStopDetection {
+  inPit: boolean;
+  enteredAt: number | null;
+  exitedAt: number | null;
+  durationMs: number;
 }

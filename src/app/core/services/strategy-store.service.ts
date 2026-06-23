@@ -75,4 +75,12 @@ export class StrategyStore {
     this.pitStopFuelOnlyMs.set(data.pitStopFuelOnlyMs);
     this.pitStopTiresMs.set(data.pitStopTiresMs);
   }
+
+  markStintCompleted(stintIndex: number, actualTimeMs: number): void {
+    this.stintPlan.update(stints =>
+      stints.map(s =>
+        s.index === stintIndex ? { ...s, endTimeMs: actualTimeMs, isCompleted: true } : s
+      )
+    );
+  }
 }

@@ -1,0 +1,161 @@
+import { Injectable, signal, computed } from '@angular/core';
+import {
+  TelemetryPacket,
+  TelemetryConnectionStatus,
+  PitStopDetection,
+} from '../models/race-strategy.model';
+
+const DEFAULT_WS_URL = 'ws://localhost:8080';
+const RECONNECT_DELAY_MS = 3000;
+const PIT_SPEED_THRESHOLD = 5;
+
+@Injectable({ providedIn: 'root' })
+export class TelemetryService {
+  private ws: WebSocket | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastCompletedLap = 0;
+
+  connectionStatus = signal<TelemetryConnectionStatus>(TelemetryConnectionStatus.DISCONNECTED);
+  lastPacket = signal<TelemetryPacket | null>(null);
+  isInPit = signal(false);
+  pitStop = signal<PitStopDetection>({ inPit: false, enteredAt: null, exitedAt: null, durationMs: 0 });
+  consecutiveFails = signal(0);
+
+  currentSpeed = computed(() => this.lastPacket()?.car.speed ?? 0);
+  currentRpm = computed(() => this.lastPacket()?.car.rpm ?? 0);
+  currentGear = computed(() => this.lastPacket()?.car.gear ?? 0);
+  currentLap = computed(() => this.lastPacket()?.lapDetails.currentLap ?? 0);
+  currentLapTime = computed(() => this.lastPacket()?.lapDetails.lapTimeCurrent ?? 0);
+  distancePercentage = computed(() => this.lastPacket()?.lapDetails.distancePercentage ?? 0);
+  isConnected = computed(() => this.connectionStatus() === TelemetryConnectionStatus.CONNECTED);
+
+  activeStintIndex = signal<number>(1);
+  actualLapTimes = signal<number[]>([]);
+  lastStintCompleted = signal<number | null>(null);
+  pitExited = signal<number | null>(null);
+
+  fuelLevel = computed(() => this.lastPacket()?.car.fuelLevel ?? 0);
+  fuelLevelPct = computed(() => this.lastPacket()?.car.fuelLevelPct ?? 0);
+  lastLapTime = computed(() => this.lastPacket()?.lapDetails.lastLapTime ?? 0);
+  trackTemp = computed(() => this.lastPacket()?.lapDetails.trackTemp ?? 0);
+  airTemp = computed(() => this.lastPacket()?.lapDetails.airTemp ?? 0);
+
+  connect(url: string = DEFAULT_WS_URL): void {
+    if (this.ws) this.disconnect();
+    this.connectionStatus.set(TelemetryConnectionStatus.CONNECTING);
+
+    this.activeStintIndex.set(1);
+    this.actualLapTimes.set([]);
+    this.lastStintCompleted.set(null);
+    this.pitExited.set(null);
+    this.lastCompletedLap = 0;
+
+    try {
+      this.ws = new WebSocket(url);
+    } catch {
+      this.connectionStatus.set(TelemetryConnectionStatus.DISCONNECTED);
+      this.scheduleReconnect(url);
+      return;
+    }
+
+    this.ws.onopen = () => {
+      this.connectionStatus.set(TelemetryConnectionStatus.CONNECTED);
+      this.consecutiveFails.set(0);
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const packet: TelemetryPacket = JSON.parse(event.data);
+        this.lastPacket.set(packet);
+        this.detectLapCompletion(packet);
+        this.detectPitStop(packet);
+        this.consecutiveFails.set(0);
+      } catch { /* ignore malformed packets */ }
+    };
+
+    this.ws.onclose = () => {
+      this.connectionStatus.set(TelemetryConnectionStatus.DISCONNECTED);
+      this.ws = null;
+      this.scheduleReconnect(url);
+    };
+
+    this.ws.onerror = () => {
+      this.consecutiveFails.update(v => v + 1);
+    };
+  }
+
+  disconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.close();
+      this.ws = null;
+    }
+    this.connectionStatus.set(TelemetryConnectionStatus.DISCONNECTED);
+    this.lastPacket.set(null);
+    this.isInPit.set(false);
+    this.pitStop.set({ inPit: false, enteredAt: null, exitedAt: null, durationMs: 0 });
+  }
+
+  resetPitDetection(): void {
+    this.pitStop.set({ inPit: false, enteredAt: null, exitedAt: null, durationMs: 0 });
+  }
+
+  private scheduleReconnect(url: string): void {
+    if (this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect(url);
+    }, RECONNECT_DELAY_MS);
+  }
+
+  private detectLapCompletion(packet: TelemetryPacket): void {
+    const currentLap = packet.lapDetails.currentLap;
+    if (currentLap > this.lastCompletedLap && this.lastCompletedLap > 0) {
+      const lapTime = packet.lapDetails.lapTimeCurrent;
+      this.actualLapTimes.update(times => [...times, lapTime]);
+    }
+    this.lastCompletedLap = currentLap;
+  }
+
+  private detectPitStop(packet: TelemetryPacket): void {
+    const speed = packet.car.speed;
+    const now = packet.timestamp;
+    const current = this.pitStop();
+
+    if (speed < PIT_SPEED_THRESHOLD && !current.inPit) {
+      this.pitStop.set({
+        inPit: true,
+        enteredAt: now,
+        exitedAt: null,
+        durationMs: 0,
+      });
+      this.isInPit.set(true);
+    } else if (speed >= PIT_SPEED_THRESHOLD && current.inPit) {
+      const durationMs = current.enteredAt !== null ? now - current.enteredAt : 0;
+      this.pitStop.set({
+        inPit: false,
+        enteredAt: current.enteredAt,
+        exitedAt: now,
+        durationMs,
+      });
+      this.isInPit.set(false);
+      this.pitExited.set(now);
+      this.activeStintIndex.update(i => i + 1);
+      this.lastStintCompleted.set(this.activeStintIndex() - 1);
+    } else if (current.inPit && current.enteredAt !== null) {
+      this.pitStop.update(v => ({ ...v, durationMs: now - v.enteredAt! }));
+    }
+  }
+
+  resetStintTracking(): void {
+    this.activeStintIndex.set(1);
+    this.actualLapTimes.set([]);
+    this.lastStintCompleted.set(null);
+    this.pitExited.set(null);
+    this.lastCompletedLap = 0;
+  }
+}

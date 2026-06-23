@@ -271,6 +271,15 @@
     </div>
 </div>
 
+<!-- Live Telemetry Panel -->
+<div class="telemetry-section" style="margin-top: 30px;">
+    <app-telemetry-panel
+        [stintPlan]="store.stintPlan()"
+        (connect)="connectTelemetry()"
+        (disconnect)="disconnectTelemetry()">
+    </app-telemetry-panel>
+</div>
+
 <!-- Driver Roster Reference -->
 <div class="glass-card animate-in stagger-2" style="margin-top: 30px;">
     <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('team_roster') }}</span></h2>
