@@ -149,6 +149,7 @@ export interface AgentToken {
   expiresAt: number;
   lastUsedAt: number | null;
   createdBy: string;
+  strategyDriverId: string | null;
 }
 
 export interface DriverDto {

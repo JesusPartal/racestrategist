@@ -13,6 +13,7 @@ export interface AgentTokenDto {
   expiresAt: number;
   lastUsedAt: number | null;
   createdBy: string;
+  strategyDriverId: string | null;
 }
 
 export interface RelayConfig {
@@ -35,9 +36,9 @@ export class TelemetryApiService {
     );
   }
 
-  async createAgentToken(driverId: string, driverName: string): Promise<AgentTokenDto> {
+  async createAgentToken(driverId: string, driverName: string, strategyDriverId?: string): Promise<AgentTokenDto> {
     return lastValueFrom(
-      this.http.post<AgentTokenDto>(`${API_BASE}/telemetry/agent-tokens`, { driverId, driverName })
+      this.http.post<AgentTokenDto>(`${API_BASE}/telemetry/agent-tokens`, { driverId, driverName, strategyDriverId })
     );
   }
 

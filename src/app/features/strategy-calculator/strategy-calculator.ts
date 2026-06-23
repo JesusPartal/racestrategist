@@ -663,16 +663,26 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   agentDriverName = '';
   generatingToken = signal(false);
   lastCopiedCommand = '';
+  selectedStrategyDriverId = signal<string | null>(null);
+  strategyDrivers = computed(() => this.store.drivers());
+
+  onStrategyDriverChange(driverId: string) {
+    this.selectedStrategyDriverId.set(driverId || null);
+    const driver = this.store.drivers().find(d => d.id === driverId);
+    this.agentDriverName = driver?.name || '';
+  }
 
   async generateAgentToken() {
     const name = this.agentDriverName.trim();
+    const strategyDriverId = this.selectedStrategyDriverId();
     if (!name) return;
     this.generatingToken.set(true);
     try {
-      const id = name.toLowerCase().replace(/\s+/g, '-');
-      const token = await this.telemetryApi.createAgentToken(id, name);
+      const id = strategyDriverId || name.toLowerCase().replace(/\s+/g, '-');
+      const token = await this.telemetryApi.createAgentToken(id, name, strategyDriverId || undefined);
       this.agentTokens.update(t => [...t, token]);
       this.agentDriverName = '';
+      this.selectedStrategyDriverId.set(null);
       this.lastCopiedCommand = '';
     } catch { /* ignore */ }
     this.generatingToken.set(false);
@@ -683,6 +693,10 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       await this.telemetryApi.revokeAgentToken(id);
       this.agentTokens.update(t => t.filter(x => x.id !== id));
     } catch { /* ignore */ }
+  }
+
+  getStrategyDriverName(driverId: string): string {
+    return this.store.drivers().find(d => d.id === driverId)?.name || driverId;
   }
 
   copiedTokenId = signal('');

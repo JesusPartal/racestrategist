@@ -60,13 +60,13 @@ router.get('/agent-tokens', (req: AuthRequest, res: Response) => {
 
 router.post('/agent-tokens', (req: AuthRequest, res: Response) => {
   try {
-    const { driverId, driverName } = req.body;
+    const { driverId, driverName, strategyDriverId } = req.body;
     if (!driverId || !driverName) {
       res.status(400).json({ error: 'driverId and driverName are required' });
       return;
     }
     telemetryService.ensureTable();
-    const token = telemetryService.createAgentToken(req.teamId!, driverId, driverName, req.username!);
+    const token = telemetryService.createAgentToken(req.teamId!, driverId, driverName, req.username!, strategyDriverId || null);
     res.status(201).json(token);
   } catch (err: any) {
     console.error('[agent-tokens POST error]', err?.message || err);
