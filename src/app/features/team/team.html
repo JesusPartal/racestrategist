@@ -168,17 +168,6 @@
             <button class="panel-close" (click)="closeForm()">&times;</button>
         </div>
 
-        <!-- iRacing Lookup -->
-        <div class="iracing-lookup-row" *ngIf="formMode() === 'add'" style="margin-top: 15px;">
-            <input type="text" [(ngModel)]="iracingId" placeholder="iRacing ID" class="iracing-input">
-            <button class="btn-lookup-driver" (click)="lookupDriver()" [disabled]="!iracingId || lookingUp()">
-                <i class="fa-solid fa-search"></i> {{ lookingUp() ? '...' : trans.translate('lookup') }}
-            </button>
-        </div>
-        <div class="auto-info" *ngIf="autoFilled" style="margin: 8px 0 0; font-size: 0.7rem; color: var(--text-dim);">
-            {{ trans.translate('auto_filled_from_iracing') }}
-        </div>
-
         <!-- Color Picker -->
         <div class="form-field" style="margin-top: 10px;">
             <label>{{ trans.translate('driver_accent_color') }}</label>
