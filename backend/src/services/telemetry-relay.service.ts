@@ -28,10 +28,10 @@ export class TelemetryRelayService {
   private wss: WebSocketServer;
 
   constructor(server: any) {
-    this.wss = new WebSocketServer({ server, path: '/ws/telemetry/agent' });
+    this.wss = new WebSocketServer({ server, path: '/ws/telemetry/agent', perMessageDeflate: false });
     this.setupAgentEndpoint();
 
-    const liveWss = new WebSocketServer({ server, path: '/ws/telemetry/live' });
+    const liveWss = new WebSocketServer({ server, path: '/ws/telemetry/live', perMessageDeflate: false });
     this.setupLiveEndpoint(liveWss);
 
     setInterval(() => this.cleanup(), 30000);
