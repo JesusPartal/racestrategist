@@ -3,7 +3,13 @@ import jwt from 'jsonwebtoken';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import * as strategyService from '../services/strategy.service';
 
-const INVITE_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const INVITE_SECRET = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production');
+  }
+  return secret || 'dev-secret-change-in-production';
+})();
 
 const router = Router();
 

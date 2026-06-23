@@ -1,7 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is required in production');
+    }
+    console.warn('WARNING: Using insecure default JWT_SECRET. Set JWT_SECRET env var for production.');
+    return 'dev-secret-change-in-production';
+  }
+  return secret;
+})();
 
 export interface AuthRequest extends Request {
   userId?: string;

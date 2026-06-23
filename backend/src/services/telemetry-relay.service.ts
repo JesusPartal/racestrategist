@@ -4,7 +4,16 @@ import jwt from 'jsonwebtoken';
 import url from 'url';
 import { validateAgentToken } from './telemetry.service';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is required in production');
+    }
+    return 'dev-secret-change-in-production';
+  }
+  return secret;
+})();
 
 interface TelemetryPacket {
   timestamp: number;

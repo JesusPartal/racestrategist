@@ -1,16 +1,22 @@
 import bcrypt from 'bcryptjs';
 import db from './db';
 
+function getSeedPassword(username: string, fallback: string): string {
+  // Use SEED_PASSWORD_<USERNAME> env var if set, otherwise fallback
+  const envVar = `SEED_PW_${username.toUpperCase()}`;
+  return process.env[envVar] || process.env.SEED_PASSWORD || fallback;
+}
+
 export function seedData(): void {
   const users = [
-    { id: 'user_1', username: 'TrackTitan_99',   password: 'demo',     display: 'TrackTitan_99',   license: 'Pro', irating: 4500 },
-    { id: 'user_2', username: 'HectorGoded',     password: 'hector23', display: 'Hector Goded',    license: 'A',   irating: 3200 },
-    { id: 'user_3', username: 'CesarMaldonado',  password: 'cesar23',  display: 'César Maldonado', license: 'A',   irating: 3000 },
-    { id: 'user_4', username: 'JosueTellez',     password: 'josue23',  display: 'Josué Téllez',    license: 'B',   irating: 2500 },
-    { id: 'user_5', username: 'JesusPartal',     password: 'jesus23',  display: 'Jesús Partal',    license: 'Pro', irating: 4000 },
-    { id: 'user_6', username: 'BicorValencia',   password: 'bicor23',  display: 'Bicor Valencia',  license: 'A',   irating: 3500 },
-    { id: 'user_7', username: 'OrlandoDoniz',    password: 'orlando23',display: 'Orlando Doniz',    license: 'B',   irating: 2800 },
-    { id: 'user_8', username: 'RaycoLeon',       password: 'rayco23',  display: 'Rayco León',      license: 'A',   irating: 3100 },
+    { id: 'user_1', username: 'TrackTitan_99',   password: getSeedPassword('TrackTitan_99', 'demo'),     display: 'TrackTitan_99',   license: 'Pro', irating: 4500 },
+    { id: 'user_2', username: 'HectorGoded',     password: getSeedPassword('HectorGoded', 'hector23'), display: 'Hector Goded',    license: 'A',   irating: 3200 },
+    { id: 'user_3', username: 'CesarMaldonado',  password: getSeedPassword('CesarMaldonado', 'cesar23'), display: 'César Maldonado', license: 'A',   irating: 3000 },
+    { id: 'user_4', username: 'JosueTellez',     password: getSeedPassword('JosueTellez', 'josue23'),   display: 'Josué Téllez',    license: 'B',   irating: 2500 },
+    { id: 'user_5', username: 'JesusPartal',     password: getSeedPassword('JesusPartal', 'jesus23'),   display: 'Jesús Partal',    license: 'Pro', irating: 4000 },
+    { id: 'user_6', username: 'BicorValencia',   password: getSeedPassword('BicorValencia', 'bicor23'), display: 'Bicor Valencia',  license: 'A',   irating: 3500 },
+    { id: 'user_7', username: 'OrlandoDoniz',    password: getSeedPassword('OrlandoDoniz', 'orlando23'),display: 'Orlando Doniz',    license: 'B',   irating: 2800 },
+    { id: 'user_8', username: 'RaycoLeon',       password: getSeedPassword('RaycoLeon', 'rayco23'),     display: 'Rayco León',      license: 'A',   irating: 3100 },
   ];
 
   for (const u of users) {

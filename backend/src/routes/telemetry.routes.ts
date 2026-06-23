@@ -10,11 +10,15 @@ router.get('/config', (_req, res: Response) => {
   res.json({ relayUrl: telemetryService.getRelayUrl() });
 });
 
-// Agent telemetry ingestion (authenticated by agent token in query param)
+// Agent telemetry ingestion (authenticated by agent token in Authorization header or query param)
 router.post('/ingest', (req: any, res: Response) => {
   try {
-    const token = req.query.token as string;
-    const driverId = req.query.driverId as string;
+    // Support both Authorization header and query param (header preferred)
+    const authHeader = req.headers.authorization as string | undefined;
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : (req.query.token as string);
+    const driverId = req.headers['x-driver-id'] as string || req.query.driverId as string;
     if (!token || !driverId) {
       res.status(400).json({ error: 'Missing token or driverId' });
       return;
@@ -36,7 +40,7 @@ router.post('/ingest', (req: any, res: Response) => {
     res.json({ ok: true });
   } catch (err: any) {
     console.error('[ingest error]', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Unknown error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -50,7 +54,7 @@ router.get('/agent-tokens', (req: AuthRequest, res: Response) => {
     res.json(tokens);
   } catch (err: any) {
     console.error('[agent-tokens GET error]', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Unknown error', teamId: req.teamId });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -66,7 +70,7 @@ router.post('/agent-tokens', (req: AuthRequest, res: Response) => {
     res.status(201).json(token);
   } catch (err: any) {
     console.error('[agent-tokens POST error]', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Unknown error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -81,7 +85,7 @@ router.delete('/agent-tokens/:id', (req: AuthRequest, res: Response) => {
     res.status(204).send();
   } catch (err: any) {
     console.error('[agent-tokens DELETE error]', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Unknown error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

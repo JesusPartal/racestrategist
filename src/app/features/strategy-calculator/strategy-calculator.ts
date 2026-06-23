@@ -698,10 +698,10 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   async copyAgentCommand(t: AgentTokenDto) {
     try {
       const cfg = await this.telemetryApi.getRelayConfig();
-      this.lastCopiedCommand = `node server.js --relay=${cfg.relayUrl} --driver=${t.driverId} --token=${t.token}`;
+      this.lastCopiedCommand = `set PARTS_TEL_TOKEN=${t.token} && node server.js --relay=${cfg.relayUrl} --driver=${t.driverId}`;
       await navigator.clipboard.writeText(this.lastCopiedCommand);
     } catch {
-      this.lastCopiedCommand = `node server.js --relay=ws://YOUR_SERVER_IP:3000/ws/telemetry/agent --driver=${t.driverId} --token=${t.token}`;
+      this.lastCopiedCommand = `set PARTS_TEL_TOKEN=${t.token} && node server.js --relay=ws://YOUR_SERVER_IP:3000/ws/telemetry/agent --driver=${t.driverId}`;
       await navigator.clipboard.writeText(this.lastCopiedCommand).catch(() => {});
     }
   }
