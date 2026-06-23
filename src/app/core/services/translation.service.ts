@@ -218,6 +218,8 @@ export class TranslationService {
             'agent_driver_name': 'Driver name',
             'generate': 'GENERATE',
             'copy_command': 'CMD',
+            'copy_token': 'TOKEN',
+            'copied': 'COPIED',
             'click_to_copy': 'Click to copy',
         },
         es: {
@@ -431,6 +433,8 @@ export class TranslationService {
             'agent_driver_name': 'Nombre del piloto',
             'generate': 'GENERAR',
             'copy_command': 'CMD',
+            'copy_token': 'TOKEN',
+            'copied': 'COPIADO',
             'click_to_copy': 'Click para copiar',
         }
     };

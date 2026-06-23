@@ -685,12 +685,24 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     } catch { /* ignore */ }
   }
 
+  copiedTokenId = signal('');
+
+  async copyToken(t: AgentTokenDto) {
+    try {
+      await navigator.clipboard.writeText(t.token);
+      this.copiedTokenId.set(t.id);
+      setTimeout(() => this.copiedTokenId.set(''), 2000);
+    } catch { /* ignore */ }
+  }
+
   async copyAgentCommand(t: AgentTokenDto) {
     try {
       const cfg = await this.telemetryApi.getRelayConfig();
       this.lastCopiedCommand = `node server.js --relay=${cfg.relayUrl} --driver=${t.driverId} --token=${t.token}`;
+      await navigator.clipboard.writeText(this.lastCopiedCommand);
     } catch {
       this.lastCopiedCommand = `node server.js --relay=ws://YOUR_SERVER_IP:3000/ws/telemetry/agent --driver=${t.driverId} --token=${t.token}`;
+      await navigator.clipboard.writeText(this.lastCopiedCommand).catch(() => {});
     }
   }
 

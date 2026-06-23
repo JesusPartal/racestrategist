@@ -307,8 +307,12 @@
                     <strong>{{ t.driverName }}</strong>
                     <span style="opacity: 0.4; margin-left: 8px; font-family: monospace; font-size: 0.6rem;">{{ t.token.slice(0, 16) }}...</span>
                 </span>
+                <button style="background: none; border: none; color: #00E676; cursor: pointer; font-size: 0.7rem; padding: 4px 8px;" (click)="copyToken(t); $event.stopPropagation()" [title]="t.token">
+                    <i class="fa-solid" [class.fa-copy]="copiedTokenId() !== t.id" [class.fa-check]="copiedTokenId() === t.id"></i>
+                    <span style="font-size: 0.55rem; margin-left: 2px;">{{ copiedTokenId() === t.id ? (trans.translate('copied') || 'COPIED') : (trans.translate('copy_token') || 'TOKEN') }}</span>
+                </button>
                 <button style="background: none; border: none; color: #2979FF; cursor: pointer; font-size: 0.7rem; padding: 4px 8px;" (click)="copyAgentCommand(t)">
-                    <i class="fa-solid fa-copy"></i> {{ trans.translate('copy_command') || 'CMD' }}
+                    <i class="fa-solid fa-terminal"></i>
                 </button>
                 <button style="background: none; border: none; color: #ff5252; cursor: pointer; font-size: 0.7rem;" (click)="revokeAgentToken(t.id)">
                     <i class="fa-solid fa-trash"></i>
