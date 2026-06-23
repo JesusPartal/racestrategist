@@ -368,6 +368,52 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   dashCollapsed = signal(false);
   extraTimeOpen = signal(-1);
 
+  // Driver settings modal
+  driverSettingsOpen = signal<string | null>(null);
+  driverSettingsFuel = signal<number | null>(null);
+  driverSettingsLapMin = signal<number>(0);
+  driverSettingsLapSec = signal<number>(0);
+  driverSettingsLapMs = signal<number>(0);
+
+  openDriverSettings(driver: DriverProfile) {
+    this.driverSettingsOpen.set(driver.id);
+    this.driverSettingsFuel.set(driver.fuelPerLapL ?? null);
+    const ms = driver.avgLapTimeMs || 0;
+    const totalSec = Math.floor(ms / 1000);
+    this.driverSettingsLapMin.set(Math.floor(totalSec / 60));
+    this.driverSettingsLapSec.set(totalSec % 60);
+    this.driverSettingsLapMs.set(ms % 1000);
+  }
+
+  closeDriverSettings() {
+    this.driverSettingsOpen.set(null);
+  }
+
+  saveDriverSettings(driverId: string) {
+    const fuel = this.driverSettingsFuel();
+    const lapMs = (this.driverSettingsLapMin() * 60 * 1000) + (this.driverSettingsLapSec() * 1000) + (this.driverSettingsLapMs() || 0);
+
+    // Update in store.drivers if present, otherwise add a copy with overrides
+    const existing = this.store.drivers();
+    const inStore = existing.find(d => d.id === driverId);
+    if (inStore) {
+      this.store.drivers.set(existing.map(d => d.id === driverId ? { ...d, fuelPerLapL: fuel ?? 0, avgLapTimeMs: lapMs } : d));
+    } else {
+      // Driver is from team roster only — clone into strategy snapshot with overrides
+      const fromRoster = this.availableDrivers().find(d => d.id === driverId);
+      if (fromRoster) {
+        this.store.drivers.set([...existing, { ...fromRoster, fuelPerLapL: fuel ?? 0, avgLapTimeMs: lapMs }]);
+      }
+    }
+
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+    this.closeDriverSettings();
+  }
+
+  getDriverSettingsLapMs(driver: DriverProfile): number {
+    return driver.avgLapTimeMs || 0;
+  }
+
   toggleTimeMode() {
     if (this.useRelativeTime()) {
       this.useRelativeTime.set(false);

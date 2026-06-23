@@ -222,6 +222,8 @@ export class TranslationService {
             'copy_token': 'TOKEN',
             'copied': 'COPIED',
             'click_to_copy': 'Click to copy',
+            'driver_settings': 'Driver settings',
+            'global_fuel': 'Global Fuel',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -438,6 +440,8 @@ export class TranslationService {
             'copy_token': 'TOKEN',
             'copied': 'COPIADO',
             'click_to_copy': 'Click para copiar',
+            'driver_settings': 'Ajustes del piloto',
+            'global_fuel': 'Combustible global',
         }
     };
 

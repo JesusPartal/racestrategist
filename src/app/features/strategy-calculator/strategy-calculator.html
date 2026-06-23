@@ -441,12 +441,40 @@
         style="display: flex; gap: 15px; flex-wrap: wrap; align-content: flex-start;">
         <div *ngFor="let driver of availableDrivers(); trackBy: trackByDriverId" class="driver-badge"
             [style.border-left-color]="driver.accentColor">
-            <div style="font-weight: 700;">{{ driver.name }}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 700;">{{ driver.name }}</div>
+                <button class="btn-driver-settings" (click)="openDriverSettings(driver)" title="{{ trans.translate('driver_settings') || 'Driver settings' }}">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
             <div style="font-size: 0.7rem; color: var(--text-dim);">
-                {{ driver.fuelPerLapL ? driver.fuelPerLapL + ' L/Lap' : 'Global Fuel' }}
+                {{ driver.fuelPerLapL ? driver.fuelPerLapL + ' L/Lap' : (trans.translate('global_fuel') || 'Global Fuel') }}
                 <span *ngIf="driver.avgLapTimeMs" style="margin-left: 8px; color: var(--accent-color);">
                     ⏱ {{ formatLapTime(driver.avgLapTimeMs) }}
                 </span>
+            </div>
+            <!-- Inline driver settings panel -->
+            <div *ngIf="driverSettingsOpen() === driver.id" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 4px;">{{ trans.translate('fuel_per_lap') || 'Fuel/Lap (L)' }}</label>
+                        <input type="number" step="0.1" min="0" [ngModel]="driverSettingsFuel()" (ngModelChange)="driverSettingsFuel.set($event)" placeholder="{{ trans.translate('use_global') || 'Use global' }}" style="width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 4px;">{{ trans.translate('avg_lap_time') || 'Avg Lap Time' }}</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" min="0" max="10" [ngModel]="driverSettingsLapMin()" (ngModelChange)="driverSettingsLapMin.set($event)" placeholder="min" style="width: 60px; padding: 8px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem; text-align: center;">
+                            <span style="color: var(--text-dim);">:</span>
+                            <input type="number" min="0" max="59" [ngModel]="driverSettingsLapSec()" (ngModelChange)="driverSettingsLapSec.set($event)" placeholder="sec" style="width: 60px; padding: 8px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem; text-align: center;">
+                            <span style="color: var(--text-dim);">.</span>
+                            <input type="number" min="0" max="999" [ngModel]="driverSettingsLapMs()" (ngModelChange)="driverSettingsLapMs.set($event)" placeholder="ms" style="width: 70px; padding: 8px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.8rem; text-align: center;">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button class="btn-save" style="padding: 6px 14px; font-size: 0.75rem;" (click)="saveDriverSettings(driver.id)">{{ trans.translate('save') || 'SAVE' }}</button>
+                        <button class="btn-cancel" style="padding: 6px 14px; font-size: 0.75rem;" (click)="closeDriverSettings()">{{ trans.translate('cancel') || 'CANCEL' }}</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -696,7 +724,7 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-left: 4px solid var(--accent-color);
         border-radius: 8px;
-        padding: 12px 40px 12px 15px;
+        padding: 12px 15px;
         position: relative;
         min-width: 150px;
         transition: all 0.3s ease;
@@ -705,6 +733,36 @@
     .driver-badge:hover {
         background: rgba(255, 255, 255, 0.1);
         transform: translateY(-2px);
+    }
+
+    .btn-driver-settings {
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        padding: 4px;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-driver-settings:hover {
+        color: var(--accent-color);
+        background: rgba(255, 176, 0, 0.1);
+    }
+
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-dim);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
     }
 
     .driver-badge.editing {
