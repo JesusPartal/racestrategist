@@ -5,6 +5,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 import { initializeDatabase } from './db';
 import { errorHandler } from './middleware/error';
+import { ensureTable as ensureAgentTokensTable } from './services/telemetry.service';
 import authRoutes from './routes/auth.routes';
 import strategiesRoutes from './routes/strategies.routes';
 import catalogRoutes from './routes/catalog.routes';
@@ -22,6 +23,9 @@ const PORT = process.env.PORT || 3000;
 
 // Initialize database
 initializeDatabase();
+
+// Ensure agent_tokens table + migrations (for cleanupExpiredTokens etc.)
+ensureAgentTokensTable();
 
 // Seed data
 seedData();
