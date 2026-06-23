@@ -41,10 +41,10 @@ export class StrategyStore {
     this.stintPlan.set(generateEmptyStints(count, lapsPerStint));
   }
 
-  recalculateTimeline(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number) {
+  recalculateTimeline(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number, drivers?: DriverProfile[]) {
     this.stintPlan.update(stints =>
       recalculateTimeline(
-        stints, this.drivers(), globalFuelPerLap, globalAvgLapTime, tankCapacity,
+        stints, drivers ?? this.drivers(), globalFuelPerLap, globalAvgLapTime, tankCapacity,
         this.pitStopFuelOnlyMs(), this.pitStopTiresMs()
       )
     );

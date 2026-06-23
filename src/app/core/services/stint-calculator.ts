@@ -5,7 +5,7 @@ export function calculateStintLaps(
   tankCapacity: number,
   globalFuelPerLap: number
 ): number {
-  const consumption = (driver?.fuelPerLapL) ?? globalFuelPerLap;
+  const consumption = driver?.fuelPerLapL || globalFuelPerLap;
   return consumption > 0 && tankCapacity > 0 ? Math.floor(tankCapacity / consumption) : 0;
 }
 

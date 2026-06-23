@@ -161,7 +161,7 @@ missingFields = computed<string[]>(() => {
       const pitTires = this.store.pitStopTiresMs();
 
       if (untracked(() => this.store.stintPlan()).length > 0) {
-        this.store.recalculateTimeline(fuel, lapTime, tank);
+        this.store.recalculateTimeline(fuel, lapTime, tank, this.availableDrivers());
       }
     });
 
@@ -312,23 +312,23 @@ missingFields = computed<string[]>(() => {
   generateStintPlan() {
     const count = Math.ceil(this.stintsNeeded());
     this.store.generateEmptyStints(count, this.maxLaps());
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
     this.telemetry.setPlannedValues(this.fuelPerLap(), this.avgLapTime());
   }
 
   updateStintDriver(stintIndex: number, driverId: string) {
     this.store.updateStintDriver(stintIndex, driverId);
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
   updateStintTires(stintIndex: number, change: boolean) {
     this.store.updateStintFields(stintIndex, { changeTires: change });
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
 updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.updateStintFields(stintIndex, { additionalTimeMs: (seconds || 0) * 1000 });
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
   toggleExtraTimeInput(stintIndex: number) {
@@ -337,7 +337,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
 
   drop(event: CdkDragDrop<string[]>) {
     this.store.reorderStints(event.previousIndex, event.currentIndex);
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
   trackByEventId = (_: number, e: { id: string }) => e.id;
