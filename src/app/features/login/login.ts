@@ -26,9 +26,14 @@ import { Router, ActivatedRoute } from '@angular/router';
               <label for="username">USERNAME</label>
               <input type="text" id="username" [(ngModel)]="username" placeholder="Enter your username" autocomplete="username">
             </div>
-            <div class="form-field">
+            <div class="form-field password-field">
               <label for="password">PASSWORD</label>
-              <input type="password" id="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password">
+              <div class="password-wrapper">
+                <input [type]="showPassword() ? 'text' : 'password'" id="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password">
+                <button type="button" class="toggle-password" (click)="showPassword.set(!showPassword())" [title]="showPassword() ? 'Hide password' : 'Show password'">
+                  <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
+                </button>
+              </div>
             </div>
 
             <div class="error-msg" *ngIf="errorMsg()">{{ errorMsg() }}</div>
@@ -78,6 +83,10 @@ import { Router, ActivatedRoute } from '@angular/router';
     .form-field input { width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.9rem; transition: 0.2s; }
     .form-field input:focus { outline: none; border-color: var(--accent-color); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(255,176,0,0.1); }
     .form-field input::placeholder { color: rgba(255,255,255,0.25); }
+    .password-field .password-wrapper { position: relative; display: flex; align-items: center; }
+    .password-field .password-wrapper input { padding-right: 45px; }
+    .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.35); cursor: pointer; padding: 8px; font-size: 1.1rem; display: flex; align-items: center; transition: color 0.2s; }
+    .toggle-password:hover { color: var(--accent-color); }
     .error-msg { color: #ff5252; font-size: 0.75rem; text-align: center; padding: 8px; background: rgba(255,82,82,0.1); border-radius: 6px; }
     .auth-buttons { display: flex; gap: 12px; margin-top: 5px; }
     .login-btn, .signup-btn { flex: 1; padding: 14px; border-radius: 8px; font-family: var(--font-display); font-weight: 800; font-size: 0.75rem; letter-spacing: 1.5px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; }
@@ -100,6 +109,7 @@ export class LoginComponent {
     password = '';
     loading = false;
     errorMsg = signal('');
+    showPassword = signal(false);
 
     async login() {
         if (!this.username || !this.password) {
