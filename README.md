@@ -1,8 +1,6 @@
 # RaceStrategist
 
-WORK IN PROGRESS
-
-RaceStrategist is a premium, high-performance web application designed for endurance racing teams to plan, calculate, and optimize stint strategies on the iRacing platform. Built using **Angular 20**, **Angular Signals**, and **Angular Material CDK**, the application provides real-time stint calculation, team driver management, and an interactive stint timeline.
+RaceStrategist is a premium, high-performance web application designed for endurance racing teams to plan, calculate, and optimize stint strategies on the iRacing platform. Built using **Angular 20**, **Angular Signals**, and **Angular Material CDK**, the application provides real-time stint calculation, team driver management, an interactive stint timeline, and **live telemetry integration** via a multi-PC relay system.
 
 ---
 
@@ -43,7 +41,17 @@ RaceStrategist features a custom-built, immersive **"Midnight Track"** design sy
 - **Tyre & Refueling Customization**: Toggle tyre changes per stint and inject extra pit lane offsets (e.g., penalties or extra service times) on the fly.
 - **Drag-and-Drop Reordering**: Rearrange stint orders instantly with smooth, integrated drag-and-drop lists powered by `@angular/cdk/drag-drop`.
 
-### 4. Interactive Library & Localization
+### 5. Live Telemetry Integration
+- **Real-Time iRacing Data** — Live speed, RPM, gear, fuel level, lap times, track & air temperatures via WebSocket.
+- **Multi-PC Relay** — Run the telemetry agent on the gaming PC; connect from any browser via the backend relay (`/ws/telemetry/live`).
+- **Agent Token Auth** — Generate `at_` prefixed tokens from the web UI for secure agent connections.
+- **HTTP Ingest** — Agents send telemetry via HTTP POST (`/api/telemetry/ingest`) to avoid WebSocket proxy issues (Railway-compatible).
+- **Live Adjustments Panel** — Compares PLAN vs REAL fuel consumption, pace, and pit stop times; apply real data to recalculate remaining stints.
+- **Auto-Update** — Periodically (default 30s) syncs fuel, pace, and pit data from telemetry into the strategy plan.
+- **Pit Stop Detection** — Automatically detects pit entries/exits via speed threshold (<5 km/h), records durations.
+- **Driver Badge** — Shows which driver/PC is sending telemetry when connected via relay.
+
+### 6. Interactive Library & Localization
 - **Strategy Library**: Save configurations, load historical strategy setups, and clear state parameters inside a local database backed by browser `localStorage`.
 - **Bilingual Interface**: Full translation mapping between **English (EN)** and **Spanish (ES)**.
 - **State Navigation Protection**: Route guards (`unsavedChangesGuard`) check for unsaved modifications and prompt users prior to leaving active workspace configurations.
@@ -89,26 +97,54 @@ flowchart TD
 
 ## Repository Structure
 
-The code is cleanly modularized into Core and Feature modules:
+### Frontend (`src/`)
 
 ```text
 src/
 ├── app/
-│   ├── app.config.ts        # Global configuration (routing, providers)
-│   ├── app.routes.ts        # Protected application routing rules
-│   ├── app.ts               # Core app layout / Shell component
-│   ├── app.css              # Base styling variables and layouts
+│   ├── app.config.ts          # Global configuration (routing, providers)
+│   ├── app.routes.ts          # Protected application routing rules
+│   ├── app.ts                 # Core app layout / Shell component
+│   ├── app.css                # Base styling variables and layouts
 │   ├── core/
-│   │   ├── guards/          # Router guard definitions (Auth, Unsaved Changes)
-│   │   ├── models/          # Strongly-typed Interfaces & Enums (RaceStrategy, DriverProfile)
-│   │   └── services/        # Strategy Engine, Catalog, Auth, Team, & Localization Services
+│   │   ├── guards/            # Router guard definitions (Auth, Unsaved Changes)
+│   │   ├── models/            # Interfaces & Enums (RaceStrategy, DriverProfile, TelemetryPacket)
+│   │   └── services/          # Strategy Engine, Catalog, Auth, Team, Translation,
+│   │                            TelemetryService (WS client), TelemetryApiService
 │   └── features/
-│       ├── home/            # Dashboard landing, telemetry alerts & team log events
-│       ├── login/           # User authentication screen
-│       ├── strategies-list/ # Strategy library overview and search
-│       ├── strategy-calculator/ # Core dynamic stint planner and static calculator
-│       └── team/            # Team settings and Driver roster editor
-└── styles.css               # "Midnight Track" design system theme tokens and utilities
+│       ├── home/              # Dashboard landing, telemetry alerts & team log events
+│       ├── login/             # User authentication screen
+│       ├── strategies-list/   # Strategy library overview and search
+│       ├── strategy-calculator/ # Core stint planner + Live Adjustments + Agent Token UI
+│       ├── telemetry-panel/   # Live gauges, fuel bar, lap info, pit status, race timer
+│       └── team/              # Team settings and Driver roster editor
+└── styles.css                 # "Midnight Track" design system theme tokens and utilities
+```
+
+### Backend (`backend/`)
+
+```text
+backend/
+├── src/
+│   ├── index.ts               # Express + HTTP server, WS relay registration
+│   ├── db.ts                  # SQLite initialization (better-sqlite3)
+│   ├── seed.ts                # Default data seeding
+│   ├── middleware/
+│   │   ├── auth.ts            # JWT authentication middleware
+│   │   └── error.ts           # Error handler
+│   ├── models/                # Database models (User, Strategy, Team, Catalog)
+│   ├── routes/
+│   │   ├── auth.routes.ts
+│   │   ├── strategies.routes.ts
+│   │   ├── catalog.routes.ts
+│   │   ├── team.routes.ts
+│   │   ├── teams.routes.ts
+│   │   ├── admin.routes.ts
+│   │   └── telemetry.routes.ts   # Agent token CRUD + HTTP /api/telemetry/ingest
+│   └── services/
+│       ├── telemetry.service.ts       # Token generation, validation, DB ops
+│       └── telemetry-relay.service.ts # WebSocket relay (live clients) + HTTP ingest
+└── Dockerfile                  # Multi-stage build for Railway deployment
 ```
 
 ---
@@ -148,3 +184,36 @@ npm run test
 # or
 ng test
 ```
+
+## Telemetry Relay Architecture
+
+```
+iRacing (Sim)
+  → sdk-worker.js (reads telemetry via irsdk-node)
+  → server.js (agent, HTTP POST /api/telemetry/ingest every 200ms)
+  → Railway (Express backend)
+  → TelemetryRelayService (broadcasts to live WebSocket clients)
+  → Browser (TelemetryService receives via /ws/telemetry/live)
+```
+
+### Agent Token Setup
+1. Navigate to **Strategy Calculator > TELEMETRY AGENTS**
+2. Enter a driver name and click **GENERATE**
+3. Copy the token (`at_xxx`) using the **TOKEN** button
+4. On the gaming PC, run:
+   ```bash
+   node server.js --relay=wss://your-server.com/ws/telemetry/agent --driver=MyName --token=at_xxx
+   ```
+
+### Environment Configuration
+
+| Variable | File | Description |
+|---|---|---|
+| `telemetryRelayUrl` | `environments/environment.ts` / `environment.prod.ts` | WebSocket URL for live telemetry relay |
+| `apiUrl` | `environments/environment.ts` / `environment.prod.ts` | Backend API base URL |
+| `JWT_SECRET` | Backend `.env` | Secret for JWT signing |
+| `RELAY_URL` | Backend (optional) | Override agent relay URL returned by `/api/telemetry/config` |
+
+### Multi-PC Setup
+- **Gaming PC**: Run [parts-tel-desktop](https://github.com/JesusPartal/parts-tel-desktop) (Electron GUI) or `node server.js` with `--relay` flag
+- **Any PC**: Open the web app and click **CONNECT RELAY** (or the unified **CONNECT** button when logged in)
