@@ -660,19 +660,19 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   private telemetryApi = inject(TelemetryApiService);
   showAgentSetup = signal(false);
   agentTokens = signal<AgentTokenDto[]>([]);
-  agentDriverName = signal('');
+  agentDriverName = '';
   generatingToken = signal(false);
   lastCopiedCommand = '';
 
   async generateAgentToken() {
-    const name = this.agentDriverName().trim();
+    const name = this.agentDriverName.trim();
     if (!name) return;
     this.generatingToken.set(true);
     try {
       const id = name.toLowerCase().replace(/\s+/g, '-');
       const token = await this.telemetryApi.createAgentToken(id, name);
       this.agentTokens.update(t => [...t, token]);
-      this.agentDriverName.set('');
+      this.agentDriverName = '';
       this.lastCopiedCommand = '';
     } catch { /* ignore */ }
     this.generatingToken.set(false);
