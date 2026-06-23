@@ -2,35 +2,11 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 15px;
 }
 
-.logo-icon {
-  color: var(--accent-color);
-  font-size: 1.8rem;
-  display: flex;
-  align-items: center;
-}
-
-.logo-text {
-  display: flex;
-  align-items: baseline;
-}
-
-.logo-race {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: var(--accent-color);
-  letter-spacing: 2px;
-}
-
-.logo-strategist {
-  font-family: var(--font-display);
-  font-weight: 300;
-  font-size: 1.1rem;
-  color: #fff;
-  letter-spacing: 1px;
+.logo-img {
+  height: 40px;
+  width: auto;
 }
 
 /* ── Nav (Desktop) ──────────────────────────────────────────────────────── */
@@ -356,7 +332,7 @@
 }
 
 @media (max-width: 480px) {
-  .logo-text {
+  .logo-img {
     display: none;
   }
 }
