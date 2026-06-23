@@ -13,6 +13,8 @@ import { Vehicle, DriverProfile } from '../../core/models/race-strategy.model';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 import { AuthService } from '../../core/services/auth.service';
 import { TelemetryService } from '../../core/services/telemetry.service';
+import { TelemetryApiService, AgentTokenDto } from '../../core/services/telemetry-api.service';
+import { environment } from '../../../environments/environment';
 import { TelemetryPanelComponent } from '../telemetry-panel/telemetry-panel';
 
 @Component({
@@ -128,7 +130,7 @@ missingFields = computed<string[]>(() => {
     public team: TeamService,
     private router: Router,
     public telemetry: TelemetryService,
-    private auth: AuthService
+    public auth: AuthService
   ) {
     effect(() => {
       const eventId = this.selectedEventId();
@@ -652,6 +654,49 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       this.applyRealPaceToStrategy();
       this.useRealTelemetryData.set(true);
     }
+  }
+
+  // Telemetry Agent Setup
+  private telemetryApi = inject(TelemetryApiService);
+  showAgentSetup = signal(false);
+  agentTokens = signal<AgentTokenDto[]>([]);
+  agentDriverName = '';
+  generatingToken = signal(false);
+  lastCopiedCommand = '';
+
+  async generateAgentToken() {
+    const name = this.agentDriverName.trim();
+    if (!name) return;
+    this.generatingToken.set(true);
+    try {
+      const id = name.toLowerCase().replace(/\s+/g, '-');
+      const token = await this.telemetryApi.createAgentToken(id, name);
+      this.agentTokens.update(t => [...t, token]);
+      this.agentDriverName = '';
+      this.lastCopiedCommand = '';
+    } catch { /* ignore */ }
+    this.generatingToken.set(false);
+  }
+
+  async revokeAgentToken(id: string) {
+    try {
+      await this.telemetryApi.revokeAgentToken(id);
+      this.agentTokens.update(t => t.filter(x => x.id !== id));
+    } catch { /* ignore */ }
+  }
+
+  async copyAgentCommand(t: AgentTokenDto) {
+    try {
+      const cfg = await this.telemetryApi.getRelayConfig();
+      this.lastCopiedCommand = `node server.js --relay=${cfg.relayUrl} --driver=${t.driverId} --token=${t.token}`;
+    } catch {
+      this.lastCopiedCommand = `node server.js --relay=ws://YOUR_SERVER_IP:3000/ws/telemetry/agent --driver=${t.driverId} --token=${t.token}`;
+    }
+  }
+
+  copyText(text: string) {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    this.lastCopiedCommand = '';
   }
 
   connectTelemetry() {

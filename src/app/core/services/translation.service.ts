@@ -212,6 +212,12 @@ export class TranslationService {
             'apply_as_fuel_only': '→ FUEL ONLY',
             'apply_as_with_tires': '→ WITH TIRES',
             'avg': 'AVG',
+            'telemetry_agents': 'TELEMETRY AGENTS',
+            'agent_setup_desc': 'Generate tokens so team PCs can send telemetry to this server.',
+            'agent_driver_name': 'Driver name',
+            'generate': 'GENERATE',
+            'copy_command': 'CMD',
+            'click_to_copy': 'Click to copy',
         },
         es: {
             'app_title': 'RaceStrategist',
@@ -418,6 +424,12 @@ export class TranslationService {
             'apply_as_fuel_only': '→ SÓLO COMBUSTIBLE',
             'apply_as_with_tires': '→ CON NEUMÁTICOS',
             'avg': 'PROM',
+            'telemetry_agents': 'AGENTES TELEMETRÍA',
+            'agent_setup_desc': 'Genera tokens para que los PCs del equipo envíen telemetría a este servidor.',
+            'agent_driver_name': 'Nombre del piloto',
+            'generate': 'GENERAR',
+            'copy_command': 'CMD',
+            'click_to_copy': 'Click para copiar',
         }
     };
 

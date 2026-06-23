@@ -93,6 +93,20 @@ export function initializeDatabase(): void {
   try { db.exec('ALTER TABLE strategies ADD COLUMN event_start_time INTEGER DEFAULT 0'); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN created_by TEXT'); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN source_id TEXT'); } catch {}
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_tokens (
+      id TEXT PRIMARY KEY,
+      team_id TEXT NOT NULL,
+      driver_id TEXT NOT NULL,
+      driver_name TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_used_at INTEGER,
+      created_by TEXT NOT NULL,
+      FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+    );
+  `);
 }
 
 export default db;

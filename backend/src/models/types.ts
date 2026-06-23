@@ -139,6 +139,17 @@ export interface StintDto {
   additionalTimeMs?: number;
 }
 
+export interface AgentToken {
+  id: string;
+  teamId: string;
+  driverId: string;
+  driverName: string;
+  token: string;
+  createdAt: number;
+  lastUsedAt: number | null;
+  createdBy: string;
+}
+
 export interface DriverDto {
   id?: string;
   name: string;

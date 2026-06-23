@@ -10,6 +10,7 @@ import catalogRoutes from './routes/catalog.routes';
 import teamRoutes from './routes/team.routes';
 import teamsRoutes from './routes/teams.routes';
 import adminRoutes from './routes/admin.routes';
+import telemetryRoutes from './routes/telemetry.routes';
 import { seedData } from './seed';
 import { TelemetryRelayService } from './services/telemetry-relay.service';
 
@@ -49,6 +50,7 @@ app.use('/api/catalog', catalogRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/telemetry', telemetryRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
