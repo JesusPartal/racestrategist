@@ -326,6 +326,20 @@
     color: var(--accent-color);
 }
 
+/* ── Stint Coverage Status Icon ─────────────────────────────────────────── */
+.stint-coverage-icon {
+    font-size: 0.9rem;
+    cursor: help;
+}
+
+.stint-coverage-icon.error {
+    color: #ff5252;
+}
+
+.stint-coverage-icon.warning {
+    color: var(--accent-color);
+}
+
 /* ── Stint Config Gear Button ─────────────────────────────────────────── */
 .btn-stint-config {
     background: none;

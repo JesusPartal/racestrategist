@@ -511,7 +511,13 @@
 <!-- Stint Strategy Section (Tiles) -->
 <div *ngIf="store.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
     <div class="section-header-row">
-        <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</h2>
+        <h2 style="display: flex; align-items: center; gap: 8px;">
+            <span><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('plan_label') }}</span> {{ trans.translate('team_strategy_title') }}</span>
+            <i *ngIf="stintCoverage() === 'error'" class="fa-solid fa-circle-xmark stint-coverage-icon error"
+               [title]="stintCoverageTitle()"></i>
+            <i *ngIf="stintCoverage() === 'warning'" class="fa-solid fa-triangle-exclamation stint-coverage-icon warning"
+               [title]="stintCoverageTitle()"></i>
+        </h2>
         <button class="btn-time-toggle" (click)="toggleTimeMode()">
             <i class="fa-solid fa-clock"></i> {{ timeModeLabel() }}
         </button>

@@ -82,6 +82,29 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
 
   canGenerateStints = computed(() => this.stintsNeeded() > 0 && this.stintsNeeded() <= 1000);
 
+  stintCoverage = computed<'error' | 'warning' | null>(() => {
+    const planned = this.store.stintPlan().length;
+    if (planned === 0) return null;
+    const needed = Math.ceil(this.stintsNeeded());
+    if (needed === 0) return null;
+    if (planned < needed) return 'error';
+    if (planned > needed) return 'warning';
+    return null;
+  });
+
+  stintCoverageTitle = computed<string>(() => {
+    const state = this.stintCoverage();
+    const needed = Math.ceil(this.stintsNeeded());
+    const planned = this.store.stintPlan().length;
+    if (state === 'error') {
+      return (this.trans.translate('stint_coverage_error') || 'Planned stints (%d) are not enough to finish the race (%d needed)').replace('%d1', String(planned)).replace('%d2', String(needed));
+    }
+    if (state === 'warning') {
+      return (this.trans.translate('stint_coverage_warning') || 'More stints planned (%d) than needed (%d) - consider removing extras').replace('%d1', String(planned)).replace('%d2', String(needed));
+    }
+    return '';
+  });
+
 missingFields = computed<string[]>(() => {
     const missing: string[] = [];
     if (!this.selectedEventId()) missing.push('select_event');
