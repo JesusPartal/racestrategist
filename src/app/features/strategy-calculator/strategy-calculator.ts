@@ -97,10 +97,10 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
     const needed = Math.ceil(this.stintsNeeded());
     const planned = this.store.stintPlan().length;
     if (state === 'error') {
-      return (this.trans.translate('stint_coverage_error') || 'Planned stints (%d) are not enough to finish the race (%d needed)').replace('%d1', String(planned)).replace('%d2', String(needed));
+      return this.trans.translate('stint_coverage_error', { d1: planned, d2: needed });
     }
     if (state === 'warning') {
-      return (this.trans.translate('stint_coverage_warning') || 'More stints planned (%d) than needed (%d) - consider removing extras').replace('%d1', String(planned)).replace('%d2', String(needed));
+      return this.trans.translate('stint_coverage_warning', { d1: planned, d2: needed });
     }
     return '';
   });
