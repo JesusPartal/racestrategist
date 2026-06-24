@@ -481,6 +481,23 @@
     </div>
 </div>
 
+<!-- Remove Stint Confirm Modal -->
+<div class="delete-overlay" *ngIf="showRemoveStintDialog() !== null" (click)="cancelRemoveStint()">
+    <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="delete-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="delete-title">{{ trans.translate('remove_stint') || 'Remove Stint' }}</h3>
+        <p class="delete-body">{{ trans.translate('remove_stint_confirm') || 'Are you sure you want to remove this stint? This action cannot be undone.' }}</p>
+        <div class="delete-actions">
+            <button class="btn-delete-confirm" (click)="removeStint(showRemoveStintDialog()!)">
+                <i class="fa-solid fa-trash"></i> {{ trans.translate('remove_stint') || 'Remove stint' }}
+            </button>
+            <button class="btn-delete-cancel" (click)="cancelRemoveStint()">{{ trans.translate('cancel') || 'CANCEL' }}</button>
+        </div>
+    </div>
+</div>
+
 <!-- Stint Settings Modal -->
 <div class="delete-overlay" *ngIf="stintSettingsOpen() !== null" (click)="closeStintSettings()">
     <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
@@ -534,7 +551,7 @@
                 <button class="btn-stint-config" (click)="openStintSettings(stint.index)" title="{{ trans.translate('configure_stint') || 'Configure stint' }}">
                     <i class="fa-solid fa-gear"></i>
                 </button>
-                <button class="btn-stint-remove" (click)="removeStint(i)" title="{{ trans.translate('remove_stint') || 'Remove stint' }}">
+                <button class="btn-stint-remove" (click)="confirmRemoveStint(i)" title="{{ trans.translate('remove_stint') || 'Remove stint' }}">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>

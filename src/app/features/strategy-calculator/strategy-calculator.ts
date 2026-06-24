@@ -36,6 +36,7 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
   lapMs = signal<number>(0);
   tankCapacityInput = signal<number | null>(null);
 
+  showRemoveStintDialog = signal<number | null>(null);
   showTeamSelector = signal(false);
   availableTeams = signal<TeamSummary[]>([]);
   teamsLoading = signal(false);
@@ -76,7 +77,6 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
 
   stintCoverage = computed<'error' | 'warning' | null>(() => {
     const planned = this.store.stintPlan().length;
-    if (planned === 0) return null;
     const needed = Math.ceil(this.stintsNeeded());
     if (needed === 0) return null;
     if (planned < needed) return 'error';
@@ -334,8 +334,17 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
-  removeStint(atIndex: number) {
+  confirmRemoveStint(atIndex: number) {
     if (this.store.stintPlan().length <= 1) return;
+    this.showRemoveStintDialog.set(atIndex);
+  }
+
+  cancelRemoveStint() {
+    this.showRemoveStintDialog.set(null);
+  }
+
+  removeStint(atIndex: number) {
+    this.showRemoveStintDialog.set(null);
     this.store.removeStintAtPosition(atIndex);
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
