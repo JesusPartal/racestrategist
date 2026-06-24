@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { RaceStrategy, DriverProfile, StintPlanItem, StrategySummary } from '../models/race-strategy.model';
-import { generateEmptyStints, recalculateTimeline, updateStintFields, reorderStints } from './stint-calculator';
+import { generateEmptyStints, recalculateTimeline, updateStintFields, reorderStints, insertStintAt } from './stint-calculator';
 
 @Injectable({ providedIn: 'root' })
 export class StrategyStore {
@@ -60,6 +60,10 @@ export class StrategyStore {
 
   reorderStints(previousIndex: number, currentIndex: number) {
     this.stintPlan.update(stints => reorderStints(stints, previousIndex, currentIndex));
+  }
+
+  insertStint(atIndex: number) {
+    this.stintPlan.update(stints => insertStintAt(stints, atIndex));
   }
 
   applyLoadedStrategy(data: RaceStrategy) {

@@ -74,3 +74,20 @@ export function reorderStints(stints: StintPlanItem[], previousIndex: number, cu
   newStints.splice(currentIndex, 0, item);
   return newStints.map((s, i) => ({ ...s, index: i + 1 }));
 }
+
+export function insertStintAt(stints: StintPlanItem[], atIndex: number): StintPlanItem[] {
+  const newStints = [...stints];
+  const clampedIndex = Math.max(0, Math.min(atIndex, newStints.length));
+  const newItem: StintPlanItem = {
+    index: 0,
+    driverId: '',
+    startTimeMs: 0,
+    endTimeMs: 0,
+    laps: 0,
+    changeTires: false,
+    additionalTimeMs: 0,
+    manualEndTimeMs: null,
+  };
+  newStints.splice(clampedIndex, 0, newItem);
+  return newStints.map((s, i) => ({ ...s, index: i + 1 }));
+}

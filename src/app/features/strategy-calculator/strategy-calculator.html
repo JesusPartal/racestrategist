@@ -489,7 +489,8 @@
         </button>
     </div>
     <div class="stint-timeline" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
-        <div *ngFor="let stint of store.stintPlan(); trackBy: trackByStintIndex" [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
+        <ng-container *ngFor="let stint of store.stintPlan(); let i = index; trackBy: trackByStintIndex">
+        <div [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
             [style.background]="getDriverColor(stint.driverId) + '22'"
             [style.border-left-color]="getDriverColor(stint.driverId)">
             <div class="stint-header">
@@ -555,6 +556,11 @@
                 </div>
             </div>
         </div>
+        <div *ngIf="i < store.stintPlan().length - 1" class="stint-insert-handle"
+             (click)="insertStint(i + 1)" title="{{ trans.translate('insert_stint') || 'Insert stint' }}">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+        </ng-container>
     </div>
 
     <!-- Visual Overview Grid -->
@@ -845,6 +851,37 @@
         transition: var(--transition);
         display: flex;
         flex-direction: column;
+    }
+
+    .stint-insert-handle {
+        flex: 0 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+        margin: 0 -10px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .stint-insert-handle:hover {
+        opacity: 1;
+    }
+
+    .stint-insert-handle i {
+        font-size: 0.7rem;
+        color: var(--accent-color);
+        background: rgba(15, 15, 15, 0.95);
+        border: 1px solid var(--accent-color);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 12px rgba(255, 176, 0, 0.3);
     }
 
     .stint-header {

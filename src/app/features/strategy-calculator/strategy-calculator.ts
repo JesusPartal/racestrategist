@@ -340,6 +340,11 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
+  insertStint(atIndex: number) {
+    this.store.insertStint(atIndex);
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+  }
+
   trackByEventId = (_: number, e: { id: string }) => e.id;
   trackByVehicleId = (_: number, v: { id: string }) => v.id;
   trackByDriverId = (_: number, d: { id: string }) => d.id;
