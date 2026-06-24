@@ -107,18 +107,20 @@
         <div class="config-panel" style="padding: 10px;">
             <h3 style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 25px;">{{ trans.translate('select_event') }}</h3>
             <div class="form-field">
-                <label for="eventSelect">{{ trans.translate('select_event') }}</label>
-                <select id="eventSelect" [ngModel]="selectedEventId()" (ngModelChange)="onEventChange($event)">
-                    <option *ngFor="let event of events(); trackBy: trackByEventId" [value]="event.id">{{ event.name }}</option>
-                </select>
+                <label for="eventDuration">{{ trans.translate('event_duration') || 'Event Duration' }}</label>
+                <div style="position: relative;">
+                    <input type="number" id="eventDuration" [ngModel]="eventDurationMinutes()"
+                        (ngModelChange)="onEventDurationChange($event)" min="1" step="1" placeholder="0">
+                    <span
+                        style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">MIN</span>
+                </div>
             </div>
 
             <div class="form-field">
-                <label for="vehicleSelect">{{ trans.translate('select_vehicle') }}</label>
-                <select id="vehicleSelect" [ngModel]="selectedVehicleId()" (ngModelChange)="onVehicleChange($event)">
-                    <option *ngFor="let vehicle of vehiclesByEvent(); trackBy: trackByVehicleId" [value]="vehicle.id">{{ vehicle.name }} ({{
-                        vehicle.vehicleClass }})</option>
-                </select>
+                <label for="vehicleName">{{ trans.translate('vehicle_label') || 'Vehicle' }}</label>
+                <input type="text" id="vehicleName" [ngModel]="vehicleName()"
+                    (ngModelChange)="onVehicleNameInput($event)" maxlength="255"
+                    placeholder="{{ trans.translate('vehicle_label') || 'Vehicle' }}">
             </div>
 
             <div class="form-field">
@@ -129,11 +131,10 @@
             </div>
 
             <div class="form-field">
-                <label for="tankCapacity">{{ trans.translate('tank_capacity') }} <span class="tag"
-                        *ngIf="tankCapacityOverride() !== null">BOP</span></label>
+                <label for="tankCapacity">{{ trans.translate('tank_capacity') }}</label>
                 <div style="position: relative;">
-                    <input type="number" id="tankCapacity" [ngModel]="tankCapacity()"
-                        (ngModelChange)="tankCapacityOverride.set($event)" step="0.5">
+                    <input type="number" id="tankCapacity" [ngModel]="tankCapacityInput()"
+                        (ngModelChange)="tankCapacityInput.set($event)" step="0.5" placeholder="0">
                     <span
                         style="position: absolute; right: 15px; top: 12px; color: var(--text-dim); font-size: 0.8rem;">LITS</span>
                 </div>

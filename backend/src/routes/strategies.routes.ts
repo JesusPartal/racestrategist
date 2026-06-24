@@ -43,16 +43,12 @@ router.get('/:id', (req: AuthRequest, res: Response) => {
 });
 
 router.post('/', (req: AuthRequest, res: Response) => {
-  const { name, eventId, vehicleId, avgLapTimeMs, fuelPerLap } = req.body;
-  if (!name || !eventId || !vehicleId) {
-    res.status(400).json({ error: 'name, eventId, and vehicleId are required' });
+  const { name, eventId, vehicleId, vehicleName, avgLapTimeMs, fuelPerLap, eventStartTime, eventDurationMinutes } = req.body;
+  if (!name) {
+    res.status(400).json({ error: 'name is required' });
     return;
   }
-  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0 }, req.teamId, req.userId);
-  if (!strategy) {
-    res.status(400).json({ error: 'Invalid eventId or vehicleId' });
-    return;
-  }
+  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, vehicleName, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0, eventStartTime, eventDurationMinutes }, req.teamId, req.userId);
   res.status(201).json(strategy);
 });
 

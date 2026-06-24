@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
-import { CatalogService } from '../../core/services/catalog.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { StrategyStore } from '../../core/services/strategy-store.service';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { TeamService } from '../../core/services/team.service';
 import { TeamsService, TeamSummary } from '../../core/services/teams.service';
-import { Vehicle, DriverProfile } from '../../core/models/race-strategy.model';
+import { DriverProfile } from '../../core/models/race-strategy.model';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 import { AuthService } from '../../core/services/auth.service';
 import { TelemetryService } from '../../core/services/telemetry.service';
@@ -28,32 +27,25 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
   private teamsService = inject(TeamsService);
   private suppressDirty = true;
 
-  events = signal<any[]>([]);
-  vehiclesByEvent = signal<Vehicle[]>([]);
-
-  selectedEventId = signal<string>('');
-  selectedVehicleId = signal<string>('');
+  eventDurationMinutes = signal<number | null>(null);
+  vehicleName = signal<string>('');
 
   fuelPerLap = signal<number>(0);
   lapMin = signal<number>(0);
   lapSec = signal<number>(0);
   lapMs = signal<number>(0);
-  tankCapacityOverride = signal<number | null>(null);
+  tankCapacityInput = signal<number | null>(null);
 
   showTeamSelector = signal(false);
   availableTeams = signal<TeamSummary[]>([]);
   teamsLoading = signal(false);
-
-  selectedEvent = computed(() => this.events().find((e: any) => e.id === this.selectedEventId()));
-  selectedVehicle = computed(() => this.vehiclesByEvent().find(v => v.id === this.selectedVehicleId()));
 
   avgLapTime = computed(() => {
     return (this.lapMin() * 60 * 1000) + (this.lapSec() * 1000) + (this.lapMs() || 0);
   });
 
   tankCapacity = computed(() => {
-    if (this.tankCapacityOverride() !== null) return this.tankCapacityOverride()!;
-    return this.selectedVehicle()?.fuelTankCapacityL || 0;
+    return this.tankCapacityInput() ?? 0;
   });
 
   maxLaps = computed(() => {
@@ -72,11 +64,11 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
   });
 
   stintsNeeded = computed(() => {
-    const event = this.selectedEvent();
-    if (!event) return 0;
+    const dur = this.eventDurationMinutes();
+    if (!dur || dur <= 0) return 0;
     const stintMs = this.stintDurationMs();
     if (stintMs <= 0) return 0;
-    const eventMs = event.durationMinutes * 60 * 1000;
+    const eventMs = dur * 60 * 1000;
     return Number((eventMs / stintMs).toFixed(2));
   });
 
@@ -107,8 +99,8 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
 
 missingFields = computed<string[]>(() => {
     const missing: string[] = [];
-    if (!this.selectedEventId()) missing.push('select_event');
-    if (!this.selectedVehicleId()) missing.push('select_vehicle');
+    if (!this.eventDurationMinutes() || this.eventDurationMinutes()! <= 0) missing.push('event_duration');
+    if (!this.vehicleName().trim()) missing.push('vehicle_label');
     if (this.fuelPerLap() <= 0) missing.push('fuel_consumption');
     if (this.avgLapTime() <= 0) missing.push('avg_lap_time');
     if (this.tankCapacity() <= 0) missing.push('tank_capacity');
@@ -146,7 +138,6 @@ missingFields = computed<string[]>(() => {
   }
 
   constructor(
-    private catalog: CatalogService,
     public trans: TranslationService,
     public store: StrategyStore,
     private api: StrategyApiService,
@@ -155,26 +146,6 @@ missingFields = computed<string[]>(() => {
     public telemetry: TelemetryService,
     public auth: AuthService
   ) {
-    effect(() => {
-      const eventId = this.selectedEventId();
-      if (eventId) {
-        this.catalog.getVehiclesByEvent(eventId).then(v => {
-          this.vehiclesByEvent.set(v);
-          if (v.length > 0) {
-            const current = untracked(() => this.selectedVehicleId());
-            if (!current || !v.some(item => item.id === current)) {
-              this.selectedVehicleId.set(v[0].id);
-            }
-          }
-        });
-      }
-    });
-
-    effect(() => {
-      this.selectedVehicleId();
-      untracked(() => this.tankCapacityOverride.set(null));
-    });
-
     effect(() => {
       const fuel = this.fuelPerLap();
       const lapTime = this.avgLapTime();
@@ -190,7 +161,7 @@ missingFields = computed<string[]>(() => {
 
     effect(() => {
       this.fuelPerLap(); this.lapMin(); this.lapSec(); this.lapMs();
-      this.selectedEventId(); this.selectedVehicleId();
+      this.eventDurationMinutes(); this.vehicleName();
       this.store.pitStopFuelOnlyMs(); this.store.pitStopTiresMs();
       this.store.stintPlan(); this.store.drivers();
       this.store.activeStrategyName(); this.store.activeEventStartTime();
@@ -203,11 +174,6 @@ missingFields = computed<string[]>(() => {
   async ngOnInit() {
     this.team.loadRoster();
     this.refreshDriversFromRoster();
-    const events = await this.catalog.getEvents();
-    this.events.set(events);
-    if (events.length > 0 && !this.store.activeStrategyId() && !this.selectedEventId()) {
-      this.selectedEventId.set(events[0].id);
-    }
 
     if (this.store.activeStrategyId()) {
       this.syncFromActiveStrategy();
@@ -251,13 +217,13 @@ missingFields = computed<string[]>(() => {
 
   syncFromActiveStrategy() {
     this.suppressDirty = true;
-    const eventId = this.store.activeEventId();
-    const vehicleId = this.store.activeVehicleId();
+    const dur = this.store.activeEventDurationMinutes();
+    const vname = this.store.activeVehicleName();
     const fuel = this.store.activeFuelPerLap();
     const totalMs = this.store.activeAvgLapTimeMs();
 
-    if (eventId) this.selectedEventId.set(eventId);
-    if (vehicleId) this.selectedVehicleId.set(vehicleId);
+    if (dur) this.eventDurationMinutes.set(dur);
+    if (vname) this.vehicleName.set(vname);
     if (fuel) this.fuelPerLap.set(fuel);
 
     if (totalMs) {
@@ -273,7 +239,8 @@ missingFields = computed<string[]>(() => {
     setTimeout(() => { this.suppressDirty = false; });
   }
 
-  onEventChange(id: string) { this.selectedEventId.set(id); }
+  onEventDurationChange(v: number | null) { this.eventDurationMinutes.set(v); }
+  onVehicleNameInput(v: string) { this.vehicleName.set(v); }
 
   onStrategyNameInput(event: Event) {
     this.store.activeStrategyName.set((event.target as HTMLInputElement).value);
@@ -290,7 +257,6 @@ missingFields = computed<string[]>(() => {
   }
 
   onStrategyNameEnter(event: Event) { (event.target as HTMLInputElement).blur(); }
-  onVehicleChange(id: string) { this.selectedVehicleId.set(id); }
 
   getEventStartDateString(): string {
     const ts = this.store.activeEventStartTime();
@@ -408,8 +374,6 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.stintSettingsOpen.set(null);
   }
 
-  trackByEventId = (_: number, e: { id: string }) => e.id;
-  trackByVehicleId = (_: number, v: { id: string }) => v.id;
   trackByDriverId = (_: number, d: { id: string }) => d.id;
   trackByStintIndex = (_: number, s: { index: number }) => s.index;
 
@@ -537,13 +501,12 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   }
 
   getSummaryEventName(): string {
-    const id = this.selectedEventId();
-    return id ? this.events().find(e => e.id === id)?.name || '—' : '—';
+    const dur = this.eventDurationMinutes();
+    return dur ? `${dur} min` : '—';
   }
 
   getSummaryVehicleName(): string {
-    const id = this.selectedVehicleId();
-    return id ? this.vehiclesByEvent().find(v => v.id === id)?.name || '—' : '—';
+    return this.vehicleName() || '—';
   }
 
   private deactivateResolver: ((allow: boolean) => void) | null = null;
@@ -583,12 +546,16 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   }
 
   async saveStrategy() {
+    this.store.activeEventDurationMinutes.set(this.eventDurationMinutes() || 0);
+    this.store.activeVehicleName.set(this.vehicleName());
+
     if (!this.store.activeStrategyId()) {
       const name = this.store.activeStrategyName() || 'New Strategy';
       const created = await this.api.createStrategy(
-        name, this.selectedEventId(), this.selectedVehicleId(),
+        name, this.eventDurationMinutes() || 0, this.vehicleName(),
         this.avgLapTime(), this.fuelPerLap(),
-        this.store.activeEventStartTime() || undefined
+        this.store.activeEventStartTime() || undefined,
+        this.tankCapacity()
       );
       this.store.activeStrategyId.set(created.id);
       this.store.activeStrategyName.set(name);
@@ -599,11 +566,12 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       const name = this.store.activeStrategyName() || 'Unnamed Strategy';
       await this.api.updateStrategy(id, {
         name,
-        eventId: this.selectedEventId(), vehicleId: this.selectedVehicleId(),
+        vehicleName: this.vehicleName(),
         avgLapTimeMs: this.avgLapTime(), fuelPerLap: this.fuelPerLap(),
         pitStopFuelOnlyMs: this.store.pitStopFuelOnlyMs(),
         pitStopTiresMs: this.store.pitStopTiresMs(),
         eventStartTime: this.store.activeEventStartTime(),
+        eventDurationMinutes: this.eventDurationMinutes() || 0,
       } as any);
       await this.saveStintsAndDrivers(id);
       await this.loadLibrary();
@@ -684,13 +652,13 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       });
     } else {
       this.store.clearActive();
-      this.selectedEventId.set('');
-      this.selectedVehicleId.set('');
+      this.eventDurationMinutes.set(null);
+      this.vehicleName.set('');
       this.fuelPerLap.set(0);
       this.lapMin.set(0);
       this.lapSec.set(0);
       this.lapMs.set(0);
-      this.tankCapacityOverride.set(null);
+      this.tankCapacityInput.set(null);
     }
     this.isDirty.set(false);
   }

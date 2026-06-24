@@ -42,8 +42,8 @@ export function initializeDatabase(): void {
     CREATE TABLE IF NOT EXISTS strategies (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT 'Unnamed Strategy',
-      event_id TEXT NOT NULL,
-      vehicle_id TEXT NOT NULL,
+      event_id TEXT NOT NULL DEFAULT '',
+      vehicle_id TEXT NOT NULL DEFAULT '',
       vehicle_name TEXT NOT NULL DEFAULT '',
       avg_lap_time_ms REAL NOT NULL DEFAULT 0,
       fuel_per_lap REAL NOT NULL DEFAULT 0,
@@ -53,9 +53,7 @@ export function initializeDatabase(): void {
       event_start_time INTEGER DEFAULT 0,
       drivers TEXT NOT NULL DEFAULT '[]',
       stints TEXT NOT NULL DEFAULT '[]',
-      team_id TEXT NOT NULL DEFAULT 'default',
-      FOREIGN KEY (event_id) REFERENCES events(id),
-      FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+      team_id TEXT NOT NULL DEFAULT 'default'
     );
 
     CREATE TABLE IF NOT EXISTS teams (
@@ -93,6 +91,7 @@ export function initializeDatabase(): void {
   try { db.exec('ALTER TABLE strategies ADD COLUMN event_start_time INTEGER DEFAULT 0'); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN created_by TEXT'); } catch {}
   try { db.exec('ALTER TABLE strategies ADD COLUMN source_id TEXT'); } catch {}
+  try { db.exec('ALTER TABLE strategies ADD COLUMN event_duration_minutes INTEGER DEFAULT 0'); } catch {}
 
   // Migrate agent_tokens: v1 had FOREIGN KEY teams(id) which broke inserts
   // because seed users use team_id='default' but no teams row exists.
