@@ -368,6 +368,12 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
+  removeStint(atIndex: number) {
+    if (this.store.stintPlan().length <= 1) return;
+    this.store.removeStintAtPosition(atIndex);
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+  }
+
   stintSettingsOpen = signal<number | null>(null);
   stintSettingsFuel = signal<number | null>(null);
   stintSettingsExtraSec = signal<number>(0);

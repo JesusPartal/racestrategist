@@ -502,7 +502,7 @@
             </label>
         </div>
         <div class="delete-actions">
-            <button class="btn-delete-confirm" (click)="saveStintSettings()"><i class="fa-solid fa-floppy-disk"></i> {{ trans.translate('save') || 'SAVE' }}</button>
+            <button class="btn-save-stint" (click)="saveStintSettings()"><i class="fa-solid fa-floppy-disk"></i> {{ trans.translate('save') || 'SAVE' }}</button>
             <button class="btn-delete-cancel" (click)="closeStintSettings()">{{ trans.translate('cancel') || 'CANCEL' }}</button>
         </div>
     </div>
@@ -532,6 +532,9 @@
                 <span class="stint-laps">{{ stint.laps }} {{ trans.translate('stint_laps') }}</span>
                 <button class="btn-stint-config" (click)="openStintSettings(stint.index)" title="{{ trans.translate('configure_stint') || 'Configure stint' }}">
                     <i class="fa-solid fa-gear"></i>
+                </button>
+                <button class="btn-stint-remove" (click)="removeStint(i)" title="{{ trans.translate('remove_stint') || 'Remove stint' }}">
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
             <div class="stint-body">

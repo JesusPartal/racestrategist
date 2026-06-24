@@ -93,3 +93,10 @@ export function insertStintAt(stints: StintPlanItem[], atIndex: number): StintPl
   newStints.splice(clampedIndex, 0, newItem);
   return newStints.map((s, i) => ({ ...s, index: i + 1 }));
 }
+
+export function removeStintAtPosition(stints: StintPlanItem[], atIndex: number): StintPlanItem[] {
+  const newStints = [...stints];
+  if (atIndex < 0 || atIndex >= newStints.length) return newStints;
+  newStints.splice(atIndex, 1);
+  return newStints.map((s, i) => ({ ...s, index: i + 1 }));
+}

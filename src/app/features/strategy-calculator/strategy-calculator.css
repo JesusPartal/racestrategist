@@ -359,6 +359,41 @@
     background: rgba(255, 176, 0, 0.1);
 }
 
+.btn-stint-remove {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-stint-remove:hover {
+    color: #ff5252;
+    background: rgba(255, 82, 82, 0.1);
+}
+
+.btn-save-stint {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-save-stint:hover {
+    background: #43a047;
+}
+
 /* ── Stint Config Badges (active overrides) ──────────────────────────────── */
 .stint-config-badges {
     display: flex;
