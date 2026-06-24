@@ -7,6 +7,8 @@ export interface StintPlanItem {
   isCompleted: boolean;
   changeTires: boolean;
   additionalTimeMs?: number;
+  manualEndTimeMs?: number | null;
+  fuelAddedL?: number;
 }
 
 export interface DriverProfile {

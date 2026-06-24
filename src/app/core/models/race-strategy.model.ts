@@ -51,6 +51,7 @@ export interface StintPlanItem {
   isCompleted?: boolean;
   actualEndTimeMs?: number;
   manualEndTimeMs?: number | null;
+  fuelAddedL?: number;
 }
 
 export interface RaceStrategy {

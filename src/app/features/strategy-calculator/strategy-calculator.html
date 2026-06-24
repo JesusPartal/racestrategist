@@ -480,6 +480,34 @@
     </div>
 </div>
 
+<!-- Stint Settings Modal -->
+<div class="delete-overlay" *ngIf="stintSettingsOpen() !== null" (click)="closeStintSettings()">
+    <div class="delete-modal glass-card animate-in" (click)="$event.stopPropagation()">
+        <div class="delete-icon">
+            <i class="fa-solid fa-gear"></i>
+        </div>
+        <h3 class="delete-title">{{ trans.translate('configure_stint') || 'Configure Stint' }} #{{ stintSettingsOpen() }}</h3>
+        <div style="display: flex; flex-direction: column; gap: 16px; margin: 20px 0;">
+            <div>
+                <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 6px;">{{ trans.translate('fuel_added') || 'Fuel Added (L)' }} <span style="opacity:0.5;">({{ trans.translate('default') || 'default' }}: {{ tankCapacity() }}L)</span></label>
+                <input type="number" min="0" step="0.1" [ngModel]="stintSettingsFuel()" (ngModelChange)="onStintSettingsFuel($event)" [placeholder]="tankCapacity()" class="stint-settings-input">
+            </div>
+            <div>
+                <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 6px;">{{ trans.translate('add_buffer_time') }} ({{ trans.translate('seconds') }})</label>
+                <input type="number" min="0" step="1" [ngModel]="stintSettingsExtraSec()" (ngModelChange)="onStintSettingsExtraSec($event)" placeholder="0" class="stint-settings-input">
+            </div>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.8rem; color: white;">
+                <input type="checkbox" [ngModel]="stintSettingsTires()" (ngModelChange)="onStintSettingsTires($event)" style="width: 16px; height: 16px; cursor: pointer; appearance: auto; -webkit-appearance: auto;">
+                {{ trans.translate('change_tires') }}
+            </label>
+        </div>
+        <div class="delete-actions">
+            <button class="btn-delete-confirm" (click)="saveStintSettings()"><i class="fa-solid fa-floppy-disk"></i> {{ trans.translate('save') || 'SAVE' }}</button>
+            <button class="btn-delete-cancel" (click)="closeStintSettings()">{{ trans.translate('cancel') || 'CANCEL' }}</button>
+        </div>
+    </div>
+</div>
+
 <!-- Stint Strategy Section (Tiles) -->
 <div *ngIf="store.stintPlan().length > 0" class="glass-card animate-in stagger-3" style="margin-top: 30px;">
     <div class="section-header-row">
@@ -496,16 +524,9 @@
             <div class="stint-header">
                 <span class="stint-number">{{ trans.translate('stint_no') }}{{ stint.index }}</span>
                 <span class="stint-laps">{{ stint.laps }} {{ trans.translate('stint_laps') }}</span>
-                <button class="btn-add-time" (click)="toggleExtraTimeInput(stint.index)" title="{{ trans.translate('add_buffer_time') }}">
-                    <i class="fa-solid fa-plus"></i>
+                <button class="btn-stint-config" (click)="openStintSettings(stint.index)" title="{{ trans.translate('configure_stint') || 'Configure stint' }}">
+                    <i class="fa-solid fa-gear"></i>
                 </button>
-            </div>
-            <div class="extra-time-row" *ngIf="extraTimeOpen() === stint.index">
-                <input type="number" [ngModel]="(stint.additionalTimeMs || 0) / 1000"
-                    (ngModelChange)="updateStintExtraTime(stint.index, $event)" placeholder="0"
-                    class="extra-time-input">
-                <span class="extra-time-unit">{{ trans.translate('seconds') }}</span>
-                <button class="btn-close-extra" (click)="toggleExtraTimeInput(-1)"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="stint-body">
                 <select [ngModel]="stint.driverId" (ngModelChange)="updateStintDriver(stint.index, $event)">
@@ -514,16 +535,12 @@
                     </option>
                 </select>
 
-                <div
-                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px;">
-                    <label
-                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.65rem; color: white;">
-                        <input type="checkbox" [ngModel]="stint.changeTires"
-                            (ngModelChange)="updateStintTires(stint.index, $event)"
-                            style="width: 14px; height: 14px; cursor: pointer; appearance: auto; -webkit-appearance: auto;">
-                        {{ trans.translate('change_tires') }}
-                    </label>
+                <div class="stint-config-badges" *ngIf="stint.changeTires || (stint.additionalTimeMs || 0) > 0 || (stint.fuelAddedL != null && stint.fuelAddedL !== tankCapacity())">
+                    <span class="config-badge" *ngIf="stint.changeTires" title="{{ trans.translate('change_tires') }}"><i class="fa-solid fa-rotate"></i></span>
+                    <span class="config-badge" *ngIf="(stint.additionalTimeMs || 0) > 0" title="{{ trans.translate('add_buffer_time') }}">+{{ (stint.additionalTimeMs || 0) / 1000 }}s</span>
+                    <span class="config-badge" *ngIf="stint.fuelAddedL != null && stint.fuelAddedL !== tankCapacity()" title="{{ trans.translate('fuel_added') || 'Fuel added' }}">{{ stint.fuelAddedL }}L</span>
                 </div>
+
                 <div class="stint-times">
                     <div>
                         <label>{{ trans.translate('start_time') }}</label>

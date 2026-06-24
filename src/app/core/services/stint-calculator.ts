@@ -3,10 +3,12 @@ import { DriverProfile, StintPlanItem } from '../models/race-strategy.model';
 export function calculateStintLaps(
   driver: DriverProfile | undefined,
   tankCapacity: number,
-  globalFuelPerLap: number
+  globalFuelPerLap: number,
+  fuelAddedL?: number
 ): number {
   const consumption = driver?.fuelPerLapL || globalFuelPerLap;
-  return consumption > 0 && tankCapacity > 0 ? Math.floor(tankCapacity / consumption) : 0;
+  const fuel = (fuelAddedL != null && fuelAddedL > 0) ? fuelAddedL : tankCapacity;
+  return consumption > 0 && fuel > 0 ? Math.floor(fuel / consumption) : 0;
 }
 
 export function calculateStintDuration(laps: number, driver: DriverProfile | undefined, globalAvgLapTime: number): number {
@@ -28,7 +30,7 @@ export function recalculateTimeline(
 
   return stints.map(stint => {
     const driver = driverMap.get(stint.driverId);
-    const laps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap);
+    const laps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap, stint.fuelAddedL);
     const duration = calculateStintDuration(laps, driver, globalAvgLapTime);
     const pitBaseTime = stint.changeTires ? pitStopTiresMs : pitStopFuelOnlyMs;
     const totalPitTime = pitBaseTime + (stint.additionalTimeMs || 0);

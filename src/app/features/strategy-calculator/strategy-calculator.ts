@@ -345,6 +345,40 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
   }
 
+  stintSettingsOpen = signal<number | null>(null);
+  stintSettingsFuel = signal<number | null>(null);
+  stintSettingsExtraSec = signal<number>(0);
+  stintSettingsTires = signal<boolean>(false);
+
+  openStintSettings(stintIndex: number) {
+    const stint = this.store.stintPlan().find(s => s.index === stintIndex);
+    if (!stint) return;
+    this.stintSettingsOpen.set(stintIndex);
+    this.stintSettingsFuel.set(stint.fuelAddedL ?? null);
+    this.stintSettingsExtraSec.set((stint.additionalTimeMs || 0) / 1000);
+    this.stintSettingsTires.set(!!stint.changeTires);
+  }
+
+  closeStintSettings() {
+    this.stintSettingsOpen.set(null);
+  }
+
+  onStintSettingsFuel(v: number) { this.stintSettingsFuel.set(v); }
+  onStintSettingsExtraSec(v: number) { this.stintSettingsExtraSec.set(v); }
+  onStintSettingsTires(v: boolean) { this.stintSettingsTires.set(v); }
+
+  saveStintSettings() {
+    const idx = this.stintSettingsOpen();
+    if (idx == null) return;
+    this.store.updateStintFields(idx, {
+      fuelAddedL: this.stintSettingsFuel() ?? undefined,
+      additionalTimeMs: (this.stintSettingsExtraSec() || 0) * 1000,
+      changeTires: this.stintSettingsTires(),
+    });
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+    this.stintSettingsOpen.set(null);
+  }
+
   trackByEventId = (_: number, e: { id: string }) => e.id;
   trackByVehicleId = (_: number, v: { id: string }) => v.id;
   trackByDriverId = (_: number, d: { id: string }) => d.id;
