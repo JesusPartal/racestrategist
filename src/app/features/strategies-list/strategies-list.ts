@@ -202,11 +202,15 @@ export class StrategiesListComponent implements OnInit {
   }
 
   private async loadLibrary() {
+    this.store.loading.set(true);
+    this.store.error.set(null);
     try {
       const list = await this.api.loadLibrary();
       this.store.savedStrategies.set(list);
     } catch {
       this.store.error.set('Failed to load strategies');
+    } finally {
+      this.store.loading.set(false);
     }
   }
 
