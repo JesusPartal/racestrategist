@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -18,19 +19,19 @@ import { Router, ActivatedRoute } from '@angular/router';
             <span class="accent">RACE</span><span>STRATEGIST</span>
           </div>
 
-          <h1 class="title">DESIGNED FOR <span class="accent">VICTORY</span></h1>
-          <p class="subtitle">The ultimate collaboration platform for iRacing endurance teams.</p>
+          <h1 class="title">{{ trans.translate('login_title_prefix') }}<span class="accent">{{ trans.translate('login_title_accent') }}</span></h1>
+          <p class="subtitle">{{ trans.translate('login_subtitle') }}</p>
 
           <div class="auth-form">
             <div class="form-field">
-              <label for="username">USERNAME</label>
-              <input type="text" id="username" [(ngModel)]="username" placeholder="Enter your username" autocomplete="username">
+              <label for="username">{{ trans.translate('login_username') }}</label>
+              <input type="text" id="username" [(ngModel)]="username" [placeholder]="trans.translate('login_username_placeholder')" autocomplete="username">
             </div>
             <div class="form-field password-field">
-              <label for="password">PASSWORD</label>
+              <label for="password">{{ trans.translate('login_password') }}</label>
               <div class="password-wrapper">
-                <input [type]="showPassword() ? 'text' : 'password'" id="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password">
-                <button type="button" class="toggle-password" (click)="showPassword.set(!showPassword())" [title]="showPassword() ? 'Hide password' : 'Show password'">
+                <input [type]="showPassword() ? 'text' : 'password'" id="password" [(ngModel)]="password" [placeholder]="trans.translate('login_password_placeholder')" autocomplete="current-password">
+                <button type="button" class="toggle-password" (click)="showPassword.set(!showPassword())" [attr.title]="showPassword() ? trans.translate('login_hide_password') : trans.translate('login_show_password')">
                   <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
                 </button>
               </div>
@@ -41,11 +42,11 @@ import { Router, ActivatedRoute } from '@angular/router';
             <div class="auth-buttons">
               <button class="login-btn" (click)="login()" [disabled]="loading">
                 <i class="fa-solid fa-right-to-bracket"></i>
-                {{ loading ? 'LOGGING IN...' : 'LOGIN' }}
+                {{ loading ? trans.translate('login_loading') : trans.translate('login_btn') }}
               </button>
               <button class="signup-btn" (click)="register()" [disabled]="true">
                 <i class="fa-solid fa-user-plus"></i>
-                SIGN UP
+                {{ trans.translate('sign_up_btn') }}
               </button>
             </div>
           </div>
@@ -55,15 +56,15 @@ import { Router, ActivatedRoute } from '@angular/router';
       <div class="stats-ribbon animate-in stagger-2">
         <div class="stat-box">
           <span class="val">1,240</span>
-          <span class="lbl">ACTIVE_TEAMS</span>
+          <span class="lbl">{{ trans.translate('login_stats_active_teams') }}</span>
         </div>
         <div class="stat-box">
           <span class="val">45k+</span>
-          <span class="lbl">STINTS_PLANNED</span>
+          <span class="lbl">{{ trans.translate('login_stats_stints_planned') }}</span>
         </div>
         <div class="stat-box">
           <span class="val">99.9%</span>
-          <span class="lbl">UPTIME</span>
+          <span class="lbl">{{ trans.translate('login_stats_uptime') }}</span>
         </div>
       </div>
     </div>
@@ -103,6 +104,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 })
 export class LoginComponent {
     auth = inject(AuthService);
+    trans = inject(TranslationService);
     router = inject(Router);
     route = inject(ActivatedRoute);
     username = '';
@@ -113,7 +115,7 @@ export class LoginComponent {
 
     async login() {
         if (!this.username || !this.password) {
-            this.errorMsg.set('Please enter username and password');
+            this.errorMsg.set(this.trans.translate('login_error_required'));
             return;
         }
         this.loading = true;
@@ -123,22 +125,22 @@ export class LoginComponent {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
             this.router.navigateByUrl(returnUrl);
         } catch {
-            this.errorMsg.set('Invalid username or password');
+            this.errorMsg.set(this.trans.translate('login_error_invalid'));
             this.loading = false;
         }
     }
 
     async register() {
         if (!this.username || !this.password) {
-            this.errorMsg.set('Please enter username and password');
+            this.errorMsg.set(this.trans.translate('login_error_required'));
             return;
         }
         if (this.username.length < 3) {
-            this.errorMsg.set('Username must be at least 3 characters');
+            this.errorMsg.set(this.trans.translate('login_error_username_short'));
             return;
         }
         if (this.password.length < 4) {
-            this.errorMsg.set('Password must be at least 4 characters');
+            this.errorMsg.set(this.trans.translate('login_error_password_short'));
             return;
         }
         this.loading = true;
@@ -148,7 +150,7 @@ export class LoginComponent {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
             this.router.navigateByUrl(returnUrl);
         } catch (e: any) {
-            this.errorMsg.set(e?.error?.error || 'Registration failed');
+            this.errorMsg.set(e?.error?.error || this.trans.translate('login_error_registration'));
             this.loading = false;
         }
     }
