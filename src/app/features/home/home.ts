@@ -1,9 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { StrategySummary } from '../../core/models/race-strategy.model';
 
 @Component({
   selector: 'app-home',
@@ -37,7 +38,7 @@ import { TranslationService } from '../../core/services/translation.service';
         <div class="glass-card feature-card">
           <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
           <h3>{{ trans.translate('active_strategies') }}</h3>
-          <p>{{ strategyCount > 0 ? strategyCount + ' ' + (strategyCount !== 1 ? trans.translate('strategies_plural') : trans.translate('strategies_singular')) : trans.translate('no_strategies_yet') }}</p>
+          <p>{{ strategyCount() > 0 ? strategyCount() + ' ' + (strategyCount() !== 1 ? trans.translate('strategies_plural') : trans.translate('strategies_singular')) : trans.translate('no_strategies_yet') }}</p>
           <button class="ghost-btn" routerLink="/strategies">{{ trans.translate('view_all') }}</button>
         </div>
 
@@ -57,24 +58,15 @@ import { TranslationService } from '../../core/services/translation.service';
       </div>
 
       <div class="glass-card animate-in stagger-2" style="margin-top: 40px;">
-        <h2 style="font-size: 1rem; color: #fff; margin-bottom: 20px;">{{ trans.translate('recent_logs') }}</h2>
-        <div class="log-table">
-          <div class="log-row">
-            <span class="time">14:02:45</span>
-            <span class="msg">Strategy recalculated: increased track temperature (+2.5°C)</span>
-            <span class="status-ok">SYNC_OK</span>
-          </div>
-          <div class="log-row">
-            <span class="time">13:58:12</span>
-            <span class="msg">New driver profile: J. Smith (S-Class) added to catalog</span>
-            <span class="status-ok">UPDATED</span>
-          </div>
-          <div class="log-row">
-            <span class="time">13:45:30</span>
-            <span class="msg">Event synced: Nürburgring 24h (Combined Endurance Layout)</span>
-            <span class="status-ok">SYNC_OK</span>
+        <h2 style="font-size: 1rem; color: #fff; margin-bottom: 20px;">{{ trans.translate('recent_strategies') }}</h2>
+        <div class="log-table" *ngIf="recentStrategies().length > 0">
+          <div class="log-row" *ngFor="let s of recentStrategies()">
+            <span class="time">{{ formatDate(s.lastModified) }}</span>
+            <span class="msg">{{ s.name }} <span style="color: var(--text-dim)">— {{ s.vehicleName }}</span></span>
+            <span class="status-ok">{{ s.stintCount }} {{ trans.translate('stints') }} · {{ s.driverCount }} {{ trans.translate('drivers') }}</span>
           </div>
         </div>
+        <p *ngIf="recentStrategies().length === 0" style="color: var(--text-dim); padding: 20px 0;">{{ trans.translate('no_strategies_yet') }}</p>
       </div>
     </div>
   `,
@@ -229,12 +221,31 @@ export class HomeComponent implements OnInit {
   auth = inject(AuthService);
   trans = inject(TranslationService);
   api = inject(StrategyApiService);
-  strategyCount = 0;
+  strategies = signal<StrategySummary[]>([]);
+  strategyCount = computed(() => this.strategies().length);
+  recentStrategies = computed(() =>
+    [...this.strategies()]
+      .sort((a, b) => b.lastModified - a.lastModified)
+      .slice(0, 5)
+  );
 
   async ngOnInit() {
     try {
       const list = await this.api.loadLibrary();
-      this.strategyCount = list.length;
+      this.strategies.set(list);
     } catch {}
+  }
+
+  formatDate(timestamp: number): string {
+    const d = new Date(timestamp * 1000);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHrs = Math.floor(diffMin / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    return `${diffDays}d ago`;
   }
 }

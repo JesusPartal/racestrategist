@@ -93,6 +93,7 @@ export class TranslationService {
             'tempest_alerts': 'Tempest Alerts',
             'weather_alert': "40% chance of rain detected for Sunday's main event.",
             'recent_logs': 'RECENT_TELEMETRY_LOGS',
+            'recent_strategies': 'RECENT STRATEGIES',
 
             'strategy_library': 'STRATEGY LIBRARY',
             'library_subtitle': 'Manage and load your saved race configurations.',
@@ -340,6 +341,7 @@ export class TranslationService {
             'tempest_alerts': 'Alertas Tempest',
             'weather_alert': '40% de probabilidad de lluvia para el evento del domingo.',
             'recent_logs': 'REGISTROS RECIENTES',
+            'recent_strategies': 'ESTRATEGIAS RECIENTES',
 
             'strategy_library': 'BIBLIOTECA DE ESTRATEGIAS',
             'library_subtitle': 'Gestiona y carga tus configuraciones guardadas.',

@@ -53,7 +53,7 @@ import { Router, ActivatedRoute } from '@angular/router';
         </div>
       </div>
 
-      <div class="stats-ribbon animate-in stagger-2">
+      <div class="stats-ribbon animate-in stagger-2" *ngIf="false">
         <div class="stat-box">
           <span class="val">1,240</span>
           <span class="lbl">{{ trans.translate('login_stats_active_teams') }}</span>
