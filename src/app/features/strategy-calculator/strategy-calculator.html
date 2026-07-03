@@ -345,11 +345,11 @@
     <div class="section-header-row">
         <h2><span style="font-weight: 300; opacity: 0.6;">{{ trans.translate('live_adjustments') || 'LIVE ADJUSTMENTS' }}</span></h2>
         <div class="live-header-actions">
-            <button class="btn-time-toggle" (click)="toggleRealTelemetryData()" [style.color]="useRealTelemetryData() ? 'var(--success-color)' : 'var(--accent-color)'" [style.border-color]="useRealTelemetryData() ? 'var(--success-color)' : 'var(--accent-color)'">
+            <button class="btn-time-toggle" (click)="toggleRealTelemetryData()" [style.color]="useRealTelemetryData() ? 'var(--success-color)' : 'var(--accent-color)'" [style.border-color]="useRealTelemetryData() ? 'var(--success-color)' : 'var(--accent-color)'" title="{{ trans.translate('apply_real_data_tip') }}">
                 <i class="fa-solid" [class.fa-toggle-on]="useRealTelemetryData()" [class.fa-toggle-off]="!useRealTelemetryData()"></i>
                 {{ useRealTelemetryData() ? (trans.translate('using_real_data') || 'USING REAL DATA') : (trans.translate('apply_real_data') || 'APPLY REAL DATA') }}
             </button>
-            <button class="btn-auto" [class.active]="autoUpdateEnabled()" (click)="toggleAutoUpdate()">
+            <button class="btn-auto" [class.active]="autoUpdateEnabled()" (click)="toggleAutoUpdate()" title="{{ trans.translate('auto_update_tip') }}">
                 <i class="fa-solid fa-rotate"></i>
                 {{ trans.translate('auto') || 'AUTO' }}
                 <span class="auto-badge" *ngIf="autoUpdateEnabled()">{{ autoUpdateCountdown() }}s</span>
@@ -542,7 +542,7 @@
                 <i class="fa-solid fa-clock"></i> {{ trans.translate('auto_complete') }}
                 <span class="auto-badge" *ngIf="autoCompleteEnabled()"><i class="fa-solid fa-spinner fa-spin"></i></span>
             </button>
-            <button class="btn-progress" [class.active]="completedCollapsed()" (click)="toggleCompletedCollapsed()">
+            <button class="btn-progress" [class.active]="completedCollapsed()" (click)="toggleCompletedCollapsed()" title="{{ trans.translate('collapse_completed_tip') }}">
                 <i class="fa-solid" [class.fa-compress]="completedCollapsed()" [class.fa-expand]="!completedCollapsed()"></i> {{ trans.translate('collapse_completed') }}
             </button>
             <button class="btn-time-toggle" (click)="toggleTimeMode()">
