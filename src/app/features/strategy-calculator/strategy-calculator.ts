@@ -509,6 +509,66 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     this.dashCollapsed.set(!this.dashCollapsed());
   }
 
+  // ── Race Progress: Auto/Mannual Stint Completion ──────────────────────
+
+  autoCompleteEnabled = signal(false);
+  completedCollapsed = signal(true);
+  private autoCompleteTimer: ReturnType<typeof setInterval> | null = null;
+
+  currentStintIndex = computed(() => {
+    const stints = this.store.stintPlan();
+    const completed = stints.filter(s => s.isCompleted);
+    if (completed.length === 0 && stints.length > 0) return stints[0].index;
+    if (completed.length >= stints.length) return -1;
+    return stints[completed.length].index;
+  });
+
+  toggleAutoComplete() {
+    if (this.autoCompleteEnabled()) {
+      this.stopAutoComplete();
+    } else {
+      this.startAutoComplete();
+    }
+  }
+
+  private startAutoComplete() {
+    this.stopAutoComplete();
+    this.autoCompleteEnabled.set(true);
+    this.autoCompleteTimer = setInterval(() => {
+      const eventStart = this.store.activeEventStartTime();
+      if (!eventStart) return;
+      const lastCompleted = this.store.autoCompleteStints(eventStart);
+      if (lastCompleted >= 0) {
+        this.scrollToStint(this.currentStintIndex());
+      }
+    }, 5000);
+  }
+
+  private stopAutoComplete() {
+    if (this.autoCompleteTimer !== null) {
+      clearInterval(this.autoCompleteTimer);
+      this.autoCompleteTimer = null;
+    }
+    this.autoCompleteEnabled.set(false);
+  }
+
+  toggleCompletedCollapsed() {
+    this.completedCollapsed.set(!this.completedCollapsed());
+  }
+
+  manualCompleteStint(stintIndex: number) {
+    this.store.markStintCompleted(stintIndex);
+    this.scrollToStint(this.currentStintIndex());
+  }
+
+  manualIncompleteStint(stintIndex: number) {
+    this.store.markStintIncomplete(stintIndex);
+  }
+
+  isCurrentStint(stintIndex: number): boolean {
+    return this.currentStintIndex() === stintIndex;
+  }
+
   getSummaryEventName(): string {
     const dur = this.eventDurationMinutes();
     return dur ? `${dur} min` : '—';
@@ -680,6 +740,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
 
   ngOnDestroy(): void {
     this.stopAutoUpdate();
+    this.stopAutoComplete();
   }
 
   applyRealPitFuelOnly(): void {

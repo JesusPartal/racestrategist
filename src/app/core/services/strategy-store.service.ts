@@ -90,12 +90,38 @@ export class StrategyStore {
     this.pitStopTiresMs.set(data.pitStopTiresMs);
   }
 
-  markStintCompleted(stintIndex: number, actualTimeMs: number): void {
+  markStintCompleted(stintIndex: number): void {
     this.stintPlan.update(stints =>
       stints.map(s =>
-        s.index === stintIndex ? { ...s, endTimeMs: actualTimeMs, isCompleted: true } : s
+        s.index === stintIndex ? { ...s, isCompleted: true } : s
       )
     );
+  }
+
+  markStintIncomplete(stintIndex: number): void {
+    this.stintPlan.update(stints =>
+      stints.map(s =>
+        s.index === stintIndex ? { ...s, isCompleted: false } : s
+      )
+    );
+  }
+
+  autoCompleteStints(eventStartTime: number): number {
+    const now = Date.now();
+    const elapsedMs = now - eventStartTime;
+    let lastCompleted = -1;
+
+    this.stintPlan.update(stints =>
+      stints.map(s => {
+        if (!s.isCompleted && elapsedMs >= s.endTimeMs) {
+          lastCompleted = s.index;
+          return { ...s, isCompleted: true };
+        }
+        return s;
+      })
+    );
+
+    return lastCompleted;
   }
 
   applyRealFuelData(actualFuelPerLap: number, tankCapacity: number): void {

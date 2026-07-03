@@ -432,6 +432,189 @@
     border-color: var(--accent-color);
 }
 
+/* ── Progress Header Actions ──────────────────────────────────────────── */
+.progress-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn-progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-progress:hover:not(:disabled) {
+    background: rgba(255, 176, 0, 0.1);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.btn-progress.active {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.btn-progress:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* ── Completed / Current Stint States ─────────────────────────────────── */
+.stint-tile.completed {
+    opacity: 0.85;
+}
+
+.stint-tile.current-stint {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 20px rgba(255, 176, 0, 0.15), inset 0 0 20px rgba(255, 176, 0, 0.05);
+    animation: pulse-current 2s ease-in-out infinite;
+}
+
+@keyframes pulse-current {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 176, 0, 0.15), inset 0 0 20px rgba(255, 176, 0, 0.05); }
+    50% { box-shadow: 0 0 30px rgba(255, 176, 0, 0.3), inset 0 0 30px rgba(255, 176, 0, 0.1); }
+}
+
+.completed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--success-color);
+    font-size: 0.5rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+/* ── Collapsed Stint View ─────────────────────────────────────────────── */
+.stint-collapsed {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 4px;
+    min-height: 40px;
+}
+
+.stint-collapsed-bar {
+    width: 4px;
+    height: 28px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.stint-collapsed-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.stint-collapsed-number {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.stint-completed-icon {
+    color: var(--success-color);
+    font-size: 0.85rem;
+}
+
+/* ── Stint Complete / Undo Buttons ────────────────────────────────────── */
+.stint-complete-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 12px;
+    margin-top: auto;
+}
+
+.btn-stint-complete {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(0, 230, 118, 0.1);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    color: var(--success-color);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-stint-complete:hover {
+    background: rgba(0, 230, 118, 0.2);
+    border-color: var(--success-color);
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+}
+
+.btn-stint-undo {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 176, 0, 0.08);
+    border: 1px solid rgba(255, 176, 0, 0.2);
+    color: var(--accent-color);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-stint-undo:hover {
+    background: rgba(255, 176, 0, 0.15);
+    border-color: var(--accent-color);
+}
+
+.btn-stint-incomplete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.65rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-stint-incomplete:hover {
+    color: var(--accent-color);
+    background: rgba(255, 176, 0, 0.1);
+}
+
 /* ── Mobile Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .calc-header {
@@ -452,5 +635,9 @@
 
     .dash-label {
         font-size: 0.75rem;
+    }
+
+    .progress-header-actions {
+        flex-wrap: wrap;
     }
 }

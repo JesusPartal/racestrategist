@@ -536,18 +536,46 @@
             <i *ngIf="stintCoverage() === 'warning'" class="fa-solid fa-triangle-exclamation stint-coverage-icon warning"
                [title]="stintCoverageTitle()"></i>
         </h2>
-        <button class="btn-time-toggle" (click)="toggleTimeMode()">
-            <i class="fa-solid fa-clock"></i> {{ timeModeLabel() }}
-        </button>
+        <div class="progress-header-actions">
+            <button class="btn-progress" [class.active]="autoCompleteEnabled()" (click)="toggleAutoComplete()"
+                [disabled]="!store.activeEventStartTime()" title="{{ trans.translate('auto_complete_tip') }}">
+                <i class="fa-solid fa-clock"></i> {{ trans.translate('auto_complete') }}
+                <span class="auto-badge" *ngIf="autoCompleteEnabled()"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            </button>
+            <button class="btn-progress" [class.active]="completedCollapsed()" (click)="toggleCompletedCollapsed()">
+                <i class="fa-solid" [class.fa-compress]="completedCollapsed()" [class.fa-expand]="!completedCollapsed()"></i> {{ trans.translate('collapse_completed') }}
+            </button>
+            <button class="btn-time-toggle" (click)="toggleTimeMode()">
+                <i class="fa-solid fa-clock"></i> {{ timeModeLabel() }}
+            </button>
+        </div>
     </div>
     <div class="stint-timeline" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
         <ng-container *ngFor="let stint of store.stintPlan(); let i = index; trackBy: trackByStintIndex">
         <div [id]="'stint-' + stint.index" cdkDrag class="stint-tile"
             [style.background]="getDriverColor(stint.driverId) + '22'"
-            [style.border-left-color]="getDriverColor(stint.driverId)">
+            [style.border-left-color]="getDriverColor(stint.driverId)"
+            [class.completed]="stint.isCompleted"
+            [class.current-stint]="isCurrentStint(stint.index)">
+
+            <!-- Collapsed completed stint -->
+            <div *ngIf="stint.isCompleted && completedCollapsed()" class="stint-collapsed">
+                <div class="stint-collapsed-bar" [style.background]="getDriverColor(stint.driverId)"></div>
+                <div class="stint-collapsed-info">
+                    <span class="stint-collapsed-number">{{ trans.translate('stint_no') }}{{ stint.index }}</span>
+                    <i class="fa-solid fa-check-circle stint-completed-icon" title="{{ trans.translate('completed') }}"></i>
+                </div>
+                <button class="btn-stint-incomplete" (click)="manualIncompleteStint(stint.index)" title="{{ trans.translate('undo_complete') || 'Undo complete' }}">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+
+            <!-- Full stint view -->
+            <ng-container *ngIf="!stint.isCompleted || !completedCollapsed()">
             <div class="stint-header">
                 <span class="stint-number">{{ trans.translate('stint_no') }}{{ stint.index }}</span>
                 <span class="stint-laps">{{ stint.laps }} {{ trans.translate('stint_laps') }}</span>
+                <span *ngIf="stint.isCompleted" class="completed-badge"><i class="fa-solid fa-check"></i> {{ trans.translate('completed') }}</span>
                 <button class="btn-stint-config" (click)="openStintSettings(stint.index)" title="{{ trans.translate('configure_stint') || 'Configure stint' }}">
                     <i class="fa-solid fa-gear"></i>
                 </button>
@@ -598,7 +626,16 @@
                         </button>
                     </div>
                 </div>
+                <div class="stint-complete-row">
+                    <button *ngIf="!stint.isCompleted" class="btn-stint-complete" (click)="manualCompleteStint(stint.index)">
+                        <i class="fa-solid fa-check"></i> {{ trans.translate('complete_stint') }}
+                    </button>
+                    <button *ngIf="stint.isCompleted" class="btn-stint-undo" (click)="manualIncompleteStint(stint.index)">
+                        <i class="fa-solid fa-rotate-left"></i> {{ trans.translate('undo_complete') || 'UNDO' }}
+                    </button>
+                </div>
             </div>
+            </ng-container>
         </div>
         <div *ngIf="i < store.stintPlan().length - 1" class="stint-insert-handle"
              (click)="insertStint(i + 1)" title="{{ trans.translate('insert_stint') || 'Insert stint' }}">
