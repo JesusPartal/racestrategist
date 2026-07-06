@@ -80,25 +80,32 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
   canGenerateStints = computed(() => this.stintsNeeded() > 0 && this.stintsNeeded() <= 1000);
 
   stintCoverage = computed<'error' | 'warning' | null>(() => {
-    const planned = this.store.stintPlan().length;
-    const needed = this.stintCountWithPits();
-    if (needed === 0) return null;
-    if (planned < needed) return 'error';
-    if (planned > needed) return 'warning';
+    const stints = this.store.stintPlan();
+    if (stints.length === 0) return null;
+    const eventDur = this.eventDurationMinutes();
+    if (!eventDur || eventDur <= 0) return null;
+    const eventMs = eventDur * 60 * 1000;
+    const lastEnd = stints[stints.length - 1].endTimeMs;
+    const lapMs = this.avgLapTime();
+    if (lastEnd < eventMs - lapMs) return 'error';
+    if (lastEnd > eventMs + lapMs) return 'warning';
     return null;
   });
 
   stintCoverageTitle = computed<string>(() => {
     const state = this.stintCoverage();
-    const needed = this.stintCountWithPits();
-    const planned = this.store.stintPlan().length;
+    if (!state) return '';
+    const stints = this.store.stintPlan();
+    const eventDur = this.eventDurationMinutes();
+    if (!eventDur || stints.length === 0) return '';
+    const eventMs = eventDur * 60 * 1000;
+    const lastEnd = stints[stints.length - 1].endTimeMs;
+    const diffSec = Math.round(Math.abs(eventMs - lastEnd) / 1000);
+    const diffStr = this.formatMs(Math.abs(eventMs - lastEnd));
     if (state === 'error') {
-      return this.trans.translate('stint_coverage_error', { d1: planned, d2: needed });
+      return this.trans.translate('stint_coverage_error', { d1: diffStr });
     }
-    if (state === 'warning') {
-      return this.trans.translate('stint_coverage_warning', { d1: planned, d2: needed });
-    }
-    return '';
+    return this.trans.translate('stint_coverage_warning', { d1: diffStr });
   });
 
   stintCountWithPits = computed(() => {
