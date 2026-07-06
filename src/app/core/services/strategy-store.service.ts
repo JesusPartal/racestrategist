@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { RaceStrategy, DriverProfile, StintPlanItem, StrategySummary } from '../models/race-strategy.model';
-import { generateEmptyStints, recalculateTimeline, updateStintFields, reorderStints, insertStintAt, removeStintAtPosition } from './stint-calculator';
+import { generateEmptyStints, recalculateTimeline, updateStintFields, reorderStints, insertStintAt, removeStintAtPosition, removeTrailingEmptyStints } from './stint-calculator';
 
 @Injectable({ providedIn: 'root' })
 export class StrategyStore {
@@ -48,12 +48,14 @@ export class StrategyStore {
   }
 
   recalculateTimeline(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number, drivers?: DriverProfile[]) {
-    this.stintPlan.update(stints =>
-      recalculateTimeline(
+    const eventDurationMs = this.activeEventDurationMinutes() * 60 * 1000;
+    this.stintPlan.update(stints => {
+      const updated = recalculateTimeline(
         stints, drivers ?? this.drivers(), globalFuelPerLap, globalAvgLapTime, tankCapacity,
-        this.pitStopFuelOnlyMs(), this.pitStopTiresMs()
-      )
-    );
+        this.pitStopFuelOnlyMs(), this.pitStopTiresMs(), eventDurationMs
+      );
+      return removeTrailingEmptyStints(updated);
+    });
   }
 
   updateStintFields(stintIndex: number, updates: Partial<StintPlanItem>) {

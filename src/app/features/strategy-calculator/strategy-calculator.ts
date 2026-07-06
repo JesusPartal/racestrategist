@@ -9,6 +9,7 @@ import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { TeamService } from '../../core/services/team.service';
 import { TeamsService, TeamSummary } from '../../core/services/teams.service';
 import { DriverProfile } from '../../core/models/race-strategy.model';
+import { calculateStintCount } from '../../core/services/stint-calculator';
 import { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 import { AuthService } from '../../core/services/auth.service';
 import { TelemetryService } from '../../core/services/telemetry.service';
@@ -311,7 +312,10 @@ missingFields = computed<string[]>(() => {
   }
 
   generateStintPlan() {
-    const count = Math.ceil(this.stintsNeeded());
+    const avgPitMs = this.store.pitStopFuelOnlyMs();
+    const stintMs = this.stintDurationMs();
+    const eventMs = this.eventDurationMinutes() * 60 * 1000;
+    const count = calculateStintCount(eventMs, stintMs, avgPitMs, this.maxLaps());
     this.store.generateEmptyStints(count, this.maxLaps());
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
     this.telemetry.setPlannedValues(this.fuelPerLap(), this.avgLapTime());

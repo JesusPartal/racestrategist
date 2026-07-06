@@ -23,30 +23,42 @@ export function recalculateTimeline(
   globalAvgLapTime: number,
   tankCapacity: number,
   pitStopFuelOnlyMs: number,
-  pitStopTiresMs: number
+  pitStopTiresMs: number,
+  eventDurationMs?: number
 ): StintPlanItem[] {
   let currentTimeMs = 0;
   const driverMap = new Map(drivers.map(d => [d.id, d]));
 
-  return stints.map(stint => {
+  return stints.map((stint, idx) => {
     const driver = driverMap.get(stint.driverId);
-    const laps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap, stint.fuelAddedL);
-    const duration = calculateStintDuration(laps, driver, globalAvgLapTime);
+    let laps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap, stint.fuelAddedL);
+    let duration = calculateStintDuration(laps, driver, globalAvgLapTime);
     const pitBaseTime = stint.changeTires ? pitStopTiresMs : pitStopFuelOnlyMs;
     const totalPitTime = pitBaseTime + (stint.additionalTimeMs || 0);
 
-    const calculatedEnd = currentTimeMs + duration;
-    const endTimeMs = stint.manualEndTimeMs != null ? stint.manualEndTimeMs : calculatedEnd;
-
-    const updated = {
-      ...stint,
-      startTimeMs: currentTimeMs,
-      endTimeMs,
-      laps,
-    };
+    let endTimeMs: number;
+    if (stint.manualEndTimeMs != null) {
+      endTimeMs = stint.manualEndTimeMs;
+    } else {
+      let calculatedEnd = currentTimeMs + duration;
+      if (eventDurationMs && idx === stints.length - 1 && calculatedEnd > eventDurationMs) {
+        if (currentTimeMs >= eventDurationMs) {
+          laps = 0;
+          duration = 0;
+          calculatedEnd = currentTimeMs;
+        } else {
+          const remainingMs = eventDurationMs - currentTimeMs;
+          const adjustedLaps = Math.max(1, Math.floor(remainingMs / globalAvgLapTime));
+          laps = adjustedLaps;
+          duration = calculateStintDuration(laps, driver, globalAvgLapTime);
+          calculatedEnd = currentTimeMs + duration;
+        }
+      }
+      endTimeMs = calculatedEnd;
+    }
 
     currentTimeMs = endTimeMs + totalPitTime;
-    return updated;
+    return { ...stint, startTimeMs: currentTimeMs - totalPitTime, endTimeMs, laps };
   });
 }
 
@@ -99,4 +111,25 @@ export function removeStintAtPosition(stints: StintPlanItem[], atIndex: number):
   if (atIndex < 0 || atIndex >= newStints.length) return newStints;
   newStints.splice(atIndex, 1);
   return newStints.map((s, i) => ({ ...s, index: i + 1 }));
+}
+
+export function calculateStintCount(
+  eventDurationMs: number,
+  stintMs: number,
+  avgPitMs: number,
+  maxLapsPerStint: number
+): number {
+  const cycleMs = stintMs + avgPitMs;
+  const fullCycles = Math.floor(eventDurationMs / cycleMs);
+  const remainingMs = eventDurationMs - fullCycles * cycleMs;
+  const remainingLaps = Math.floor(remainingMs / (stintMs / maxLapsPerStint));
+  return remainingLaps > 0 ? fullCycles + 1 : fullCycles;
+}
+
+export function removeTrailingEmptyStints(stints: StintPlanItem[]): StintPlanItem[] {
+  let i = stints.length - 1;
+  while (i >= 0 && stints[i].laps <= 0) {
+    i--;
+  }
+  return stints.slice(0, i + 1).map((s, idx) => ({ ...s, index: idx + 1 }));
 }
