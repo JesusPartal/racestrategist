@@ -314,7 +314,7 @@ missingFields = computed<string[]>(() => {
   generateStintPlan() {
     const avgPitMs = this.store.pitStopFuelOnlyMs();
     const stintMs = this.stintDurationMs();
-    const eventMs = this.eventDurationMinutes() * 60 * 1000;
+    const eventMs = (this.eventDurationMinutes() || 0) * 60 * 1000;
     const count = calculateStintCount(eventMs, stintMs, avgPitMs, this.maxLaps());
     this.store.generateEmptyStints(count, this.maxLaps());
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
