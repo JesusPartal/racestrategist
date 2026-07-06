@@ -12,16 +12,6 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 export function initializeDatabase(): void {
-  // Preserve users table, drop and recreate all other tables to remove legacy FK constraints
-  db.exec('PRAGMA foreign_keys = OFF');
-
-  db.exec('DROP TABLE IF EXISTS agent_tokens');
-  db.exec('DROP TABLE IF EXISTS team_drivers');
-  db.exec('DROP TABLE IF EXISTS strategies');
-  db.exec('DROP TABLE IF EXISTS teams');
-  db.exec('DROP TABLE IF EXISTS events');
-  db.exec('DROP TABLE IF EXISTS vehicles');
-
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
