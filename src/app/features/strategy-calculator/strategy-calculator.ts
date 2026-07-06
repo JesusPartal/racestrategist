@@ -263,9 +263,11 @@ missingFields = computed<string[]>(() => {
     const startTs = this.store.activeEventStartTime();
     if (startTs) {
       const d = new Date(startTs);
-      const iso = d.toISOString().split('T');
-      this.eventStartDate.set(iso[0]);
-      this.eventStartTime.set(iso[1].substring(0, 5));
+      const y = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      this.eventStartDate.set(`${y}-${mo}-${day}`);
+      this.eventStartTime.set(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
     }
 
     this.telemetry.setPlannedValues(fuel, totalMs);
