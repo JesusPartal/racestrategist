@@ -37,30 +37,31 @@ export function recalculateTimeline(
     let laps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap, stint.fuelAddedL);
     let duration = calculateStintDuration(laps, driver, globalAvgLapTime);
     const totalPitTime = getPitTime(stint, pitStopFuelOnlyMs, pitStopTiresMs);
+    const startTimeMs = currentTimeMs;
 
     let endTimeMs: number;
     if (stint.manualEndTimeMs != null) {
       endTimeMs = stint.manualEndTimeMs;
     } else {
-      let calculatedEnd = currentTimeMs + duration;
+      let calculatedEnd = startTimeMs + duration;
       if (eventDurationMs && idx === stints.length - 1 && calculatedEnd > eventDurationMs) {
-        if (currentTimeMs >= eventDurationMs) {
+        if (startTimeMs >= eventDurationMs) {
           laps = 0;
           duration = 0;
-          calculatedEnd = currentTimeMs;
+          calculatedEnd = startTimeMs;
         } else {
-          const remainingMs = eventDurationMs - currentTimeMs;
+          const remainingMs = eventDurationMs - startTimeMs;
           const adjustedLaps = Math.max(1, Math.round(remainingMs / globalAvgLapTime));
           laps = adjustedLaps;
           duration = calculateStintDuration(laps, driver, globalAvgLapTime);
-          calculatedEnd = currentTimeMs + duration;
+          calculatedEnd = startTimeMs + duration;
         }
       }
       endTimeMs = calculatedEnd;
     }
 
     currentTimeMs = endTimeMs + totalPitTime;
-    return { ...stint, startTimeMs: currentTimeMs - totalPitTime, endTimeMs, laps };
+    return { ...stint, startTimeMs, endTimeMs, laps };
   });
 }
 
