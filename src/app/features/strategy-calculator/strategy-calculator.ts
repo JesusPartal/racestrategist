@@ -81,7 +81,7 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
 
   stintCoverage = computed<'error' | 'warning' | null>(() => {
     const planned = this.store.stintPlan().length;
-    const needed = Math.ceil(this.stintsNeeded());
+    const needed = this.stintCountWithPits();
     if (needed === 0) return null;
     if (planned < needed) return 'error';
     if (planned > needed) return 'warning';
@@ -90,7 +90,7 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
 
   stintCoverageTitle = computed<string>(() => {
     const state = this.stintCoverage();
-    const needed = Math.ceil(this.stintsNeeded());
+    const needed = this.stintCountWithPits();
     const planned = this.store.stintPlan().length;
     if (state === 'error') {
       return this.trans.translate('stint_coverage_error', { d1: planned, d2: needed });
@@ -99,6 +99,16 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
       return this.trans.translate('stint_coverage_warning', { d1: planned, d2: needed });
     }
     return '';
+  });
+
+  stintCountWithPits = computed(() => {
+    const dur = this.eventDurationMinutes();
+    if (!dur || dur <= 0) return 0;
+    const stintMs = this.stintDurationMs();
+    if (stintMs <= 0) return 0;
+    const eventMs = dur * 60 * 1000;
+    const avgPitMs = this.store.pitStopFuelOnlyMs();
+    return calculateStintCount(eventMs, stintMs, avgPitMs, this.maxLaps());
   });
 
 missingFields = computed<string[]>(() => {

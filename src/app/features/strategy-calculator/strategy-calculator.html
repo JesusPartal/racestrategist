@@ -227,7 +227,7 @@
             </div>
             <div class="result-row" *ngIf="maxLaps() > 0">
                 <span class="label">{{ trans.translate('estimated_stints') }}</span>
-                <span class="value" style="color: var(--success-color); font-weight: 700;">{{ stintsNeeded() }}</span>
+                <span class="value" style="color: var(--success-color); font-weight: 700;">{{ stintCountWithPits() }}</span>
             </div>
             <div style="margin-top: 20px;">
                 <button [disabled]="!canGenerateStints()" (click)="generateStintPlan()" class="primary"
