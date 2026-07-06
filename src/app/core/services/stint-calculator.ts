@@ -74,12 +74,11 @@ export function calculateDefaultLastStintFuel(
   eventDurationMs: number,
   lapTimeMs: number,
   consumptionPerLap: number,
-  tankCapacity: number
+  tankCapacity: number,
+  actualLaps?: number
 ): number {
-  const remainingMs = eventDurationMs - stintStartMs;
-  if (remainingMs <= 0) return 0;
-  const lapsToFinish = Math.ceil(remainingMs / lapTimeMs);
-  const totalLaps = lapsToFinish + 1; // +1 safety lap
+  const baseLaps = actualLaps ?? Math.ceil((eventDurationMs - stintStartMs) / lapTimeMs);
+  const totalLaps = baseLaps + 1;
   const fuel = Math.ceil(totalLaps * consumptionPerLap);
   return Math.min(fuel, tankCapacity);
 }

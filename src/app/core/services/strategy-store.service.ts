@@ -70,10 +70,10 @@ export class StrategyStore {
       if (stints.length === 0) return stints;
       const last = stints[stints.length - 1];
       const fuel = calculateDefaultLastStintFuel(
-        last.startTimeMs, eventDurationMs, globalAvgLapTime, globalFuelPerLap, tankCapacity
+        last.startTimeMs, eventDurationMs, globalAvgLapTime, globalFuelPerLap, tankCapacity, last.laps
       );
       return stints.map((s, idx) =>
-        idx === stints.length - 1 ? { ...s, fuelAddedL: fuel || undefined } : s
+        idx === stints.length - 1 ? { ...s, fuelAddedL: fuel > 0 ? fuel : undefined } : s
       );
     });
   }

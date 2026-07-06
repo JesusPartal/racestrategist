@@ -623,10 +623,7 @@
                 <div class="stint-fuel-row">
                     <label>{{ trans.translate('fuel_added') || 'Fuel' }}</label>
                     <div style="display: flex; align-items: center; gap: 4px;">
-                        <input type="number" min="0" [max]="tankCapacity()" [ngModel]="stint.fuelAddedL ?? tankCapacity()"
-                            (ngModelChange)="updateStintFuel(stint.index, $event ?? null)" class="fuel-input"
-                            [style.width]="'60px'">
-                        <span style="font-size: 0.65rem; opacity: 0.6;">L</span>
+                        <code class="fuel-value">{{ stint.fuelAddedL ?? tankCapacity() }}<span style="font-size: 0.65rem; opacity: 0.6;">L</span></code>
                         <span *ngIf="stint.fuelAddedL != null" class="fuel-badge-override"
                             title="{{ trans.translate('fuel_override') || 'Fuel override' }}">
                             <i class="fa-solid fa-pen"></i>

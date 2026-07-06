@@ -312,9 +312,11 @@ missingFields = computed<string[]>(() => {
   }
 
   generateStintPlan() {
+    const eventDuration = this.eventDurationMinutes() || 0;
+    this.store.activeEventDurationMinutes.set(eventDuration);
     const avgPitMs = this.store.pitStopFuelOnlyMs();
     const stintMs = this.stintDurationMs();
-    const eventMs = (this.eventDurationMinutes() || 0) * 60 * 1000;
+    const eventMs = eventDuration * 60 * 1000;
     const count = calculateStintCount(eventMs, stintMs, avgPitMs, this.maxLaps());
     this.store.generateEmptyStints(count, this.maxLaps());
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
@@ -399,12 +401,13 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   saveStintSettings() {
     const idx = this.stintSettingsOpen();
     if (idx == null) return;
+    this.store.activeEventDurationMinutes.set(this.eventDurationMinutes() || 0);
     this.store.updateStintFields(idx, {
       fuelAddedL: this.stintSettingsFuel() ?? undefined,
       additionalTimeMs: (this.stintSettingsExtraSec() || 0) * 1000,
       changeTires: this.stintSettingsTires(),
     });
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers(), idx);
     this.stintSettingsOpen.set(null);
   }
 
