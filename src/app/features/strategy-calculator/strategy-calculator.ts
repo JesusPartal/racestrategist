@@ -37,8 +37,8 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
   lapMs = signal<number>(0);
   tankCapacityInput = signal<number | null>(null);
 
-  eventStartHour = signal<number>(0);
-  eventStartMinute = signal<number>(0);
+  eventStartDate = signal<string>('');
+  eventStartTime = signal<string>('');
 
   showRemoveStintDialog = signal<number | null>(null);
   showTeamSelector = signal(false);
@@ -255,8 +255,9 @@ missingFields = computed<string[]>(() => {
     const startTs = this.store.activeEventStartTime();
     if (startTs) {
       const d = new Date(startTs);
-      this.eventStartHour.set(d.getHours());
-      this.eventStartMinute.set(d.getMinutes());
+      const iso = d.toISOString().split('T');
+      this.eventStartDate.set(iso[0]);
+      this.eventStartTime.set(iso[1].substring(0, 5));
     }
 
     this.telemetry.setPlannedValues(fuel, totalMs);
@@ -285,11 +286,12 @@ missingFields = computed<string[]>(() => {
   onStrategyNameEnter(event: Event) { (event.target as HTMLInputElement).blur(); }
 
   onEventStartChange() {
-    const h = this.eventStartHour();
-    const m = this.eventStartMinute();
-    const d = new Date();
-    d.setHours(h, m, 0, 0);
-    this.store.activeEventStartTime.set(d.getTime());
+    const dateStr = this.eventStartDate();
+    const timeStr = this.eventStartTime();
+    const d = new Date(`${dateStr}T${timeStr || '00:00'}`);
+    if (!isNaN(d.getTime())) {
+      this.store.activeEventStartTime.set(d.getTime());
+    }
   }
 
   formatMs(ms: number): string {
@@ -767,8 +769,8 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       this.lapSec.set(0);
       this.lapMs.set(0);
       this.tankCapacityInput.set(null);
-      this.eventStartHour.set(0);
-      this.eventStartMinute.set(0);
+      this.eventStartDate.set('');
+      this.eventStartTime.set('');
       this.store.activeTankCapacity.set(0);
     }
     this.isDirty.set(false);

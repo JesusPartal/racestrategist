@@ -124,18 +124,12 @@
             </div>
 
             <div class="form-field">
-                <label for="eventStartHour">{{ trans.translate('event_start_datetime') }}</label>
+                <label for="eventStartDate">{{ trans.translate('event_start_datetime') }}</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div style="position: relative;">
-                        <input type="number" id="eventStartHour" [ngModel]="eventStartHour()"
-                            (ngModelChange)="eventStartHour.set($event); onEventStartChange()" min="0" max="23" placeholder="HH">
-                        <span style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">H</span>
-                    </div>
-                    <div style="position: relative;">
-                        <input type="number" [ngModel]="eventStartMinute()"
-                            (ngModelChange)="eventStartMinute.set($event); onEventStartChange()" min="0" max="59" placeholder="MM">
-                        <span style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">M</span>
-                    </div>
+                    <input type="date" id="eventStartDate" [ngModel]="eventStartDate()"
+                        (ngModelChange)="eventStartDate.set($event); onEventStartChange()">
+                    <input type="time" [ngModel]="eventStartTime()"
+                        (ngModelChange)="eventStartTime.set($event); onEventStartChange()">
                 </div>
             </div>
 
@@ -673,27 +667,31 @@
             style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;">
             Race Overview Matrix</h3>
         <div class="stint-grid">
-            <div *ngFor="let stint of store.stintPlan(); trackBy: trackByStintIndex" class="mini-tile"
-                [style.background]="getDriverColor(stint.driverId)" [class.unassigned]="!stint.driverId"
-                (click)="scrollToStint(stint.index)">
-                {{ stint.index }}
+            <div *ngFor="let stint of store.stintPlan(); trackBy: trackByStintIndex" class="mini-tile-wrapper">
+                <div class="mini-tile"
+                    [style.background]="getDriverColor(stint.driverId)" [class.unassigned]="!stint.driverId"
+                    [class.current]="isCurrentStint(stint.index)"
+                    (click)="scrollToStint(stint.index)">
+                    {{ stint.index }}
 
-                <!-- Expanded Tooltip -->
-                <div class="mini-tooltip">
-                    <div
-                        style="font-weight: 700; color: var(--accent-color); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
-                        {{ trans.translate('stint_no') }}{{ stint.index }}
-                    </div>
-                    <div style="font-size: 0.8rem; font-weight: 600; color: white;">{{
-                        getDriverById(stint.driverId)?.name || trans.translate('unassigned') }}</div>
-                    <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 5px; color: white;">{{ stint.laps }} {{ trans.translate('stint_laps') }}
-                    </div>
-                    <div
-                        style="font-family: monospace; font-size: 0.7rem; color: var(--accent-color); margin-top: 8px;">
-                        {{ formatAbsoluteTime(stint.startTimeMs) }} <br>
-                        {{ formatAbsoluteTime(stint.endTimeMs) }}
+                    <!-- Expanded Tooltip -->
+                    <div class="mini-tooltip">
+                        <div
+                            style="font-weight: 700; color: var(--accent-color); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                            {{ trans.translate('stint_no') }}{{ stint.index }}
+                        </div>
+                        <div style="font-size: 0.8rem; font-weight: 600; color: white;">{{
+                            getDriverById(stint.driverId)?.name || trans.translate('unassigned') }}</div>
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 5px; color: white;">{{ stint.laps }} {{ trans.translate('stint_laps') }}
+                        </div>
+                        <div
+                            style="font-family: monospace; font-size: 0.7rem; color: var(--accent-color); margin-top: 8px;">
+                            {{ formatAbsoluteTime(stint.startTimeMs) }} <br>
+                            {{ formatAbsoluteTime(stint.endTimeMs) }}
+                        </div>
                     </div>
                 </div>
+                <div *ngIf="isCurrentStint(stint.index)" class="current-stint-marker">▲</div>
             </div>
         </div>
     </div>
@@ -1122,6 +1120,29 @@
     .mini-tile.unassigned {
         background: rgba(255, 255, 255, 0.05) !important;
         color: var(--text-dim);
+    }
+
+    .mini-tile-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .mini-tile.current {
+        box-shadow: 0 0 0 2px var(--accent-color), 0 0 12px rgba(100, 200, 255, 0.4);
+    }
+
+    .current-stint-marker {
+        font-size: 0.5rem;
+        color: var(--accent-color);
+        line-height: 1;
+        animation: pulse-arrow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-arrow {
+        0%, 100% { opacity: 1; transform: translateY(0); }
+        50% { opacity: 0.4; transform: translateY(2px); }
     }
 
 
