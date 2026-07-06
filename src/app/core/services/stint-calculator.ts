@@ -24,17 +24,19 @@ export function recalculateTimeline(
   tankCapacity: number,
   pitStopFuelOnlyMs: number,
   pitStopTiresMs: number,
-  eventDurationMs?: number
+  eventDurationMs?: number,
+  fromIndex = 0
 ): StintPlanItem[] {
-  let currentTimeMs = 0;
   const driverMap = new Map(drivers.map(d => [d.id, d]));
+  let currentTimeMs = fromIndex > 0 ? stints[fromIndex - 1].endTimeMs + getPitTime(stints[fromIndex - 1], pitStopFuelOnlyMs, pitStopTiresMs) : 0;
 
   return stints.map((stint, idx) => {
+    if (idx < fromIndex) return stint;
+
     const driver = driverMap.get(stint.driverId);
     let laps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap, stint.fuelAddedL);
     let duration = calculateStintDuration(laps, driver, globalAvgLapTime);
-    const pitBaseTime = stint.changeTires ? pitStopTiresMs : pitStopFuelOnlyMs;
-    const totalPitTime = pitBaseTime + (stint.additionalTimeMs || 0);
+    const totalPitTime = getPitTime(stint, pitStopFuelOnlyMs, pitStopTiresMs);
 
     let endTimeMs: number;
     if (stint.manualEndTimeMs != null) {
@@ -48,7 +50,7 @@ export function recalculateTimeline(
           calculatedEnd = currentTimeMs;
         } else {
           const remainingMs = eventDurationMs - currentTimeMs;
-          const adjustedLaps = Math.max(1, Math.floor(remainingMs / globalAvgLapTime));
+          const adjustedLaps = Math.max(1, Math.round(remainingMs / globalAvgLapTime));
           laps = adjustedLaps;
           duration = calculateStintDuration(laps, driver, globalAvgLapTime);
           calculatedEnd = currentTimeMs + duration;
@@ -60,6 +62,26 @@ export function recalculateTimeline(
     currentTimeMs = endTimeMs + totalPitTime;
     return { ...stint, startTimeMs: currentTimeMs - totalPitTime, endTimeMs, laps };
   });
+}
+
+function getPitTime(stint: StintPlanItem, pitStopFuelOnlyMs: number, pitStopTiresMs: number): number {
+  const pitBaseTime = stint.changeTires ? pitStopTiresMs : pitStopFuelOnlyMs;
+  return pitBaseTime + (stint.additionalTimeMs || 0);
+}
+
+export function calculateDefaultLastStintFuel(
+  stintStartMs: number,
+  eventDurationMs: number,
+  lapTimeMs: number,
+  consumptionPerLap: number,
+  tankCapacity: number
+): number {
+  const remainingMs = eventDurationMs - stintStartMs;
+  if (remainingMs <= 0) return 0;
+  const lapsToFinish = Math.ceil(remainingMs / lapTimeMs);
+  const totalLaps = lapsToFinish + 1; // +1 safety lap
+  const fuel = Math.ceil(totalLaps * consumptionPerLap);
+  return Math.min(fuel, tankCapacity);
 }
 
 export function generateEmptyStints(count: number, lapsPerStint: number): StintPlanItem[] {

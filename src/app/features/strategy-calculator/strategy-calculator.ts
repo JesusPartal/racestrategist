@@ -318,7 +318,16 @@ missingFields = computed<string[]>(() => {
     const count = calculateStintCount(eventMs, stintMs, avgPitMs, this.maxLaps());
     this.store.generateEmptyStints(count, this.maxLaps());
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers());
+    this.store.applyDefaultLastStintFuel(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
     this.telemetry.setPlannedValues(this.fuelPerLap(), this.avgLapTime());
+  }
+
+  updateStintFuel(stintIndex: number, fuelL: number | null) {
+    const fuelPerLap = this.fuelPerLap();
+    const lapTimeMs = this.avgLapTime();
+    const tank = this.tankCapacity();
+    const value = fuelL != null && fuelL > 0 ? (fuelL < tank ? fuelL : null) : null;
+    this.store.updateStintFuel(stintIndex, value, fuelPerLap, lapTimeMs, tank);
   }
 
   updateStintDriver(stintIndex: number, driverId: string) {

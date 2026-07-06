@@ -620,6 +620,19 @@
                         <code [style.color]="stint.manualEndTimeMs != null ? 'var(--accent-color)' : ''">{{ formatAbsoluteTime(stint.endTimeMs) }}</code>
                     </div>
                 </div>
+                <div class="stint-fuel-row">
+                    <label>{{ trans.translate('fuel_added') || 'Fuel' }}</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <input type="number" min="0" [max]="tankCapacity()" [ngModel]="stint.fuelAddedL ?? tankCapacity()"
+                            (ngModelChange)="updateStintFuel(stint.index, $event ?? null)" class="fuel-input"
+                            [style.width]="'60px'">
+                        <span style="font-size: 0.65rem; opacity: 0.6;">L</span>
+                        <span *ngIf="stint.fuelAddedL != null" class="fuel-badge-override"
+                            title="{{ trans.translate('fuel_override') || 'Fuel override' }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </span>
+                    </div>
+                </div>
                 <div *ngIf="endTimeEditOpen() === stint.index" class="endtime-edit-row">
                     <div style="display: flex; gap: 4px; align-items: center; justify-content: center;">
                         <input type="number" min="0" max="23" [ngModel]="endTimeEditH()" (ngModelChange)="endTimeEditH.set($event)" placeholder="h" class="endtime-input">
@@ -651,6 +664,9 @@
             <i class="fa-solid fa-plus"></i>
         </div>
         </ng-container>
+        <div class="stint-insert-handle" (click)="insertStint(store.stintPlan().length)" title="{{ trans.translate('add_stint') || 'Add stint' }}">
+            <i class="fa-solid fa-plus"></i>
+        </div>
     </div>
 
     <!-- Visual Overview Grid -->

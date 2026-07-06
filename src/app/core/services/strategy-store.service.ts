@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { RaceStrategy, DriverProfile, StintPlanItem, StrategySummary } from '../models/race-strategy.model';
-import { generateEmptyStints, recalculateTimeline, updateStintFields, reorderStints, insertStintAt, removeStintAtPosition, removeTrailingEmptyStints } from './stint-calculator';
+import { generateEmptyStints, recalculateTimeline, updateStintFields, reorderStints, insertStintAt, removeStintAtPosition, removeTrailingEmptyStints, calculateDefaultLastStintFuel } from './stint-calculator';
 
 @Injectable({ providedIn: 'root' })
 export class StrategyStore {
@@ -47,14 +47,34 @@ export class StrategyStore {
     this.stintPlan.set(generateEmptyStints(count, lapsPerStint));
   }
 
-  recalculateTimeline(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number, drivers?: DriverProfile[]) {
+  recalculateTimeline(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number, drivers?: DriverProfile[], fromIndex = 0) {
     const eventDurationMs = this.activeEventDurationMinutes() * 60 * 1000;
     this.stintPlan.update(stints => {
       const updated = recalculateTimeline(
         stints, drivers ?? this.drivers(), globalFuelPerLap, globalAvgLapTime, tankCapacity,
-        this.pitStopFuelOnlyMs(), this.pitStopTiresMs(), eventDurationMs
+        this.pitStopFuelOnlyMs(), this.pitStopTiresMs(), eventDurationMs, fromIndex
       );
       return removeTrailingEmptyStints(updated);
+    });
+  }
+
+  updateStintFuel(stintIndex: number, fuelL: number | null, globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number) {
+    this.updateStintFields(stintIndex, { fuelAddedL: fuelL ?? undefined });
+    this.recalculateTimeline(globalFuelPerLap, globalAvgLapTime, tankCapacity, undefined, stintIndex);
+  }
+
+  applyDefaultLastStintFuel(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number) {
+    const eventDurationMs = this.activeEventDurationMinutes() * 60 * 1000;
+    if (!eventDurationMs) return;
+    this.stintPlan.update(stints => {
+      if (stints.length === 0) return stints;
+      const last = stints[stints.length - 1];
+      const fuel = calculateDefaultLastStintFuel(
+        last.startTimeMs, eventDurationMs, globalAvgLapTime, globalFuelPerLap, tankCapacity
+      );
+      return stints.map((s, idx) =>
+        idx === stints.length - 1 ? { ...s, fuelAddedL: fuel || undefined } : s
+      );
     });
   }
 
