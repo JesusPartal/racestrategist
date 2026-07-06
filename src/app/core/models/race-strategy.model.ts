@@ -62,6 +62,7 @@ export interface RaceStrategy {
   vehicleName: string;
   avgLapTimeMs: number;
   fuelPerLap: number;
+  tankCapacity: number;
   drivers: DriverProfile[];
   stints: StintPlanItem[];
   pitStopFuelOnlyMs: number;

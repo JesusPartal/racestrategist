@@ -58,6 +58,7 @@ export function initializeDatabase(): void {
       vehicle_name TEXT NOT NULL DEFAULT '',
       avg_lap_time_ms REAL NOT NULL DEFAULT 0,
       fuel_per_lap REAL NOT NULL DEFAULT 0,
+      tank_capacity REAL DEFAULT 0,
       pit_stop_fuel_only_ms INTEGER NOT NULL DEFAULT 45000,
       pit_stop_tires_ms INTEGER NOT NULL DEFAULT 65000,
       last_modified INTEGER NOT NULL,

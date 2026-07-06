@@ -43,12 +43,12 @@ router.get('/:id', (req: AuthRequest, res: Response) => {
 });
 
 router.post('/', (req: AuthRequest, res: Response) => {
-  const { name, eventId, vehicleId, vehicleName, avgLapTimeMs, fuelPerLap, eventStartTime, eventDurationMinutes } = req.body;
+  const { name, eventId, vehicleId, vehicleName, avgLapTimeMs, fuelPerLap, tankCapacity, eventStartTime, eventDurationMinutes } = req.body;
   if (!name) {
     res.status(400).json({ error: 'name is required' });
     return;
   }
-  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, vehicleName, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0, eventStartTime, eventDurationMinutes }, req.teamId, req.userId);
+  const strategy = strategyService.createStrategy({ name, eventId, vehicleId, vehicleName, avgLapTimeMs: avgLapTimeMs || 0, fuelPerLap: fuelPerLap || 0, tankCapacity, eventStartTime, eventDurationMinutes }, req.teamId, req.userId);
   res.status(201).json(strategy);
 });
 

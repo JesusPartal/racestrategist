@@ -32,6 +32,7 @@ export interface RaceStrategy {
   vehicleName: string;
   avgLapTimeMs: number;
   fuelPerLap: number;
+  tankCapacity: number;
   pitStopFuelOnlyMs: number;
   pitStopTiresMs: number;
   lastModified: number;
@@ -114,6 +115,7 @@ export interface CreateStrategyRequest {
   vehicleName?: string;
   avgLapTimeMs: number;
   fuelPerLap: number;
+  tankCapacity?: number;
   eventStartTime?: number;
   eventDurationMinutes?: number;
 }
@@ -125,6 +127,7 @@ export interface UpdateStrategyRequest {
   vehicleName?: string;
   avgLapTimeMs?: number;
   fuelPerLap?: number;
+  tankCapacity?: number;
   pitStopFuelOnlyMs?: number;
   pitStopTiresMs?: number;
   eventStartTime?: number;

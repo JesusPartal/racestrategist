@@ -238,6 +238,9 @@ missingFields = computed<string[]>(() => {
       this.lapMs.set(totalMs % 1000);
     }
 
+    const tank = this.store.activeTankCapacity();
+    if (tank) this.tankCapacityInput.set(tank);
+
     const startTs = this.store.activeEventStartTime();
     if (startTs) {
       const d = new Date(startTs);
@@ -646,6 +649,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
         name,
         vehicleName: this.vehicleName(),
         avgLapTimeMs: this.avgLapTime(), fuelPerLap: this.fuelPerLap(),
+        tankCapacity: this.tankCapacity(),
         pitStopFuelOnlyMs: this.store.pitStopFuelOnlyMs(),
         pitStopTiresMs: this.store.pitStopTiresMs(),
         eventStartTime: this.store.activeEventStartTime(),
@@ -739,6 +743,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       this.tankCapacityInput.set(null);
       this.eventStartHour.set(0);
       this.eventStartMinute.set(0);
+      this.store.activeTankCapacity.set(0);
     }
     this.isDirty.set(false);
   }

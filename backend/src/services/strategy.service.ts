@@ -2,7 +2,7 @@ import db from '../db';
 import { v4 as uuid } from 'uuid';
 import { RaceStrategy, DriverProfile, StintPlanItem, StrategySummaryDto, CreateStrategyRequest, UpdateStrategyRequest, StintDto } from '../models/types';
 
-const STRATEGY_COLS = 'id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, event_duration_minutes';
+const STRATEGY_COLS = 'id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, tank_capacity, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, event_duration_minutes';
 
 function rowToStrategy(row: any): RaceStrategy {
   return {
@@ -13,6 +13,7 @@ function rowToStrategy(row: any): RaceStrategy {
     vehicleName: row.vehicle_name,
     avgLapTimeMs: row.avg_lap_time_ms,
     fuelPerLap: row.fuel_per_lap,
+    tankCapacity: row.tank_capacity || 0,
     pitStopFuelOnlyMs: row.pit_stop_fuel_only_ms,
     pitStopTiresMs: row.pit_stop_tires_ms,
     lastModified: row.last_modified,
@@ -58,10 +59,10 @@ export function createStrategy(req: CreateStrategyRequest, teamId?: string, user
   db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
     tid, userId || 'user_1', 'My Racing Team', now);
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, event_start_time, event_duration_minutes, drivers, stints, team_id, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '[]', ?, ?)`).run(
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, tank_capacity, last_modified, event_start_time, event_duration_minutes, drivers, stints, team_id, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '[]', ?, ?)`).run(
     id, req.name, req.eventId || '', req.vehicleId || '', req.vehicleName || '',
-    req.avgLapTimeMs, req.fuelPerLap, now, req.eventStartTime || 0, req.eventDurationMinutes || 0,
+    req.avgLapTimeMs, req.fuelPerLap, req.tankCapacity || 0, now, req.eventStartTime || 0, req.eventDurationMinutes || 0,
     tid, userId || null);
 
   return getStrategyById(id)!;
@@ -82,6 +83,7 @@ export function updateStrategy(id: string, req: UpdateStrategyRequest, teamId?: 
   if (req.vehicleName !== undefined) { fields.push('vehicle_name = ?'); values.push(req.vehicleName); }
   if (req.avgLapTimeMs !== undefined) { fields.push('avg_lap_time_ms = ?'); values.push(req.avgLapTimeMs); }
   if (req.fuelPerLap !== undefined) { fields.push('fuel_per_lap = ?'); values.push(req.fuelPerLap); }
+  if (req.tankCapacity !== undefined) { fields.push('tank_capacity = ?'); values.push(req.tankCapacity); }
   if (req.pitStopFuelOnlyMs !== undefined) { fields.push('pit_stop_fuel_only_ms = ?'); values.push(req.pitStopFuelOnlyMs); }
   if (req.pitStopTiresMs !== undefined) { fields.push('pit_stop_tires_ms = ?'); values.push(req.pitStopTiresMs); }
   if (req.eventStartTime !== undefined) { fields.push('event_start_time = ?'); values.push(req.eventStartTime); }
@@ -132,10 +134,10 @@ export function cloneStrategy(sourceId: string, targetTeamId: string, userId?: s
   db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
     targetTeamId, userId || 'user_1', 'My Racing Team', now);
 
-  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, event_duration_minutes, drivers, stints, team_id, created_by, source_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, tank_capacity, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, event_duration_minutes, drivers, stints, team_id, created_by, source_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     id, original.name, original.eventId || '', original.vehicleId || '', original.vehicleName || '',
-    original.avgLapTimeMs, original.fuelPerLap, original.pitStopFuelOnlyMs, original.pitStopTiresMs,
+    original.avgLapTimeMs, original.fuelPerLap, original.tankCapacity, original.pitStopFuelOnlyMs, original.pitStopTiresMs,
     now, original.eventStartTime || 0, original.eventDurationMinutes || 0, JSON.stringify(original.drivers), JSON.stringify(original.stints), targetTeamId, userId || null, sourceId
   );
 
