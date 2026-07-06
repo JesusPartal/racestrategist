@@ -177,6 +177,8 @@ missingFields = computed<string[]>(() => {
 
     if (this.store.activeStrategyId()) {
       this.syncFromActiveStrategy();
+    } else {
+      this.suppressDirty = false;
     }
   }
 
