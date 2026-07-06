@@ -60,7 +60,8 @@ export class StrategyStore {
 
   updateStintFuel(stintIndex: number, fuelL: number | null, globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number) {
     this.updateStintFields(stintIndex, { fuelAddedL: fuelL ?? undefined });
-    this.recalculateTimeline(globalFuelPerLap, globalAvgLapTime, tankCapacity, undefined, stintIndex);
+    const arrayIdx = this.stintPlan().findIndex(s => s.index === stintIndex);
+    this.recalculateTimeline(globalFuelPerLap, globalAvgLapTime, tankCapacity, undefined, Math.max(0, arrayIdx));
   }
 
   applyDefaultLastStintFuel(globalFuelPerLap: number, globalAvgLapTime: number, tankCapacity: number) {

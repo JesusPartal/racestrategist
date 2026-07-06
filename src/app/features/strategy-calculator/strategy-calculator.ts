@@ -411,15 +411,16 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   onStintSettingsTires(v: boolean) { this.stintSettingsTires.set(v); }
 
   saveStintSettings() {
-    const idx = this.stintSettingsOpen();
-    if (idx == null) return;
+    const stintIdx = this.stintSettingsOpen();
+    if (stintIdx == null) return;
     this.store.activeEventDurationMinutes.set(this.eventDurationMinutes() || 0);
-    this.store.updateStintFields(idx, {
+    this.store.updateStintFields(stintIdx, {
       fuelAddedL: this.stintSettingsFuel() ?? undefined,
       additionalTimeMs: (this.stintSettingsExtraSec() || 0) * 1000,
       changeTires: this.stintSettingsTires(),
     });
-    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers(), idx);
+    const arrayIdx = this.store.stintPlan().findIndex(s => s.index === stintIdx);
+    this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers(), Math.max(0, arrayIdx));
     this.stintSettingsOpen.set(null);
   }
 
