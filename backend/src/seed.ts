@@ -26,21 +26,14 @@ export function seedData(): void {
       u.id, u.username, hash, u.display, u.license, u.irating, 'default', isAdmin);
   }
 
-  // Ensure a default team exists for users with team_id='default'
-  // This also satisfies FK constraints on strategies.team_id if they exist on legacy schemas
   db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
     'default', 'user_1', 'My Racing Team', Date.now());
 
-  // Seed events — only Spa 24HR, clean up old data
-  db.exec('PRAGMA foreign_keys = OFF');
-  db.prepare('DELETE FROM strategies WHERE event_id != ?').run('spa24');
   db.prepare('DELETE FROM events').run();
-  db.exec('PRAGMA foreign_keys = ON');
   db.prepare('INSERT INTO events (id, name, track_id, duration_minutes, allowed_car_classes) VALUES (?, ?, ?, ?, ?)').run(
     'spa24', '24h of Spa', 'spa_francorchamps', 1440, JSON.stringify(['GT3']));
 
-  // Clean up old vehicles and seed new ones
-  db.prepare('DELETE FROM vehicles WHERE id IN (?, ?, ?, ?)').run('porsche992_gt3r', 'cadillac_vseries', 'dallara_p217', 'bmw_m4_gt3');
+  db.prepare('DELETE FROM vehicles').run();
 
   const vehicles = [
     { id: 'aston_vantage_gt3_evo', name: 'Aston Martin Vantage GT3 Evo', tank: 120, refuel: 2.5 },

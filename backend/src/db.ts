@@ -12,6 +12,16 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 export function initializeDatabase(): void {
+  // Preserve users table, drop and recreate all other tables to remove legacy FK constraints
+  db.exec('PRAGMA foreign_keys = OFF');
+
+  db.exec('DROP TABLE IF EXISTS agent_tokens');
+  db.exec('DROP TABLE IF EXISTS team_drivers');
+  db.exec('DROP TABLE IF EXISTS strategies');
+  db.exec('DROP TABLE IF EXISTS teams');
+  db.exec('DROP TABLE IF EXISTS events');
+  db.exec('DROP TABLE IF EXISTS vehicles');
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -20,7 +30,8 @@ export function initializeDatabase(): void {
       display_name TEXT NOT NULL,
       license_class TEXT NOT NULL DEFAULT 'A',
       i_rating INTEGER NOT NULL DEFAULT 4500,
-      team_id TEXT NOT NULL DEFAULT 'default'
+      team_id TEXT NOT NULL DEFAULT 'default',
+      is_admin INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS events (
@@ -51,17 +62,19 @@ export function initializeDatabase(): void {
       pit_stop_tires_ms INTEGER NOT NULL DEFAULT 65000,
       last_modified INTEGER NOT NULL,
       event_start_time INTEGER DEFAULT 0,
+      event_duration_minutes INTEGER DEFAULT 0,
       drivers TEXT NOT NULL DEFAULT '[]',
       stints TEXT NOT NULL DEFAULT '[]',
-      team_id TEXT NOT NULL DEFAULT 'default'
+      team_id TEXT NOT NULL DEFAULT 'default',
+      created_by TEXT,
+      source_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS teams (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
       name TEXT NOT NULL DEFAULT 'My Racing Team',
-      created_at INTEGER NOT NULL DEFAULT 0,
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      created_at INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS team_drivers (
@@ -75,30 +88,9 @@ export function initializeDatabase(): void {
       license_class TEXT,
       i_rating INTEGER,
       nationality TEXT,
-      role TEXT,
-      FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+      role TEXT
     );
-  `);
 
-  // Migrate existing tables
-  try { db.exec('ALTER TABLE users ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
-  try { db.exec('ALTER TABLE strategies ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
-  try { db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0'); } catch {}
-  try { db.exec('ALTER TABLE team_drivers ADD COLUMN team_id TEXT NOT NULL DEFAULT \'default\''); } catch {}
-  try { db.exec('ALTER TABLE teams ADD COLUMN user_id TEXT NOT NULL DEFAULT \'user_1\''); } catch {}
-  try { db.exec('ALTER TABLE teams ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0'); } catch {}
-  try { db.exec('ALTER TABLE team_drivers ADD COLUMN fuel_per_lap_l REAL DEFAULT 0'); } catch {}
-  try { db.exec('ALTER TABLE strategies ADD COLUMN event_start_time INTEGER DEFAULT 0'); } catch {}
-  try { db.exec('ALTER TABLE strategies ADD COLUMN created_by TEXT'); } catch {}
-  try { db.exec('ALTER TABLE strategies ADD COLUMN source_id TEXT'); } catch {}
-  try { db.exec('ALTER TABLE strategies ADD COLUMN event_duration_minutes INTEGER DEFAULT 0'); } catch {}
-
-  // Migrate agent_tokens: v1 had FOREIGN KEY teams(id) which broke inserts
-  // because seed users use team_id='default' but no teams row exists.
-  // Drop and recreate since no rows can exist (FK blocked inserts).
-  try { db.exec('DROP TABLE IF EXISTS agent_tokens'); } catch {}
-
-  db.exec(`
     CREATE TABLE IF NOT EXISTS agent_tokens (
       id TEXT PRIMARY KEY,
       team_id TEXT NOT NULL,
@@ -110,6 +102,8 @@ export function initializeDatabase(): void {
       created_by TEXT NOT NULL
     );
   `);
+
+  db.exec('PRAGMA foreign_keys = ON');
 }
 
 export default db;
