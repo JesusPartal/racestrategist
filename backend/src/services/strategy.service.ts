@@ -52,12 +52,17 @@ export function getStrategyById(id: string, teamId?: string): RaceStrategy | nul
 export function createStrategy(req: CreateStrategyRequest, teamId?: string, userId?: string): RaceStrategy | null {
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
+  const tid = teamId || 'default';
+
+  // Ensure team exists (handles legacy FK constraints on strategies.team_id)
+  db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
+    tid, userId || 'user_1', 'My Racing Team', now);
 
   db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, last_modified, event_start_time, event_duration_minutes, drivers, stints, team_id, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '[]', ?, ?)`).run(
     id, req.name, req.eventId || '', req.vehicleId || '', req.vehicleName || '',
     req.avgLapTimeMs, req.fuelPerLap, now, req.eventStartTime || 0, req.eventDurationMinutes || 0,
-    teamId || 'default', userId || null);
+    tid, userId || null);
 
   return getStrategyById(id)!;
 }
@@ -122,6 +127,10 @@ export function cloneStrategy(sourceId: string, targetTeamId: string, userId?: s
 
   const id = uuid().replace(/-/g, '').slice(0, 12);
   const now = Date.now();
+
+  // Ensure target team exists (handles legacy FK constraints)
+  db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
+    targetTeamId, userId || 'user_1', 'My Racing Team', now);
 
   db.prepare(`INSERT INTO strategies (id, name, event_id, vehicle_id, vehicle_name, avg_lap_time_ms, fuel_per_lap, pit_stop_fuel_only_ms, pit_stop_tires_ms, last_modified, event_start_time, event_duration_minutes, drivers, stints, team_id, created_by, source_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(

@@ -26,6 +26,11 @@ export function seedData(): void {
       u.id, u.username, hash, u.display, u.license, u.irating, 'default', isAdmin);
   }
 
+  // Ensure a default team exists for users with team_id='default'
+  // This also satisfies FK constraints on strategies.team_id if they exist on legacy schemas
+  db.prepare('INSERT OR IGNORE INTO teams (id, user_id, name, created_at) VALUES (?, ?, ?, ?)').run(
+    'default', 'user_1', 'My Racing Team', Date.now());
+
   // Seed events — only Spa 24HR, clean up old data
   db.exec('PRAGMA foreign_keys = OFF');
   db.prepare('DELETE FROM strategies WHERE event_id != ?').run('spa24');
