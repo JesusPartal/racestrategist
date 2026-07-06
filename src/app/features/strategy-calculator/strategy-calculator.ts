@@ -421,6 +421,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     });
     const arrayIdx = this.store.stintPlan().findIndex(s => s.index === stintIdx);
     this.store.recalculateTimeline(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity(), this.availableDrivers(), Math.max(0, arrayIdx));
+    this.store.applyDefaultLastStintFuel(this.fuelPerLap(), this.avgLapTime(), this.tankCapacity());
     this.stintSettingsOpen.set(null);
   }
 

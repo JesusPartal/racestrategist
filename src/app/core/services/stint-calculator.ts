@@ -44,15 +44,16 @@ export function recalculateTimeline(
       endTimeMs = stint.manualEndTimeMs;
     } else {
       let calculatedEnd = startTimeMs + duration;
-      if (eventDurationMs && idx === stints.length - 1 && calculatedEnd > eventDurationMs) {
-        if (startTimeMs >= eventDurationMs) {
+      if (eventDurationMs && idx === stints.length - 1) {
+        const remainingMs = eventDurationMs - startTimeMs;
+        if (remainingMs <= 0) {
           laps = 0;
           duration = 0;
           calculatedEnd = startTimeMs;
         } else {
-          const remainingMs = eventDurationMs - startTimeMs;
-          const adjustedLaps = Math.max(1, Math.round(remainingMs / globalAvgLapTime));
-          laps = adjustedLaps;
+          const maxFuelLaps = calculateStintLaps(driver, tankCapacity, globalFuelPerLap, undefined);
+          const bestLaps = Math.max(1, Math.round(remainingMs / globalAvgLapTime));
+          laps = Math.min(bestLaps, maxFuelLaps);
           duration = calculateStintDuration(laps, driver, globalAvgLapTime);
           calculatedEnd = startTimeMs + duration;
         }
