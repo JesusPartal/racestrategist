@@ -124,10 +124,19 @@
             </div>
 
             <div class="form-field">
-                <label for="eventStart">{{ trans.translate('event_start_datetime') }}</label>
-                <input type="datetime-local" id="eventStart"
-                    [ngModel]="getEventStartDateString()"
-                    (ngModelChange)="onEventStartChange($event)">
+                <label for="eventStartHour">{{ trans.translate('event_start_datetime') }}</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="position: relative;">
+                        <input type="number" id="eventStartHour" [ngModel]="eventStartHour()"
+                            (ngModelChange)="eventStartHour.set($event); onEventStartChange()" min="0" max="23" placeholder="HH">
+                        <span style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">H</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="number" [ngModel]="eventStartMinute()"
+                            (ngModelChange)="eventStartMinute.set($event); onEventStartChange()" min="0" max="59" placeholder="MM">
+                        <span style="position: absolute; right: 10px; top: 12px; color: var(--text-dim); font-size: 0.6rem;">M</span>
+                    </div>
+                </div>
             </div>
 
             <div class="form-field">
