@@ -39,6 +39,7 @@ export class StrategyCalculator implements OnInit, OnDestroy, HasUnsavedChanges 
 
   eventStartDate = signal<string>('');
   eventStartTime = signal<string>('');
+  savedFeedback = signal<string | null>(null);
 
   showRemoveStintDialog = signal<number | null>(null);
   showTeamSelector = signal(false);
@@ -697,7 +698,9 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     }
     this.isDirty.set(false);
     this.suppressDirty = true;
+    this.savedFeedback.set(this.trans.translate('saved_ok') || 'Saved');
     setTimeout(() => { this.suppressDirty = false; });
+    setTimeout(() => { this.savedFeedback.set(null); }, 2000);
   }
 
   private async saveStintsAndDrivers(id: string) {

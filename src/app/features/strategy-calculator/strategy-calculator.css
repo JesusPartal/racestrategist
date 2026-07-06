@@ -127,6 +127,29 @@
     box-shadow: 0 0 0 rgba(0, 200, 83, 0);
 }
 
+.save-feedback {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: #00C853;
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    white-space: nowrap;
+    animation: fade-in-out 2s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes fade-in-out {
+    0% { opacity: 0; transform: translateY(-4px); }
+    15% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+}
+
 .btn-save:hover:not(:disabled) {
     background: #00E676;
     box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
@@ -136,9 +159,7 @@
 .btn-save:disabled {
     opacity: 0.3;
     cursor: not-allowed;
-}
-
-.btn-discard {
+}.btn-discard {
     display: flex;
     align-items: center;
     gap: 8px;
