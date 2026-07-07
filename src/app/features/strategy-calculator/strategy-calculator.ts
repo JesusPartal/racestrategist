@@ -675,10 +675,18 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 8;
+    let finalY = (doc as any).lastAutoTable.finalY + 8;
+    const pageH = doc.internal.pageSize.height;
+    const boxH = 34;
+    if (finalY + boxH > pageH - 15) {
+      doc.addPage();
+      doc.setFillColor(...darkBg);
+      doc.rect(0, 0, pw, 297, 'F');
+      finalY = 15;
+    }
 
     doc.setFillColor(...panelBg);
-    doc.roundedRect(m, finalY, cw, 34, 3, 3, 'F');
+    doc.roundedRect(m, finalY, cw, boxH, 3, 3, 'F');
 
     doc.setTextColor(...amber);
     doc.setFontSize(9);
