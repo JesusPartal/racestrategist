@@ -267,7 +267,7 @@ missingFields = computed<string[]>(() => {
       const mo = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       this.eventStartDate.set(`${y}-${mo}-${day}`);
-      this.eventStartTime.set(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+      this.eventStartTime.set(`${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`);
     }
 
     this.telemetry.setPlannedValues(fuel, totalMs);
@@ -298,7 +298,7 @@ missingFields = computed<string[]>(() => {
   onEventStartChange() {
     const dateStr = this.eventStartDate();
     const timeStr = this.eventStartTime();
-    const d = new Date(`${dateStr}T${timeStr || '00:00'}`);
+    const d = new Date(`${dateStr}T${timeStr || '00:00'}Z`);
     if (!isNaN(d.getTime())) {
       this.store.activeEventStartTime.set(d.getTime());
     }
