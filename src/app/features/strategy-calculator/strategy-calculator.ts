@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, computed, effect, untracked, inject } from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -555,6 +556,138 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
   timeModeLabel(): string {
     if (this.useRelativeTime()) return 'REL';
     return this.useLocalTime() ? 'LOCAL' : 'UTC';
+  }
+
+  private formatUtcTime(stintMs: number): string {
+    const ts = this.store.activeEventStartTime();
+    if (!ts) return '—';
+    const d = new Date(ts + stintMs);
+    return d.toISOString().slice(11, 19);
+  }
+
+  async exportPdf() {
+    const stints = this.store.stintPlan();
+    if (!stints.length) return;
+
+    const jsPDF = (await import('jspdf')).default;
+    await import('jspdf-autotable');
+
+    const doc = new jsPDF('portrait', 'mm', 'a4');
+    const pw = 210, m = 15, cw = pw - 2 * m;
+
+    const amber: [number, number, number] = [255, 176, 0];
+    const darkBg: [number, number, number] = [5, 5, 5];
+    const panelBg: [number, number, number] = [25, 25, 35];
+    const light: [number, number, number] = [240, 240, 240];
+    const dim: [number, number, number] = [136, 136, 153];
+
+    doc.setFillColor(...darkBg);
+    doc.rect(0, 0, pw, 297, 'F');
+
+    doc.setFillColor(...panelBg);
+    doc.roundedRect(m, 14, cw, 42, 3, 3, 'F');
+
+    doc.setTextColor(...amber);
+    doc.setFontSize(20);
+    doc.text(this.store.activeStrategyName(), m + 5, 28);
+
+    doc.setTextColor(...light);
+    doc.setFontSize(10);
+    doc.text(`${this.store.activeVehicleName()} — ${this.eventDurationMinutes() || 0} min`, m + 5, 38);
+
+    doc.setTextColor(...dim);
+    doc.setFontSize(8);
+    const params = [
+      `Fuel: ${(this.fuelPerLap() || 0).toFixed(2)} L/lap`,
+      `Lap: ${this.formatLapTime(this.avgLapTime())}`,
+      `Tank: ${this.tankCapacity() || 0} L`,
+      `Stints: ${stints.length}`,
+    ].join('  |  ');
+    doc.text(params, m + 5, 47);
+
+    const rows: [string, { content: string; driverId: string }, string, string][] = stints.map(s => {
+      const driver = this.getDriverById(s.driverId);
+      return [
+        String(s.index),
+        { content: driver?.name || '—', driverId: s.driverId },
+        this.formatUtcTime(s.startTimeMs),
+        this.formatUtcTime(s.endTimeMs),
+      ];
+    });
+
+    (doc as any).autoTable({
+      startY: 64,
+      head: [['#', 'Pilot', 'Start UTC', 'End UTC']],
+      body: rows as any,
+      theme: 'grid',
+      tableLineColor: [60, 60, 70],
+      tableLineWidth: 0.3,
+      headStyles: {
+        fillColor: [255, 176, 0],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center',
+      },
+      bodyStyles: {
+        fillColor: [25, 25, 35],
+        textColor: [240, 240, 240],
+        fontSize: 9,
+        halign: 'center',
+      },
+      alternateRowStyles: {
+        fillColor: [18, 18, 28],
+      },
+      columnStyles: {
+        0: { cellWidth: 16 },
+        1: { cellWidth: 74, halign: 'left' },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 45 },
+      },
+      didDrawCell: (data: any) => {
+        if (data.section === 'body' && data.column.index === 1) {
+          const cell = data.cell;
+          const raw = data.cell.raw as any;
+          const driverId = raw?.driverId;
+          if (!driverId) return;
+          const driver = this.getDriverById(driverId);
+          if (!driver) return;
+          const hex = driver.accentColor || '#888';
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          const cx = cell.x + 5;
+          const cy = cell.y + cell.height / 2;
+          const rad = 3.2;
+          doc.setFillColor(r, g, b);
+          doc.circle(cx, cy, rad, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(7);
+          doc.text(driver.name.charAt(0).toUpperCase(), cx, cy + 1, { align: 'center' });
+        }
+      },
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 8;
+
+    doc.setFillColor(...panelBg);
+    doc.roundedRect(m, finalY, cw, 28, 3, 3, 'F');
+
+    doc.setTextColor(...amber);
+    doc.setFontSize(9);
+    doc.text('Conversión UTC → Hora Local', m + 5, finalY + 8);
+
+    doc.setTextColor(...dim);
+    doc.setFontSize(8);
+    const conversions = [
+      'España Peninsular: UTC+2',
+      'Irlanda: UTC+1',
+      'México Zona Centro: UTC−6',
+      'Chicago: UTC−5',
+    ].join('    |    ');
+    doc.text(conversions, m + 5, finalY + 19);
+
+    doc.save(`${this.store.activeStrategyName().replace(/\s+/g, '_')}_stint_plan.pdf`);
   }
 
   toggleDash() {

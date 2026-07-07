@@ -102,6 +102,9 @@
             <button class="btn-invite-top" (click)="openInvite()" [disabled]="!store.activeStrategyId()" title="Invite">
                 <i class="fa-solid fa-link"></i>
             </button>
+            <button class="btn-export-pdf" (click)="exportPdf()" [disabled]="store.stintPlan().length === 0" title="Export PDF">
+                <i class="fa-solid fa-file-pdf"></i> PDF
+            </button>
         </div>
     </div>
 
@@ -1222,6 +1225,9 @@
     .btn-invite-top { background: transparent; border: 1px solid rgba(255,176,0,0.3); color: var(--accent-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
     .btn-invite-top:hover { background: rgba(255,176,0,0.15); border-color: var(--accent-color); }
     .btn-invite-top:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-export-pdf { display: flex; align-items: center; gap: 6px; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #e0e0e0; padding: 8px 14px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.75rem; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+    .btn-export-pdf:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); color: #fff; }
+    .btn-export-pdf:disabled { opacity: 0.3; cursor: not-allowed; }
     .invite-url-row { display: flex; gap: 10px; margin: 15px 0; }
     .invite-url-input { flex: 1; padding: 12px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; font-family: monospace; font-size: 0.8rem; }
     .btn-copy { display: flex; align-items: center; gap: 6px; background: var(--accent-color); color: #000; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
