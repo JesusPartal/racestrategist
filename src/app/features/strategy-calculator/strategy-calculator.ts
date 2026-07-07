@@ -605,15 +605,17 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     ].join('  |  ');
     doc.text(params, m + 5, 47);
 
-    const rows: [string, { content: string; driverId: string }, string, string][] = stints.map(s => {
+    const rows: [string, string, string, string][] = stints.map(s => {
       const driver = this.getDriverById(s.driverId);
       return [
         String(s.index),
-        { content: driver?.name || '—', driverId: s.driverId },
+        driver?.name || '—',
         this.formatUtcTime(s.startTimeMs),
         this.formatUtcTime(s.endTimeMs),
       ];
     });
+
+    const driversMap = new Map(stints.map(s => [s.index, this.getDriverById(s.driverId)]));
 
     autoTable(doc, {
       startY: 64,
@@ -644,26 +646,31 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
         2: { cellWidth: 45 },
         3: { cellWidth: 45 },
       },
+      didParseCell: (data: any) => {
+        if (data.section === 'body' && data.column.index === 1) {
+          data.cell.text = ['']; // clear text, we draw it manually
+        }
+      },
       didDrawCell: (data: any) => {
         if (data.section === 'body' && data.column.index === 1) {
           const cell = data.cell;
-          const raw = data.cell.raw as any;
-          const driverId = raw?.driverId;
-          if (!driverId) return;
-          const driver = this.getDriverById(driverId);
+          const stintIdx = parseInt(data.row.raw[0]);
+          const driver = driversMap.get(stintIdx);
           if (!driver) return;
           const hex = driver.accentColor || '#888';
           const r = parseInt(hex.slice(1, 3), 16);
           const g = parseInt(hex.slice(3, 5), 16);
           const b = parseInt(hex.slice(5, 7), 16);
-          const cx = cell.x + 5;
           const cy = cell.y + cell.height / 2;
           const rad = 3.2;
           doc.setFillColor(r, g, b);
-          doc.circle(cx, cy, rad, 'F');
+          doc.circle(cell.x + 5, cy, rad, 'F');
           doc.setTextColor(255, 255, 255);
           doc.setFontSize(7);
-          doc.text(driver.name.charAt(0).toUpperCase(), cx, cy + 1, { align: 'center' });
+          doc.text(driver.name.charAt(0).toUpperCase(), cell.x + 5, cy + 1, { align: 'center' });
+          doc.setTextColor(240, 240, 240);
+          doc.setFontSize(9);
+          doc.text(driver.name, cell.x + 12, cy + 1.5, { align: 'left' });
         }
       },
     });
@@ -671,21 +678,16 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     const finalY = (doc as any).lastAutoTable.finalY + 8;
 
     doc.setFillColor(...panelBg);
-    doc.roundedRect(m, finalY, cw, 28, 3, 3, 'F');
+    doc.roundedRect(m, finalY, cw, 34, 3, 3, 'F');
 
     doc.setTextColor(...amber);
     doc.setFontSize(9);
-    doc.text('Conversión UTC → Hora Local', m + 5, finalY + 8);
+    doc.text('Conversion UTC -> Hora Local', m + 5, finalY + 8);
 
     doc.setTextColor(...dim);
     doc.setFontSize(8);
-    const conversions = [
-      'España Peninsular: UTC+2',
-      'Irlanda: UTC+1',
-      'México Zona Centro: UTC−6',
-      'Chicago: UTC−5',
-    ].join('    |    ');
-    doc.text(conversions, m + 5, finalY + 19);
+    doc.text('Espana Peninsular: UTC+2    |    Irlanda: UTC+1', m + 5, finalY + 19);
+    doc.text('Mexico Zona Centro: UTC-6    |    Chicago: UTC-5', m + 5, finalY + 28);
 
     doc.save(`${this.store.activeStrategyName().replace(/\s+/g, '_')}_stint_plan.pdf`);
   }
