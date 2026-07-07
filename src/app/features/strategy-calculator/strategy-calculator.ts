@@ -570,7 +570,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
     if (!stints.length) return;
 
     const jsPDF = (await import('jspdf')).default;
-    await import('jspdf-autotable');
+    const { default: autoTable } = await import('jspdf-autotable');
 
     const doc = new jsPDF('portrait', 'mm', 'a4');
     const pw = 210, m = 15, cw = pw - 2 * m;
@@ -615,7 +615,7 @@ updateStintExtraTime(stintIndex: number, seconds: number) {
       ];
     });
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 64,
       head: [['#', 'Pilot', 'Start UTC', 'End UTC']],
       body: rows as any,
